@@ -1,45 +1,25 @@
 package se.alexanderblom.imageloader.concurrent;
 
-import java.io.InputStream;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
 import se.alexanderblom.imageloader.loader.Loader.Listener;
-import android.graphics.Bitmap;
 import android.util.Log;
 
 public class CallbackFuture extends FutureTask<Void> {
     private static final String TAG = "CallbackFuture";
 
-    public abstract static class Task implements Callable<Void> {
-        private Listener listener;
-
-        public abstract void run() throws Exception;
-
-        public final void deliverResult(InputStream is) {
-            listener.onStreamLoaded(is);
-        }
-
-        public final void deliverResult(Bitmap b) {
-            listener.onBitmapLoaded(b);
-        }
-
-        @Override
-        public final Void call() throws Exception {
-            run();
-
-            return null;
-        }
+    public interface Task {
+        void run(Listener listener) throws Exception;
     }
 
     private Listener listener;
 
     public CallbackFuture(Task task, Listener listener) {
-        super(task);
+        super(new WrapperCallable(task, listener));
 
         this.listener = listener;
-        task.listener = listener;
     }
 
     @Override
@@ -58,6 +38,23 @@ public class CallbackFuture extends FutureTask<Void> {
         } catch (InterruptedException e) {
             // Should not be able to happend
             Log.e(TAG, "get() was interrupted", e);
+        }
+    }
+
+    private static class WrapperCallable implements Callable<Void> {
+        private Task task;
+        private Listener listener;
+
+        public WrapperCallable(Task task, Listener listener) {
+            this.listener = listener;
+            this.task = task;
+        }
+
+        @Override
+        public Void call() throws Exception {
+            task.run(listener);
+
+            return null;
         }
     }
 }

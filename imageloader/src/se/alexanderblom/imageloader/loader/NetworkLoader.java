@@ -59,7 +59,7 @@ public class NetworkLoader implements Loader {
         return streamHandlers.get(protocol);
     }
 
-    private class DownloadTask extends CallbackFuture.Task {
+    private class DownloadTask implements CallbackFuture.Task {
         private Request request;
 
         public DownloadTask(Request request) {
@@ -67,7 +67,7 @@ public class NetworkLoader implements Loader {
         }
 
         @Override
-        public void run() throws Exception {
+        public void run(Listener listener) throws Exception {
             String url = request.getUrl();
 
             disableConnectionReuseIfNecessary();
@@ -89,7 +89,7 @@ public class NetworkLoader implements Loader {
 
             InputStream is = urlConnection.getInputStream();
             try {
-                deliverResult(is);
+                listener.onStreamLoaded(is);
             } finally {
                 is.close();
             }

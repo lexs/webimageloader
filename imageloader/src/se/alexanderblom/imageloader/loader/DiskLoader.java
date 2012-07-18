@@ -59,13 +59,13 @@ public class DiskLoader implements Loader, Closeable {
     public void load(final Request request, final Iterator<Loader> chain, final Listener listener) {
         run(listener, new CallbackFuture.Task() {
             @Override
-            public void run() throws Exception {
+            public void run(Listener listener) throws Exception {
                 String key = hashKeyForDisk(request);
                 Snapshot snapshot = cache.get(key);
                 if (snapshot != null) {
                     try {
                         InputStream is = snapshot.getInputStream(INPUT_IMAGE);
-                        deliverResult(is);
+                        listener.onStreamLoaded(is);
                         is.close();
 
                         Log.v(TAG, "Loaded " + request + " from disk");
@@ -154,7 +154,7 @@ public class DiskLoader implements Loader, Closeable {
         }
     }
 
-    private class ReadTask extends CallbackFuture.Task {
+    private class ReadTask implements CallbackFuture.Task {
         private Request request;
 
         public ReadTask(Request request) {
@@ -162,7 +162,7 @@ public class DiskLoader implements Loader, Closeable {
         }
 
         @Override
-        public void run() throws Exception {
+        public void run(Listener listener) throws Exception {
             String key = hashKeyForDisk(request);
 
             Snapshot snapshot = cache.get(key);
@@ -172,7 +172,7 @@ public class DiskLoader implements Loader, Closeable {
 
             try {
                 InputStream is = snapshot.getInputStream(INPUT_IMAGE);
-                deliverResult(is);
+                listener.onStreamLoaded(is);
                 is.close();
             } finally {
                 snapshot.close();
