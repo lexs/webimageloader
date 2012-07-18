@@ -209,6 +209,47 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         assertSame(h1.value, h2.value);
     }
 
+    public void testRequestCancellation() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+        Object tag = new Object();
+
+        final Holder<Boolean> failed = new Holder<Boolean>();
+
+        loader.load(tag, WRONG_FILE_PATH, new Listener<Object>() {
+            @Override
+            public void onSuccess(Object tag, Bitmap b) {
+                failed.value = true;
+
+                latch.countDown();
+            }
+
+            @Override
+            public void onError(Object tag, Throwable t) {
+                failed.value = true;
+
+                latch.countDown();
+            }
+        });
+
+        loader.load(tag, CORRECT_MOCK_FILE_PATH, new Listener<Object>() {
+            @Override
+            public void onSuccess(Object tag, Bitmap b) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onError(Object tag, Throwable t) {
+                latch.countDown();
+            }
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+
+        if (failed.value == Boolean.TRUE) {
+            fail("First request should have been cancelled");
+        }
+    }
+
     private static class MockProvider extends MockContentProvider {
         private AssetManager assets;
 
