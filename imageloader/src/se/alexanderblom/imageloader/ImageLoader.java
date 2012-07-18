@@ -115,7 +115,7 @@ public class ImageLoader {
             }
         }
 
-        loaderManager.load(request, new LoaderManager.Listener() {
+        loaderManager.load(tag, request, new LoaderManager.Listener() {
             @Override
             public void onLoaded(final Bitmap b) {
                 if (memoryCache != null) {

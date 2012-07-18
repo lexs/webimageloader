@@ -2,12 +2,12 @@ package se.alexanderblom.imageloader.loader;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 import se.alexanderblom.imageloader.Request;
 import se.alexanderblom.imageloader.transformation.Transformation;
-import se.alexanderblom.imageloader.util.BitmapUtils;
 import android.graphics.Bitmap;
 import android.util.Log;
 
@@ -17,6 +17,8 @@ public class LoaderManager {
     private TransformingLoader transformingLoader;
 
     private List<Loader> standardChain;
+
+    private PendingRequests pendingRequests;
 
     public interface Listener {
         void onLoaded(Bitmap b);
@@ -33,9 +35,15 @@ public class LoaderManager {
             standardChain.add(diskLoader);
         }
         standardChain.add(networkLoader);
+
+        // Ensure the standard chain is not modified and is safe to iterate
+        // over in multiple threads
+        standardChain = Collections.unmodifiableList(standardChain);
+
+        pendingRequests = new PendingRequests();
     }
 
-    public void load(Request request, final Listener listener) {
+    public void load(Object tag, Request request, final Listener listener) {
         List<Loader> chain = standardChain;
 
         Transformation transformation = request.getTransformation();
@@ -50,24 +58,13 @@ public class LoaderManager {
             chain = loaderChain;
         }
 
-        Iterator<Loader> it = chain.iterator();
-        it.next().load(request, it, new Loader.Listener() {
-            @Override
-            public void onStreamLoaded(InputStream is) {
-                Bitmap b = BitmapUtils.decodeStream(is);
-                onBitmapLoaded(b);
-            }
+        Loader.Listener l = pendingRequests.addRequest(tag, request, listener);
 
-            @Override
-            public void onBitmapLoaded(Bitmap b) {
-                listener.onLoaded(b);
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                listener.onError(t);
-            }
-        });
+        // Only load if neccesary
+        if (l != null) {
+            Iterator<Loader> it = chain.iterator();
+            it.next().load(request, it, l);
+        }
     }
 
     public void close() {
