@@ -50,12 +50,5 @@ public class BitmapUtils {
             }
             return totalBytesSkipped;
         }
-        /*
-        @Override
-        public void write(byte[] buffer, int offset, int length) throws IOException {
-            // Since we don't override "write(int oneByte)", we can write directly to "out"
-            // and avoid the inefficient implementation from the FilterOutputStream.
-            in.write(buffer, offset, length);
-        }*/
     }
 }
