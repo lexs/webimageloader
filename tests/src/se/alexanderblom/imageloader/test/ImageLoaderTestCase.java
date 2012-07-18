@@ -187,7 +187,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
             }
         });
 
-        loader.load(new Object(), WRONG_FILE_PATH, new Listener<Object>() {
+        loader.load(new Object(), CORRECT_MOCK_FILE_PATH, new Listener<Object>() {
             @Override
             public void onSuccess(Object tag, Bitmap b) {
                 h2.value = b;
