@@ -201,12 +201,12 @@ public class ImageLoaderTestCase extends AndroidTestCase {
             }
         });
 
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+
         assertNotNull(h1.value);
         assertNotNull(h2.value);
 
         assertSame(h1.value, h2.value);
-
-        assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
 
     private static class MockProvider extends MockContentProvider {
