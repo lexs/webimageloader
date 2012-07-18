@@ -69,24 +69,26 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         final CountDownLatch latch = new CountDownLatch(1);
 
         final Object t = new Object();
+        final Holder<Object> h = new Holder<Object>();
 
         loader.load(t, CORRECT_MOCK_FILE_PATH, new Listener<Object>() {
             @Override
             public void onSuccess(Object tag, Bitmap b) {
-                assertSame(t, tag);
+                h.value = tag;
 
                 latch.countDown();
             }
 
             @Override
             public void onError(Object tag, Throwable t) {
-                assertSame(t, tag);
+                h.value = tag;
 
                 latch.countDown();
             }
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertSame(t, h.value);
     }
 
     public void testWrongPath() {
@@ -106,43 +108,49 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     public void testAsyncSuccess() throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
 
+        final Holder<Bitmap> h = new Holder<Bitmap>();
+
         loader.load(new Object(), CORRECT_MOCK_FILE_PATH, new Listener<Object>() {
             @Override
             public void onSuccess(Object tag, Bitmap b) {
-                assertTrue(b.sameAs(correctFile));
+                h.value = b;
 
                 latch.countDown();
             }
 
             @Override
             public void onError(Object tag, Throwable t) {
-                fail("Should not error");
-
                 latch.countDown();
             }
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+
+        assertNotNull(h.value);
+        assertTrue(h.value.sameAs(correctFile));
     }
 
     public void testAsyncError() throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
 
+        final Holder<Throwable> h = new Holder<Throwable>();
+
         loader.load(new Object(), WRONG_FILE_PATH, new Listener<Object>() {
             @Override
             public void onSuccess(Object tag, Bitmap b) {
-                fail("Should have errored");
-
                 latch.countDown();
             }
 
             @Override
             public void onError(Object tag, Throwable t) {
+                h.value = t;
+
                 latch.countDown();
             }
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertNotNull(h.value);
     }
 
     public void testMultipleRequests() throws InterruptedException {
@@ -157,8 +165,6 @@ public class ImageLoaderTestCase extends AndroidTestCase {
 
                 @Override
                 public void onError(Object tag, Throwable t) {
-                    t.printStackTrace();
-
                     latch.countDown();
                 }
             });
