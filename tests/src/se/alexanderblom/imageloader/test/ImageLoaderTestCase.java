@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import se.alexanderblom.imageloader.ImageLoader;
 import se.alexanderblom.imageloader.ImageLoader.Listener;
+import android.content.ContentResolver;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -20,6 +21,8 @@ import android.test.mock.MockContentProvider;
 import android.test.mock.MockContentResolver;
 
 public class ImageLoaderTestCase extends AndroidTestCase {
+    private static final int TEN_MEGABYTES = 10 * 1024 * 1024;
+
     private static final String CORRECT_FILE_PATH = "test.png";
     private static final String CORRECT_MOCK_FILE_PATH = "content://mock/" + CORRECT_FILE_PATH;
     private static final String WRONG_FILE_PATH = "content://mock/error.jpeg";
@@ -33,22 +36,23 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     };
 
     private ImageLoader loader;
-
     private Bitmap correctFile;
 
-    @Override
-    protected void setUp() throws Exception {
-        int TEN_MEGABYTES = 10 * 1024 * 1024;
-
+    private ContentResolver createMockResolver() {
         MockContentResolver resolver = new MockContentResolver();
         resolver.addProvider("mock", new MockProvider(getContext().getAssets()));
 
+        return resolver;
+    }
+
+    @Override
+    protected void setUp() throws Exception {
         int random = Math.abs(new Random().nextInt());
         File cacheDir = new File(getContext().getCacheDir(), String.valueOf(random));
         loader = new ImageLoader.Builder()
                 .enableDiskCache(cacheDir, TEN_MEGABYTES)
                 .enableMemoryCache(TEN_MEGABYTES)
-                .supportResources(resolver)
+                .supportResources(createMockResolver())
                 .build();
 
         correctFile = BitmapFactory.decodeStream(getContext().getAssets().open(CORRECT_FILE_PATH));
@@ -60,6 +64,20 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     }
 
     public void testSameThread() throws IOException {
+        Bitmap b = loader.loadSynchronously(CORRECT_MOCK_FILE_PATH);
+
+        assertTrue(correctFile.sameAs(b));
+    }
+
+    public void testNoDiskCacheFallback() throws IOException {
+        File invalidCacheDir = new File("../");
+
+        ImageLoader loader = new ImageLoader.Builder()
+        .enableDiskCache(invalidCacheDir, TEN_MEGABYTES)
+        .enableMemoryCache(TEN_MEGABYTES)
+        .supportResources(createMockResolver())
+        .build();
+
         Bitmap b = loader.loadSynchronously(CORRECT_MOCK_FILE_PATH);
 
         assertTrue(correctFile.sameAs(b));
