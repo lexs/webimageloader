@@ -87,14 +87,14 @@ public class NetworkLoader implements Loader {
                 }
             }
 
+            Log.v(TAG, "Loaded " + request + " from network");
+
             InputStream is = urlConnection.getInputStream();
             try {
                 listener.onStreamLoaded(is);
             } finally {
                 is.close();
             }
-
-            Log.v(TAG, "Loaded " + request + " from network");
         }
     }
 }

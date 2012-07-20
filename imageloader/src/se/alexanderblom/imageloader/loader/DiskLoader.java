@@ -64,11 +64,12 @@ public class DiskLoader implements Loader, Closeable {
                 Snapshot snapshot = cache.get(key);
                 if (snapshot != null) {
                     try {
+                        Log.v(TAG, "Loaded " + request + " from disk");
+
                         InputStream is = snapshot.getInputStream(INPUT_IMAGE);
                         listener.onStreamLoaded(is);
                         is.close();
 
-                        Log.v(TAG, "Loaded " + request + " from disk");
                     } finally {
                         snapshot.close();
                     }
