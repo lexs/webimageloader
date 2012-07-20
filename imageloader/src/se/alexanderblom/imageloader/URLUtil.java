@@ -12,16 +12,8 @@ public class URLUtil {
         return createUrl(ContentResolver.SCHEME_FILE, "/android_asset", path);
     }
 
-    public static String fileUrl(String path) {
-        return createUrl(ContentResolver.SCHEME_FILE, null, path);
-    }
-
     private static String createUrl(String scheme, String authority, String path) {
-        if (authority != null) {
-            return scheme + "://" + authority + "/" + path;
-        } else {
-            return scheme + "://" + path;
-        }
+        return scheme + "://" + authority + "/" + path;
     }
 
     private URLUtil() {}
