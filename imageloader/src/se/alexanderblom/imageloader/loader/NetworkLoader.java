@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import se.alexanderblom.imageloader.Request;
-import se.alexanderblom.imageloader.concurrent.CallbackFuture;
+import se.alexanderblom.imageloader.concurrent.ListenerFuture;
 import se.alexanderblom.imageloader.util.Android;
 import android.net.Uri;
 import android.util.Log;
@@ -31,8 +31,8 @@ public class NetworkLoader implements Loader {
 
     @Override
     public void load(Request request, Iterator<Loader> chain, Listener listener) {
-        CallbackFuture.Task task = new DownloadTask(request);
-        executor.submit(new CallbackFuture(task, listener));
+        ListenerFuture.Task task = new DownloadTask(request);
+        executor.submit(new ListenerFuture(task, listener));
     }
 
     public void registerStreamHandler(String scheme, URLStreamHandler handler) {
@@ -59,7 +59,7 @@ public class NetworkLoader implements Loader {
         return streamHandlers.get(protocol);
     }
 
-    private class DownloadTask implements CallbackFuture.Task {
+    private class DownloadTask implements ListenerFuture.Task {
         private Request request;
 
         public DownloadTask(Request request) {

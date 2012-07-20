@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import se.alexanderblom.imageloader.Request;
-import se.alexanderblom.imageloader.concurrent.CallbackFuture;
+import se.alexanderblom.imageloader.concurrent.ListenerFuture;
 import se.alexanderblom.imageloader.util.DiskLruCache;
 import se.alexanderblom.imageloader.util.DiskLruCache.Editor;
 import se.alexanderblom.imageloader.util.DiskLruCache.Snapshot;
@@ -57,7 +57,7 @@ public class DiskLoader implements Loader, Closeable {
 
     @Override
     public void load(final Request request, final Iterator<Loader> chain, final Listener listener) {
-        run(listener, new CallbackFuture.Task() {
+        run(listener, new ListenerFuture.Task() {
             @Override
             public void run(Listener listener) throws Exception {
                 String key = hashKeyForDisk(request);
@@ -81,8 +81,8 @@ public class DiskLoader implements Loader, Closeable {
         });
     }
 
-    private void run(Listener listener, CallbackFuture.Task task) {
-        executor.submit(new CallbackFuture(task, listener));
+    private void run(Listener listener, ListenerFuture.Task task) {
+        executor.submit(new ListenerFuture(task, listener));
     }
 
     private class NextListener implements Listener {
@@ -154,7 +154,7 @@ public class DiskLoader implements Loader, Closeable {
         }
     }
 
-    private class ReadTask implements CallbackFuture.Task {
+    private class ReadTask implements ListenerFuture.Task {
         private Request request;
 
         public ReadTask(Request request) {
