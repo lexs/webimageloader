@@ -44,6 +44,13 @@ public class LoaderManager {
     }
 
     public void load(Object tag, Request request, final Listener listener) {
+        Loader.Listener l = pendingRequests.addRequest(tag, request, listener);
+
+        // Only load if neccesary
+        if (l == null) {
+            return;
+        }
+
         List<Loader> chain = standardChain;
 
         Transformation transformation = request.getTransformation();
@@ -58,13 +65,8 @@ public class LoaderManager {
             chain = loaderChain;
         }
 
-        Loader.Listener l = pendingRequests.addRequest(tag, request, listener);
-
-        // Only load if neccesary
-        if (l != null) {
-            Iterator<Loader> it = chain.iterator();
-            it.next().load(request, it, l);
-        }
+        Iterator<Loader> it = chain.iterator();
+        it.next().load(request, it, l);
     }
 
     public void close() {
