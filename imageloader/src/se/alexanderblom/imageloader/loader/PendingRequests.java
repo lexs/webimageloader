@@ -53,7 +53,7 @@ public class PendingRequests {
             return;
         }
 
-        PendingListeners listeners = pendingsRequests.remove(request);
+        PendingListeners listeners = pendingsRequests.get(request);
         if (!listeners.remove(tag)) {
             pendingsRequests.remove(request);
             // TODO: Actually cancel request
