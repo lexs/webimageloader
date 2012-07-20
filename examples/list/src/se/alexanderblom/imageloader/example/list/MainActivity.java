@@ -26,6 +26,7 @@ public class MainActivity extends ListActivity {
 
     private static final int NUM_IMAGES = 100;
     private static final int CACHE_SIZE = 10 * 1024 * 1024;
+
     private ImageLoader imageLoader;
 
     @Override
@@ -56,7 +57,7 @@ public class MainActivity extends ListActivity {
 
         @Override
         public String getItem(int position) {
-            return getImageUrl(position);
+            return "http://static.nikreiman.com/numbers/" + position + ".png";
         }
 
         @Override
@@ -73,14 +74,10 @@ public class MainActivity extends ListActivity {
             ImageView imageView = (ImageView) v.findViewById(R.id.image);
             TextView textView = (TextView) v.findViewById(R.id.text);
 
-            setImage(imageView, getImageUrl(position));
+            setImage(imageView, getItem(position));
             textView.setText("Image #" + position);
 
             return v;
-        }
-
-        private String getImageUrl(int position) {
-            return "http://static.nikreiman.com/numbers/" + position + ".png";
         }
 
         private void setImage(ImageView v, String url) {

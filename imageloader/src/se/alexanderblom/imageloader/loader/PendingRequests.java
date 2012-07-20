@@ -1,6 +1,7 @@
 package se.alexanderblom.imageloader.loader;
 
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -21,7 +22,7 @@ public class PendingRequests {
     }
 
     public synchronized Loader.Listener addRequest(Object tag, Request request, LoaderManager.Listener listener) {
-        if (alreadyPending(tag, request)) {
+        if (stillPending(tag, request)) {
             return null;
         }
 
@@ -43,10 +44,6 @@ public class PendingRequests {
         }
     }
 
-    private boolean alreadyPending(Object tag, Request request) {
-        return request.equals(pendingsTags.get(tag));
-     }
-
     private void cancelPotentialWork(Object tag) {
         Request request = pendingsTags.remove(tag);
         if (request == null) {
@@ -67,6 +64,7 @@ public class PendingRequests {
             return;
         }
 
+        filterTagsForRequest(listeners, request);
         listeners.deliverResult(b);
         pendingsTags.keySet().removeAll(listeners.getTags());
     }
@@ -78,9 +76,31 @@ public class PendingRequests {
             return;
         }
 
+        filterTagsForRequest(listeners, request);
         listeners.deliverError(t);
         pendingsTags.keySet().removeAll(listeners.getTags());
     }
+
+    /**
+     * Remove tags not pending for this request
+     */
+    private void filterTagsForRequest(PendingListeners listeners, Request request) {
+        // Tags pending for this request
+        Set<Object> tags = listeners.getTags();
+
+        for (Iterator<Object> it = tags.iterator(); it.hasNext(); ) {
+            Object tag = it.next();
+
+            // Check if tag is still pending
+            if (!stillPending(tag, request)) {
+                it.remove();
+            }
+        }
+    }
+
+    private boolean stillPending(Object tag, Request request) {
+        return request.equals(pendingsTags.get(tag));
+     }
 
     private class RequestListener implements Loader.Listener {
         private Request request;
