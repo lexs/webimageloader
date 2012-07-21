@@ -3,6 +3,7 @@ package se.alexanderblom.imageloader;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLStreamHandler;
+import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 import se.alexanderblom.imageloader.content.ContentURLStreamHandler;
@@ -175,12 +176,13 @@ public class ImageLoader {
     }
 
     public static class Builder {
-        private NetworkLoader networkLoader;
+        private HashMap<String, URLStreamHandler> streamHandlers;
+
         private DiskLoader diskLoader;
         private MemoryCache memoryCache;
 
         public Builder() {
-            networkLoader = new NetworkLoader();
+            streamHandlers = new HashMap<String, URLStreamHandler>();
         }
 
         public Builder enableDiskCache(File cacheDir, int maxSize) {
@@ -201,20 +203,21 @@ public class ImageLoader {
 
         public Builder supportResources(ContentResolver resolver) {
             URLStreamHandler handler = new ContentURLStreamHandler(resolver);
-            networkLoader.registerStreamHandler(ContentResolver.SCHEME_CONTENT, handler);
-            networkLoader.registerStreamHandler(ContentResolver.SCHEME_FILE, handler);
-            networkLoader.registerStreamHandler(ContentResolver.SCHEME_ANDROID_RESOURCE, handler);
+            streamHandlers.put(ContentResolver.SCHEME_CONTENT, handler);
+            streamHandlers.put(ContentResolver.SCHEME_FILE, handler);
+            streamHandlers.put(ContentResolver.SCHEME_ANDROID_RESOURCE, handler);
 
             return this;
         }
 
         public Builder addURLSchemeHandler(String scheme, URLStreamHandler handler) {
-            networkLoader.registerStreamHandler(scheme, handler);
+            streamHandlers.put(scheme, handler);
 
             return this;
         }
 
         public ImageLoader build() {
+            NetworkLoader networkLoader = new NetworkLoader(streamHandlers);
             LoaderManager loaderManager = new LoaderManager(memoryCache, diskLoader, networkLoader);
 
             return new ImageLoader(loaderManager);

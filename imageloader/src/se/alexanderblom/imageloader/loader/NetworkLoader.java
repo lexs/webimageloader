@@ -6,8 +6,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,12 +24,12 @@ import android.util.Log;
 public class NetworkLoader implements Loader {
     private static final String TAG = "NetworkLoader";
 
-    private HashMap<String, URLStreamHandler> streamHandlers;
+    private Map<String, URLStreamHandler> streamHandlers;
 
     private ExecutorHelper executorHelper;
 
-    public NetworkLoader() {
-        streamHandlers = new HashMap<String, URLStreamHandler>();
+    public NetworkLoader(Map<String, URLStreamHandler> streamHandlers) {
+        this.streamHandlers = Collections.unmodifiableMap(streamHandlers);
 
         ExecutorService executor = Executors.newFixedThreadPool(2, new PriorityThreadFactory(Process.THREAD_PRIORITY_BACKGROUND));
         executorHelper = new ExecutorHelper(executor);
@@ -43,10 +44,6 @@ public class NetworkLoader implements Loader {
     @Override
     public void cancel(Request request) {
         executorHelper.cancel(request);
-    }
-
-    public void registerStreamHandler(String scheme, URLStreamHandler handler) {
-        streamHandlers.put(scheme, handler);
     }
 
     /**
