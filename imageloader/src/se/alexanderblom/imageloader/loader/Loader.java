@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.util.Iterator;
 
 import se.alexanderblom.imageloader.Request;
-
 import android.graphics.Bitmap;
 
 public interface Loader {

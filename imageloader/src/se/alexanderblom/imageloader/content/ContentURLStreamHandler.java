@@ -16,11 +16,11 @@
 
 package se.alexanderblom.imageloader.content;
 
-import android.content.ContentResolver;
-
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+
+import android.content.ContentResolver;
 
 /**
  * {@link URLStreamHandler} for {@code content://}, {@code file://}, and {@code

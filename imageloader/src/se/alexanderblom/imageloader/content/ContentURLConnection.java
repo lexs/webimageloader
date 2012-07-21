@@ -16,10 +16,6 @@
 
 package se.alexanderblom.imageloader.content;
 
-import android.content.ContentResolver;
-import android.content.res.AssetFileDescriptor;
-import android.net.Uri;
-
 import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
@@ -27,6 +23,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
+
+import android.content.ContentResolver;
+import android.content.res.AssetFileDescriptor;
+import android.net.Uri;
 
 /**
  * {@link URLConnection} implementation for {@code content://}, {@code file://},
