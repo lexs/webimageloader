@@ -48,20 +48,7 @@ public class PendingRequests {
         }
     }
 
-    private void cancelPotentialWork(Object tag) {
-        Request request = pendingsTags.remove(tag);
-        if (request == null) {
-            return;
-        }
-
-        PendingListeners listeners = pendingsRequests.get(request);
-        if (!listeners.remove(tag)) {
-            pendingsRequests.remove(request);
-            // TODO: Actually cancel request
-        }
-    }
-
-    private synchronized void deliverResult(Request request, Bitmap b) {
+    protected synchronized void deliverResult(Request request, Bitmap b) {
         PendingListeners listeners = pendingsRequests.remove(request);
         if (listeners == null) {
             Log.v(TAG, "Request no longer pending: " + request);
@@ -75,7 +62,7 @@ public class PendingRequests {
         pendingsTags.keySet().removeAll(listeners.getTags());
     }
 
-    private synchronized void deliverError(Request request, Throwable t) {
+    protected synchronized void deliverError(Request request, Throwable t) {
         PendingListeners listeners = pendingsRequests.get(request);
         if (listeners == null) {
             Log.v(TAG, "Request no longer pending: " + request);
@@ -85,6 +72,19 @@ public class PendingRequests {
         filterTagsForRequest(listeners, request);
         listeners.deliverError(t);
         pendingsTags.keySet().removeAll(listeners.getTags());
+    }
+
+    private void cancelPotentialWork(Object tag) {
+        Request request = pendingsTags.remove(tag);
+        if (request == null) {
+            return;
+        }
+
+        PendingListeners listeners = pendingsRequests.get(request);
+        if (!listeners.remove(tag)) {
+            pendingsRequests.remove(request);
+            // TODO: Actually cancel request
+        }
     }
 
     /**
