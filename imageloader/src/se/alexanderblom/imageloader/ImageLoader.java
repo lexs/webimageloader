@@ -114,14 +114,7 @@ public class ImageLoader {
     }
 
     private Bitmap load(Object tag, Request request, LoaderManager.Listener listener) {
-        Bitmap b = loaderManager.getBitmap(request);
-        if (b != null) {
-            return b;
-        }
-
-        loaderManager.load(tag, request, listener);
-
-        return null;
+        return loaderManager.load(tag, request, listener);
     }
 
     public void destroy() {

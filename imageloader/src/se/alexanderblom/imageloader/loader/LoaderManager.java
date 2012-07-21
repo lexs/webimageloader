@@ -50,20 +50,21 @@ public class LoaderManager {
         return memoryCache;
     }
 
-    public Bitmap getBitmap(Request request) {
-        if (memoryCache != null) {
-            return memoryCache.get(request);
-        } else {
-            return null;
-        }
+    public Bitmap getBitmap(Object tag, Request request) {
+        return pendingRequests.getBitmap(tag, request);
     }
 
-    public void load(Object tag, Request request, final Listener listener) {
+    public Bitmap load(Object tag, Request request, final Listener listener) {
+        Bitmap b = pendingRequests.getBitmap(tag, request);
+        if (b != null) {
+            return b;
+        }
+
         Loader.Listener l = pendingRequests.addRequest(tag, request, listener);
 
-        // Only load if neccesary
+        // A request is already pending, don't load anything
         if (l == null) {
-            return;
+            return null;
         }
 
         List<Loader> chain = standardChain;
@@ -82,6 +83,8 @@ public class LoaderManager {
 
         Iterator<Loader> it = chain.iterator();
         it.next().load(request, it, l);
+
+        return null;
     }
 
     public void close() {

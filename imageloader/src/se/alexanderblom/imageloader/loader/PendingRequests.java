@@ -29,6 +29,19 @@ public class PendingRequests {
         pendingsRequests = new WeakHashMap<Request, PendingListeners>();
     }
 
+    public synchronized Bitmap getBitmap(Object tag, Request request) {
+        if (memoryCache != null) {
+            Bitmap b = memoryCache.get(request);
+            if (b != null) {
+                // We got this bitmap, cancel old pending work
+                cancelPotentialWork(tag);
+                return b;
+            }
+        }
+
+        return null;
+    }
+
     public synchronized Loader.Listener addRequest(Object tag, Request request, LoaderManager.Listener listener) {
         if (stillPending(tag, request)) {
             return null;
