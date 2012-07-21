@@ -21,11 +21,12 @@ import android.util.Log;
 public class ImageLoader {
     private static final String TAG = "ImageLoader";
 
-    private static final Listener<Object> EMPTY_LISTENER = new Listener<Object>() {
+    private static final LoaderManager.Listener EMPTY_LISTENER = new LoaderManager.Listener() {
         @Override
-        public void onSuccess(Object tag, Bitmap b) {}
+        public void onLoaded(Bitmap b) {}
+
         @Override
-        public void onError(Object tag, Throwable t) {}
+        public void onError(Throwable t) {}
     };
 
     public interface Listener<T> {
@@ -33,14 +34,13 @@ public class ImageLoader {
         void onError(T tag, Throwable t);
     }
 
-    private Handler handler;
-
     private LoaderManager loaderManager;
+    private HandlerManager handlerManager;
 
     private ImageLoader(LoaderManager loaderManager) {
         this.loaderManager = loaderManager;
 
-        handler = new Handler(Looper.getMainLooper());
+        handlerManager = new HandlerManager();
     }
 
     /**
@@ -88,7 +88,7 @@ public class ImageLoader {
     }
 
     public void preload(String url) {
-        load(new Object(), url, EMPTY_LISTENER);
+        load(new Object(), new Request(url), EMPTY_LISTENER);
     }
 
     public <T> Bitmap load(T tag, String url, Listener<T> listener) {
@@ -108,12 +108,8 @@ public class ImageLoader {
         return load(tag, request, listener);
     }
 
-    private <T> Bitmap load(final T tag, final Request request, final Listener<T> listener) {
-        // It's possible there is already a callback in progress for this tag
-        // so we'll remove it
-        handler.removeCallbacksAndMessages(tag);
-
-        return load(tag, request, new TagListener<T>(tag, listener));
+    private <T> Bitmap load(T tag, Request request,  Listener<T> listener) {
+        return load(tag, request, handlerManager.getListener(tag, listener));
     }
 
     private Bitmap load(Object tag, Request request, LoaderManager.Listener listener) {
@@ -131,35 +127,51 @@ public class ImageLoader {
         loaderManager.close();
     }
 
-    private class TagListener<T> implements LoaderManager.Listener {
-        private T tag;
-        private Listener<T> listener;
+    private static class HandlerManager {
+        private Handler handler;
 
-        public TagListener(T tag, Listener<T> listener) {
-            this.tag = tag;
-            this.listener = listener;
+        public HandlerManager() {
+            handler = new Handler(Looper.getMainLooper());
         }
 
-        @Override
-        public void onLoaded(final Bitmap b) {
-            handler.postAtTime(new Runnable() {
-                @Override
-                public void run() {
-                    listener.onSuccess(tag, b);
-                }
-            }, tag, 0);
+        public <T> LoaderManager.Listener getListener(T tag, Listener<T> listener) {
+            // It's possible there is already a callback in progress for this tag
+            // so we'll remove it
+            handler.removeCallbacksAndMessages(tag);
+
+            return new TagListener<T>(tag, listener);
         }
 
-        @Override
-        public void onError(final Throwable t) {
-            handler.postAtTime(new Runnable() {
-                @Override
-                public void run() {
-                    listener.onError(tag, t);
-                }
-            }, tag, 0);
-        }
+        private class TagListener<T> implements LoaderManager.Listener {
+            private T tag;
+            private Listener<T> listener;
 
+            public TagListener(T tag, Listener<T> listener) {
+                this.tag = tag;
+                this.listener = listener;
+            }
+
+            @Override
+            public void onLoaded(final Bitmap b) {
+                handler.postAtTime(new Runnable() {
+                    @Override
+                    public void run() {
+                        listener.onSuccess(tag, b);
+                    }
+                }, tag, 0);
+            }
+
+            @Override
+            public void onError(final Throwable t) {
+                handler.postAtTime(new Runnable() {
+                    @Override
+                    public void run() {
+                        listener.onError(tag, t);
+                    }
+                }, tag, 0);
+            }
+
+        }
     }
 
     public static class Builder {
