@@ -16,7 +16,11 @@ public class PendingRequests {
     private WeakHashMap<Object, Request> pendingsTags;
     private WeakHashMap<Request, PendingListeners> pendingsRequests;
 
-    public PendingRequests() {
+    private MemoryCache memoryCache;
+
+    public PendingRequests(MemoryCache memoryCache) {
+        this.memoryCache = memoryCache;
+
         pendingsTags = new WeakHashMap<Object, Request>();
         pendingsRequests = new WeakHashMap<Request, PendingListeners>();
     }
@@ -64,6 +68,8 @@ public class PendingRequests {
             return;
         }
 
+        saveToMemoryCache(request, b);
+
         filterTagsForRequest(listeners, request);
         listeners.deliverResult(b);
         pendingsTags.keySet().removeAll(listeners.getTags());
@@ -95,6 +101,12 @@ public class PendingRequests {
             if (!stillPending(tag, request)) {
                 it.remove();
             }
+        }
+    }
+
+    private void saveToMemoryCache(Request request, Bitmap b) {
+        if (memoryCache != null) {
+            memoryCache.set(request, b);
         }
     }
 

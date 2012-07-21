@@ -12,6 +12,8 @@ import android.graphics.Bitmap;
 import android.util.Log;
 
 public class LoaderManager {
+    private MemoryCache memoryCache;
+
     private DiskLoader diskLoader;
     private NetworkLoader networkLoader;
     private TransformingLoader transformingLoader;
@@ -25,7 +27,8 @@ public class LoaderManager {
         void onError(Throwable t);
     }
 
-    public LoaderManager(DiskLoader diskLoader, NetworkLoader networkLoader) {
+    public LoaderManager(MemoryCache memoryCache, DiskLoader diskLoader, NetworkLoader networkLoader) {
+        this.memoryCache = memoryCache;
         this.diskLoader = diskLoader;
         this.networkLoader = networkLoader;
         transformingLoader = new TransformingLoader();
@@ -40,7 +43,19 @@ public class LoaderManager {
         // over in multiple threads
         standardChain = Collections.unmodifiableList(standardChain);
 
-        pendingRequests = new PendingRequests();
+        pendingRequests = new PendingRequests(memoryCache);
+    }
+
+    public MemoryCache getMemoryCache() {
+        return memoryCache;
+    }
+
+    public Bitmap getBitmap(Request request) {
+        if (memoryCache != null) {
+            return memoryCache.get(request);
+        } else {
+            return null;
+        }
     }
 
     public void load(Object tag, Request request, final Listener listener) {

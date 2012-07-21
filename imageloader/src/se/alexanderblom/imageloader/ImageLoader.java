@@ -36,10 +36,8 @@ public class ImageLoader {
     private Handler handler;
 
     private LoaderManager loaderManager;
-    private MemoryCache memoryCache;
 
-    private ImageLoader(MemoryCache memoryCache, LoaderManager loaderManager) {
-        this.memoryCache = memoryCache;
+    private ImageLoader(LoaderManager loaderManager) {
         this.loaderManager = loaderManager;
 
         handler = new Handler(Looper.getMainLooper());
@@ -51,6 +49,8 @@ public class ImageLoader {
      * @return debug info or null if not available
      */
     public MemoryCache.DebugInfo getMemoryCacheInfo() {
+        MemoryCache memoryCache = loaderManager.getMemoryCache();
+
         if (memoryCache != null) {
             return memoryCache.getDebugInfo();
         } else {
@@ -62,11 +62,9 @@ public class ImageLoader {
         final WaitFuture future = new WaitFuture();
 
         Request request = new Request(url);
-        Bitmap b = load(new Object(), request, new MemoryCacheListener(request) {
+        Bitmap b = load(new Object(), request, new LoaderManager.Listener() {
             @Override
             public void onLoaded(Bitmap b) {
-                super.onLoaded(b);
-
                 future.set(b);
             }
 
@@ -119,11 +117,9 @@ public class ImageLoader {
     }
 
     private Bitmap load(Object tag, Request request, LoaderManager.Listener listener) {
-        if (memoryCache != null) {
-            Bitmap b = memoryCache.get(request);
-            if (b != null) {
-                return b;
-            }
+        Bitmap b = loaderManager.getBitmap(request);
+        if (b != null) {
+            return b;
         }
 
         loaderManager.load(tag, request, listener);
@@ -135,36 +131,17 @@ public class ImageLoader {
         loaderManager.close();
     }
 
-    private abstract class MemoryCacheListener implements LoaderManager.Listener {
-        protected Request request;
-
-        public MemoryCacheListener(Request request) {
-            this.request = request;
-        }
-
-        @Override
-        public void onLoaded(Bitmap b) {
-            if (memoryCache != null) {
-                memoryCache.set(request, b);
-            }
-        }
-    }
-
-    private class TagListener<T> extends MemoryCacheListener {
+    private class TagListener<T> implements LoaderManager.Listener {
         private T tag;
         private Listener<T> listener;
 
         public TagListener(Request request, T tag, Listener<T> listener) {
-            super(request);
-
             this.tag = tag;
             this.listener = listener;
         }
 
         @Override
         public void onLoaded(final Bitmap b) {
-            super.onLoaded(b);
-
             handler.postAtTime(new Runnable() {
                 @Override
                 public void run() {
@@ -226,9 +203,9 @@ public class ImageLoader {
         }
 
         public ImageLoader build() {
-            LoaderManager loaderManager = new LoaderManager(diskLoader, networkLoader);
+            LoaderManager loaderManager = new LoaderManager(memoryCache, diskLoader, networkLoader);
 
-            return new ImageLoader(memoryCache, loaderManager);
+            return new ImageLoader(loaderManager);
         }
     }
 }
