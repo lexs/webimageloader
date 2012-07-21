@@ -113,7 +113,7 @@ public class ImageLoader {
         // so we'll remove it
         handler.removeCallbacksAndMessages(tag);
 
-        return load(tag, request, new TagListener<T>(request, tag, listener));
+        return load(tag, request, new TagListener<T>(tag, listener));
     }
 
     private Bitmap load(Object tag, Request request, LoaderManager.Listener listener) {
@@ -135,7 +135,7 @@ public class ImageLoader {
         private T tag;
         private Listener<T> listener;
 
-        public TagListener(Request request, T tag, Listener<T> listener) {
+        public TagListener(T tag, Listener<T> listener) {
             this.tag = tag;
             this.listener = listener;
         }
