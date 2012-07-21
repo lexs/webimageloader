@@ -61,14 +61,17 @@ public class ImageLoader {
     public Bitmap loadSynchronously(String url) throws IOException {
         final WaitFuture future = new WaitFuture();
 
-        Bitmap b = load(new Object(), url, new Listener<Object>() {
+        Request request = new Request(url);
+        Bitmap b = load(new Object(), request, new MemoryCacheListener(request) {
             @Override
-            public void onSuccess(Object tag, Bitmap b) {
+            public void onLoaded(Bitmap b) {
+                super.onLoaded(b);
+
                 future.set(b);
             }
 
             @Override
-            public void onError(Object tag, Throwable t) {
+            public void onError(Throwable t) {
                 future.setException(t);
             }
         });
@@ -108,6 +111,14 @@ public class ImageLoader {
     }
 
     private <T> Bitmap load(final T tag, final Request request, final Listener<T> listener) {
+        // It's possible there is already a callback in progress for this tag
+        // so we'll remove it
+        handler.removeCallbacksAndMessages(tag);
+
+        return load(tag, request, new TagListener<T>(request, tag, listener));
+    }
+
+    private Bitmap load(Object tag, Request request, LoaderManager.Listener listener) {
         if (memoryCache != null) {
             Bitmap b = memoryCache.get(request);
             if (b != null) {
@@ -115,37 +126,63 @@ public class ImageLoader {
             }
         }
 
-        loaderManager.load(tag, request, new LoaderManager.Listener() {
-            @Override
-            public void onLoaded(final Bitmap b) {
-                if (memoryCache != null) {
-                    memoryCache.set(request, b);
-                }
-
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        listener.onSuccess(tag, b);
-                    }
-                });
-            }
-
-            @Override
-            public void onError(final Throwable t) {
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        listener.onError(tag, t);
-                    }
-                });
-            }
-        });
+        loaderManager.load(tag, request, listener);
 
         return null;
     }
 
     public void destroy() {
         loaderManager.close();
+    }
+
+    private abstract class MemoryCacheListener implements LoaderManager.Listener {
+        protected Request request;
+
+        public MemoryCacheListener(Request request) {
+            this.request = request;
+        }
+
+        @Override
+        public void onLoaded(Bitmap b) {
+            if (memoryCache != null) {
+                memoryCache.set(request, b);
+            }
+        }
+    }
+
+    private class TagListener<T> extends MemoryCacheListener {
+        private T tag;
+        private Listener<T> listener;
+
+        public TagListener(Request request, T tag, Listener<T> listener) {
+            super(request);
+
+            this.tag = tag;
+            this.listener = listener;
+        }
+
+        @Override
+        public void onLoaded(final Bitmap b) {
+            super.onLoaded(b);
+
+            handler.postAtTime(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onSuccess(tag, b);
+                }
+            }, tag, 0);
+        }
+
+        @Override
+        public void onError(final Throwable t) {
+            handler.postAtTime(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onError(tag, t);
+                }
+            }, tag, 0);
+        }
+
     }
 
     public static class Builder {
