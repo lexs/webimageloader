@@ -7,6 +7,7 @@ import java.io.InputStream;
 import se.alexanderblom.imageloader.ImageLoader;
 import se.alexanderblom.imageloader.ImageLoader.Listener;
 import se.alexanderblom.imageloader.URLUtil;
+import se.alexanderblom.imageloader.ext.ImageLoaderApplication;
 import se.alexanderblom.imageloader.transformation.SimpleTransformation;
 import se.alexanderblom.imageloader.transformation.Transformation;
 import android.app.Activity;
@@ -38,7 +39,7 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
-        loader = (ImageLoader) getApplicationContext().getSystemService(SimpleApplication.IMAGE_LOADER_SERVICE);
+        loader = (ImageLoader) getApplicationContext().getSystemService(ImageLoaderApplication.IMAGE_LOADER_SERVICE);
 
         View reloadButton = findViewById(R.id.button_reload);
         reloadButton.setOnClickListener(new OnClickListener() {

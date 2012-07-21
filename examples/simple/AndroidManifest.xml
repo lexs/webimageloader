@@ -11,7 +11,7 @@
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-  <application android:label="SimpleImageLoader" android:name=".SimpleApplication">
+  <application android:label="SimpleImageLoader" android:name="se.alexanderblom.imageloader.ext.ImageLoaderApplication">
     
     <activity android:name=".MainActivity">
       <intent-filter>
