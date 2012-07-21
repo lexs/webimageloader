@@ -19,6 +19,8 @@ import android.graphics.BitmapFactory;
 import android.test.AndroidTestCase;
 
 public class ImageLoaderTestCase extends AndroidTestCase {
+    private static final int TIMEOUT = 1;
+
     private static final int TEN_MEGABYTES = 10 * 1024 * 1024;
 
     private static final String MOCK_SCHEME = "mock://";
@@ -98,7 +100,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
             }
         });
 
-        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(TIMEOUT, TimeUnit.SECONDS));
         assertSame(t, h.value);
     }
 
@@ -121,7 +123,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
             }
         });
 
-        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(TIMEOUT, TimeUnit.SECONDS));
         assertTrue(h.value instanceof FileNotFoundException);
     }
 
@@ -159,7 +161,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
             }
         });
 
-        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(TIMEOUT, TimeUnit.SECONDS));
 
         assertNotNull(h.value);
         assertTrue(h.value.sameAs(correctFile));
@@ -184,7 +186,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
             }
         });
 
-        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(TIMEOUT, TimeUnit.SECONDS));
         assertNotNull(h.value);
     }
 
@@ -205,7 +207,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
             });
         }
 
-        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(TIMEOUT, TimeUnit.SECONDS));
     }
 
     public void testRequestReuse() throws InterruptedException {
@@ -242,7 +244,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
             }
         });
 
-        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(TIMEOUT, TimeUnit.SECONDS));
 
         assertNotNull(h1.value);
         assertNotNull(h2.value);
@@ -284,7 +286,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
             }
         });
 
-        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(TIMEOUT, TimeUnit.SECONDS));
 
         if (failed.value == Boolean.TRUE) {
             fail("First request should have been cancelled");
