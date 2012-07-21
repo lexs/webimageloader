@@ -1,8 +1,6 @@
 package se.alexanderblom.imageloader.loader;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
@@ -83,20 +81,10 @@ public class NetworkLoader implements Loader {
             URLStreamHandler streamHandler = getURLStreamHandler(protocol);
 
             URLConnection urlConnection = new URL(null, url, streamHandler).openConnection();
-
-            if (urlConnection instanceof HttpURLConnection) {
-                // If we are getting this from http, ensure we got a 200
-                HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
-
-                int responseCode = httpURLConnection.getResponseCode();
-                if (responseCode != 200) {
-                    throw new IOException("Server error: " + responseCode);
-                }
-            }
+            InputStream is = urlConnection.getInputStream();
 
             Log.v(TAG, "Loaded " + request + " from network");
 
-            InputStream is = urlConnection.getInputStream();
             try {
                 listener.onStreamLoaded(is);
             } finally {

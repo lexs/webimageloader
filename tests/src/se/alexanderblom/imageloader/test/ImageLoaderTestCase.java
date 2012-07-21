@@ -3,29 +3,28 @@ package se.alexanderblom.imageloader.test;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import se.alexanderblom.imageloader.ImageLoader;
 import se.alexanderblom.imageloader.ImageLoader.Listener;
-import android.content.ContentResolver;
-import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
-import android.os.Bundle;
 import android.test.AndroidTestCase;
-import android.test.mock.MockContentProvider;
-import android.test.mock.MockContentResolver;
 
 public class ImageLoaderTestCase extends AndroidTestCase {
     private static final int TEN_MEGABYTES = 10 * 1024 * 1024;
 
+    private static final String MOCK_SCHEME = "mock://";
     private static final String CORRECT_FILE_PATH = "test.png";
-    private static final String CORRECT_MOCK_FILE_PATH = "content://mock/" + CORRECT_FILE_PATH;
-    private static final String WRONG_FILE_PATH = "content://mock/error.jpeg";
+    private static final String CORRECT_MOCK_FILE_PATH = MOCK_SCHEME + CORRECT_FILE_PATH;
+    private static final String WRONG_FILE_PATH = MOCK_SCHEME + "error.jpeg";
 
     private static final Listener<Object> EMPTY_LISTENER = new Listener<Object>() {
         @Override
@@ -38,13 +37,6 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     private ImageLoader loader;
     private Bitmap correctFile;
 
-    private ContentResolver createMockResolver() {
-        MockContentResolver resolver = new MockContentResolver();
-        resolver.addProvider("mock", new MockProvider(getContext().getAssets()));
-
-        return resolver;
-    }
-
     @Override
     protected void setUp() throws Exception {
         int random = Math.abs(new Random().nextInt());
@@ -52,7 +44,8 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         loader = new ImageLoader.Builder()
                 .enableDiskCache(cacheDir, TEN_MEGABYTES)
                 .enableMemoryCache(TEN_MEGABYTES)
-                .supportResources(createMockResolver())
+                //.supportResources(createMockResolver())
+                .addURLSchemeHandler("mock", new MockURLStreamHandler(getContext().getAssets()))
                 .build();
 
         correctFile = BitmapFactory.decodeStream(getContext().getAssets().open(CORRECT_FILE_PATH));
@@ -75,7 +68,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         ImageLoader loader = new ImageLoader.Builder()
         .enableDiskCache(invalidCacheDir, TEN_MEGABYTES)
         .enableMemoryCache(TEN_MEGABYTES)
-        .supportResources(createMockResolver())
+        .addURLSchemeHandler("mock", new MockURLStreamHandler(getContext().getAssets()))
         .build();
 
         Bitmap b = loader.loadSynchronously(CORRECT_MOCK_FILE_PATH);
@@ -109,11 +102,35 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         assertSame(t, h.value);
     }
 
-    public void testWrongPath() {
+    public void testMissingImageAsync() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        final Holder<Throwable> h = new Holder<Throwable>();
+
+        loader.load(new Object(), WRONG_FILE_PATH, new Listener<Object>() {
+            @Override
+            public void onSuccess(Object tag, Bitmap b) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onError(Object tag, Throwable t) {
+                h.value = t;
+
+                latch.countDown();
+            }
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertTrue(h.value instanceof FileNotFoundException);
+    }
+
+    public void testMissingImage() throws IOException {
         try {
             loader.loadSynchronously(WRONG_FILE_PATH);
             fail("Should have thrown an exception");
-        } catch (IOException e) {
+        } catch (FileNotFoundException e) {
+            // Expected
         }
     }
 
@@ -274,29 +291,36 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         }
     }
 
-    private static class MockProvider extends MockContentProvider {
+    private static class MockURLStreamHandler extends URLStreamHandler {
         private AssetManager assets;
 
-        public MockProvider(AssetManager assets) {
+        public MockURLStreamHandler(AssetManager assets) {
             this.assets = assets;
         }
 
         @Override
-        public AssetFileDescriptor openAssetFile(Uri uri, String mode) throws FileNotFoundException {
-            try {
-                return assets.openFd(uri.getLastPathSegment());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        protected URLConnection openConnection(URL url) throws IOException {
+            return new MockURLConnection(assets, url);
+        }
+    }
+
+    private static class MockURLConnection extends URLConnection {
+        private AssetManager assets;
+        private String filename;
+
+        protected MockURLConnection(AssetManager assets, URL url) {
+            super(url);
+
+            this.assets = assets;
+            filename = url.getAuthority();
         }
 
         @Override
-        public AssetFileDescriptor openTypedAssetFile(Uri url, String mimeType, Bundle opts) {
-            try {
-                return openAssetFile(url, null);
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+        public void connect() throws IOException {}
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            return assets.open(filename);
         }
     }
 

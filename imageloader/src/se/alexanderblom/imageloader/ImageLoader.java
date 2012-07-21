@@ -82,7 +82,14 @@ public class ImageLoader {
         try {
             return future.get();
         } catch (ExecutionException e) {
-            throw new IOException("Failed to fetch image", e.getCause());
+            Throwable cause = e.getCause();
+
+            // Rethrow as original exception if possible
+            if (cause instanceof IOException) {
+                throw (IOException) cause;
+            } else {
+                throw new IOException("Failed to fetch image", e.getCause());
+            }
         } catch (InterruptedException e) {
             throw new IOException("Interruped while fetching image", e);
         }
