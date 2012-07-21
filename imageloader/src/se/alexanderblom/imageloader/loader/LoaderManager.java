@@ -43,7 +43,7 @@ public class LoaderManager {
         // over in multiple threads
         standardChain = Collections.unmodifiableList(standardChain);
 
-        pendingRequests = new PendingRequests(memoryCache);
+        pendingRequests = new PendingRequests(memoryCache, standardChain);
     }
 
     public MemoryCache getMemoryCache() {
@@ -127,6 +127,12 @@ public class LoaderManager {
                     listener.onError(t);
                 }
             });
+        }
+
+        @Override
+        public void cancel(Request request) {
+            // We can't cancel anything as we don't run the
+            // transformation on our own thread
         }
     }
 }

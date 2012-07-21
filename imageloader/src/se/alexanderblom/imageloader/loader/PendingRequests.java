@@ -2,6 +2,7 @@ package se.alexanderblom.imageloader.loader;
 
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -13,13 +14,16 @@ import android.util.Log;
 public class PendingRequests {
     private static final String TAG = "PendingRequests";
 
+    private MemoryCache memoryCache;
+    private List<Loader> loaders;
+
     private WeakHashMap<Object, Request> pendingsTags;
     private WeakHashMap<Request, PendingListeners> pendingsRequests;
 
-    private MemoryCache memoryCache;
 
-    public PendingRequests(MemoryCache memoryCache) {
+    public PendingRequests(MemoryCache memoryCache, List<Loader> loaders) {
         this.memoryCache = memoryCache;
+        this.loaders = loaders;
 
         pendingsTags = new WeakHashMap<Object, Request>();
         pendingsRequests = new WeakHashMap<Request, PendingListeners>();
@@ -83,7 +87,10 @@ public class PendingRequests {
         PendingListeners listeners = pendingsRequests.get(request);
         if (!listeners.remove(tag)) {
             pendingsRequests.remove(request);
-            // TODO: Actually cancel request
+
+            for (Loader loader : loaders) {
+                loader.cancel(request);
+            }
         }
     }
 

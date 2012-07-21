@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import se.alexanderblom.imageloader.Request;
+import se.alexanderblom.imageloader.concurrent.ExecutorHelper;
 import se.alexanderblom.imageloader.concurrent.ListenerFuture;
 import se.alexanderblom.imageloader.util.Android;
 import se.alexanderblom.imageloader.util.PriorityThreadFactory;
@@ -24,17 +25,24 @@ public class NetworkLoader implements Loader {
 
     private HashMap<String, URLStreamHandler> streamHandlers;
 
-    private ExecutorService executor;
+    private ExecutorHelper executorHelper;
 
     public NetworkLoader() {
         streamHandlers = new HashMap<String, URLStreamHandler>();
-        executor = Executors.newFixedThreadPool(2, new PriorityThreadFactory(Process.THREAD_PRIORITY_BACKGROUND));
+
+        ExecutorService executor = Executors.newFixedThreadPool(2, new PriorityThreadFactory(Process.THREAD_PRIORITY_BACKGROUND));
+        executorHelper = new ExecutorHelper(executor);
     }
 
     @Override
     public void load(Request request, Iterator<Loader> chain, Listener listener) {
         ListenerFuture.Task task = new DownloadTask(request);
-        executor.submit(new ListenerFuture(task, listener));
+        executorHelper.run(request, listener, task);
+    }
+
+    @Override
+    public void cancel(Request request) {
+        executorHelper.cancel(request);
     }
 
     public void registerStreamHandler(String scheme, URLStreamHandler handler) {

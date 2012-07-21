@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import se.alexanderblom.imageloader.Request;
+import se.alexanderblom.imageloader.concurrent.ExecutorHelper;
 import se.alexanderblom.imageloader.concurrent.ListenerFuture;
 import se.alexanderblom.imageloader.util.DiskLruCache;
 import se.alexanderblom.imageloader.util.PriorityThreadFactory;
@@ -36,7 +37,7 @@ public class DiskLoader implements Loader, Closeable {
     private static final int INPUT_METADATA = 1;
     private static final int VALUE_COUNT = 1;
 
-    private ExecutorService executor;
+    private ExecutorHelper executorHelper;
 
     private DiskLruCache cache;
 
@@ -47,19 +48,20 @@ public class DiskLoader implements Loader, Closeable {
     private DiskLoader(DiskLruCache cache) {
         this.cache = cache;
 
-        executor = Executors.newSingleThreadExecutor(new PriorityThreadFactory(Process.THREAD_PRIORITY_BACKGROUND));
+        ExecutorService executor = Executors.newSingleThreadExecutor(new PriorityThreadFactory(Process.THREAD_PRIORITY_BACKGROUND));
+        executorHelper = new ExecutorHelper(executor);
     }
 
     @Override
     public void close() {
-        executor.shutdownNow();
+        executorHelper.shutdown();
 
         IOUtil.closeQuietly(cache);
     }
 
     @Override
     public void load(final Request request, final Iterator<Loader> chain, final Listener listener) {
-        run(listener, new ListenerFuture.Task() {
+        executorHelper.run(request, listener, new ListenerFuture.Task() {
             @Override
             public void run(Listener listener) throws Exception {
                 String key = hashKeyForDisk(request);
@@ -84,8 +86,9 @@ public class DiskLoader implements Loader, Closeable {
         });
     }
 
-    private void run(Listener listener, ListenerFuture.Task task) {
-        executor.submit(new ListenerFuture(task, listener));
+    @Override
+    public void cancel(Request request) {
+        executorHelper.cancel(request);
     }
 
     private class NextListener implements Listener {
@@ -114,7 +117,7 @@ public class DiskLoader implements Loader, Closeable {
                     editor.commit();
 
                     // Read back the file we just saved
-                    run(listener, new ReadTask(request));
+                    executorHelper.run(request, listener, new ReadTask(request));
                 } catch (IOException e) {
                     editor.abort();
                     throw e;
@@ -141,7 +144,7 @@ public class DiskLoader implements Loader, Closeable {
                     editor.commit();
 
                     // Read back the file we just saved
-                    run(listener, new ReadTask(request));
+                    executorHelper.run(request, listener, new ReadTask(request));
                 } catch (IOException e) {
                     editor.abort();
                     throw e;

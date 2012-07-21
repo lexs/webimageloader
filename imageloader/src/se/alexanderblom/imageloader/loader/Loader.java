@@ -15,4 +15,5 @@ public interface Loader {
     }
 
     void load(Request request, Iterator<Loader> chain, Listener listener);
+    void cancel(Request request);
 }
