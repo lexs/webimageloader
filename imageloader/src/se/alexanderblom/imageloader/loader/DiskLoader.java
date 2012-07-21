@@ -14,10 +14,12 @@ import java.util.concurrent.Executors;
 import se.alexanderblom.imageloader.Request;
 import se.alexanderblom.imageloader.concurrent.ListenerFuture;
 import se.alexanderblom.imageloader.util.DiskLruCache;
+import se.alexanderblom.imageloader.util.PriorityThreadFactory;
 import se.alexanderblom.imageloader.util.DiskLruCache.Editor;
 import se.alexanderblom.imageloader.util.DiskLruCache.Snapshot;
 import se.alexanderblom.imageloader.util.IOUtil;
 import android.graphics.Bitmap;
+import android.os.Process;
 import android.util.Log;
 
 public class DiskLoader implements Loader, Closeable {
@@ -45,7 +47,7 @@ public class DiskLoader implements Loader, Closeable {
     private DiskLoader(DiskLruCache cache) {
         this.cache = cache;
 
-        executor = Executors.newSingleThreadExecutor();
+        executor = Executors.newSingleThreadExecutor(new PriorityThreadFactory(Process.THREAD_PRIORITY_BACKGROUND));
     }
 
     @Override

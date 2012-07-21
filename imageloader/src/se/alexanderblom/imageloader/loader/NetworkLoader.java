@@ -14,7 +14,9 @@ import java.util.concurrent.Executors;
 import se.alexanderblom.imageloader.Request;
 import se.alexanderblom.imageloader.concurrent.ListenerFuture;
 import se.alexanderblom.imageloader.util.Android;
+import se.alexanderblom.imageloader.util.PriorityThreadFactory;
 import android.net.Uri;
+import android.os.Process;
 import android.util.Log;
 
 public class NetworkLoader implements Loader {
@@ -26,7 +28,7 @@ public class NetworkLoader implements Loader {
 
     public NetworkLoader() {
         streamHandlers = new HashMap<String, URLStreamHandler>();
-        executor = Executors.newFixedThreadPool(2);
+        executor = Executors.newFixedThreadPool(2, new PriorityThreadFactory(Process.THREAD_PRIORITY_BACKGROUND));
     }
 
     @Override
