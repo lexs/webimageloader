@@ -2,6 +2,7 @@ package com.webimageloader.ext;
 
 import com.webimageloader.ImageLoader;
 import com.webimageloader.ImageLoader.Listener;
+import com.webimageloader.transformation.Transformation;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -50,7 +51,11 @@ public class ImageHelper {
     }
 
     public void load(ImageView v, String url) {
-        Bitmap b = loader.load(v, url, listener);
+        load(v, url, null);
+    }
+
+    public void load(ImageView v, String url, Transformation transformation) {
+        Bitmap b = loader.load(v, url, transformation, listener);
 
         if (b != null) {
             v.setImageBitmap(b);
