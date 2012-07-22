@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="se.alexanderblom.imageloader.example.list"
+  package="com.webimageloader.example.list"
   android:versionCode="1"
   android:versionName="1.0" >
 
@@ -12,7 +12,7 @@
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
   <application
-    android:label="ImageLoaderList">
+    android:label="WebImageLoaderList">
     <activity android:name=".MainActivity">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />

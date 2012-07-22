@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="se.alexanderblom.imageloader.simple"
+  package="com.webimageloader.example.simple"
   android:versionCode="1"
   android:versionName="1.0" >
 
@@ -11,7 +11,7 @@
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-  <application android:label="SimpleImageLoader" android:name="se.alexanderblom.imageloader.ext.ImageLoaderApplication">
+  <application android:label="WebImageLoaderSimple" android:name="com.webimageloader.ext.ImageLoaderApplication">
     
     <activity android:name=".MainActivity">
       <intent-filter>

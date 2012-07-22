@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" />
 
-  <view class="se.alexanderblom.imageloader.example.list.MainActivity$StatsView"
+  <view class="com.webimageloader.example.list.MainActivity$StatsView"
     android:id="@+id/stats"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
