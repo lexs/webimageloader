@@ -41,10 +41,10 @@ ImageLoader imageLoader = ImageLoaderApplication.getLoader(context);
 Loading images
 --------------
 
-Loading images is dead simple if you want it to be.
+Loading images is simple if you want it to be.
 
 ```java
-// This will show a nice fadein when the image is loaded
+// This will show a nice fadein when the image has loaded
 new ImageHelper(context, imageLoader)
         .load(imageView, "http://example.com/image.png");
 ```
@@ -52,7 +52,6 @@ new ImageHelper(context, imageLoader)
 You can also use specify a loading and failure image
 
 ```java
-// This will show a nice fadein when the image is loaded
 new ImageHelper(context, imageLoader)
         .setLoadingResource(R.drawable.loading)
         .setErrorResource(R.drawable.error)
