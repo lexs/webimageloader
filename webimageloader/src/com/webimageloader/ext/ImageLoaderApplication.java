@@ -3,6 +3,7 @@ package com.webimageloader.ext;
 import java.io.File;
 
 import com.webimageloader.ImageLoader;
+import com.webimageloader.loader.MemoryCache;
 
 import android.app.ActivityManager;
 import android.app.Application;
@@ -40,6 +41,39 @@ public class ImageLoaderApplication extends Application {
         super.onTerminate();
 
         imageLoader.destroy();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+
+        MemoryCache memoryCache = imageLoader.getMemoryCache();
+        if (memoryCache != null) {
+            Log.d(TAG, "onLowMemory() called, eviciting all bitmaps");
+            memoryCache.evictAll();
+        }
+    }
+
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+
+        MemoryCache memoryCache = imageLoader.getMemoryCache();
+        if (memoryCache == null) {
+            return;
+        }
+
+        if (level >= TRIM_MEMORY_MODERATE) {
+            // Nearing middle of list of cached background apps
+            // Evict our entire bitmap cache
+            Log.d(TAG, "onTrimMemory(), level>=TRIM_MEMORY_MODERATE called, eviciting all bitmaps");
+            memoryCache.evictAll();
+        } else if (level >= TRIM_MEMORY_BACKGROUND) {
+            // Entering list of cached background apps
+            // Evict oldest half of our bitmap cache
+            Log.d(TAG, "onTrimMemory(), level>=TRIM_MEMORY_BACKGROUND called, evicing half of all bitmaps");
+            memoryCache.trimToSize(memoryCache.size() / 2);
+        }
     }
 
     public static ImageLoader getLoader(Context context) {

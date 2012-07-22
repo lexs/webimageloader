@@ -1,8 +1,5 @@
 package com.webimageloader.example.list;
 
-import java.io.File;
-import java.util.Random;
-
 import android.app.ListActivity;
 import android.content.Context;
 import android.os.Bundle;
@@ -15,13 +12,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.webimageloader.ImageLoader;
-import com.webimageloader.example.list.R;
 import com.webimageloader.ext.ImageHelper;
+import com.webimageloader.ext.ImageLoaderApplication;
 import com.webimageloader.loader.MemoryCache;
 
 public class MainActivity extends ListActivity {
     private static final int NUM_IMAGES = 100;
-    private static final int CACHE_SIZE = 10 * 1024 * 1024;
 
     private ImageLoader imageLoader;
     private ImageHelper imageHelper;
@@ -32,12 +28,7 @@ public class MainActivity extends ListActivity {
 
         setContentView(R.layout.activity_main);
 
-        int random = Math.abs(new Random().nextInt());
-        File cacheDir = new File(getCacheDir(), String.valueOf(random));
-        imageLoader = new ImageLoader.Builder()
-                .enableDiskCache(cacheDir, CACHE_SIZE)
-                .enableMemoryCache(CACHE_SIZE)
-                .build();
+        imageLoader = ImageLoaderApplication.getLoader(this);
 
         imageHelper = new ImageHelper(this, imageLoader);
         imageHelper.setLoadingResource(android.R.drawable.sym_def_app_icon);

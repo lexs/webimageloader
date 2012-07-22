@@ -30,6 +30,22 @@ public class MemoryCache {
         cache = new Cache(maxSize);
     }
 
+    public int size() {
+        return cache.size();
+    }
+
+    public int maxSize() {
+        return cache.maxSize();
+    }
+
+    public void trimToSize(int maxSize) {
+        cache.trimToSize(maxSize);
+    }
+
+    public void evictAll() {
+        cache.evictAll();
+    }
+
     public Bitmap get(Request request) {
         Bitmap b = cache.get(request.getCacheKey());
         if (b != null) {
