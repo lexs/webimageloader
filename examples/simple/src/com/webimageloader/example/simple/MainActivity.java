@@ -29,9 +29,9 @@ import com.webimageloader.transformation.Transformation;
 public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
 
-    private static final String IMAGE1 = "http://images5.fanpop.com/image/photos/31100000/Picturess-Lol-random-31165113-600-600.png";
-    private static final String IMAGE3 = "http://www.adiumxtras.com/images/pictures/chuck_norris_random_fact_generator_6_3957_2224_image_2578.jpg";
-    private static final String IMAGE4 = "http://luxrerum.icmm.csic.es/files/images/random04.jpg";
+    private static final String IMAGE1 = "https://raw.github.com/lexs/webimageloader/develop/extras/numbers/1.png";
+    private static final String IMAGE2 = "https://raw.github.com/lexs/webimageloader/develop/extras/numbers/2.png";
+    private static final String IMAGE3 = "https://raw.github.com/lexs/webimageloader/develop/extras/numbers/3.png";
 
     private ImageLoader loader;
 
@@ -63,9 +63,9 @@ public class MainActivity extends Activity {
 
     private void loadImage() {
         loadImage(R.id.image1, IMAGE1);
-        loadImage(R.id.image2, URLUtil.resourceUrl(this, android.R.drawable.ic_media_next));
+        loadImage(R.id.image2, IMAGE2);
         loadImage(R.id.image3, IMAGE3);
-        loadImage(R.id.image4, IMAGE4);
+        loadImage(R.id.image4, URLUtil.resourceUrl(this, android.R.drawable.ic_media_next));
     }
 
     private void loadImage(int id, String url) {

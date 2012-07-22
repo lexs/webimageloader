@@ -62,7 +62,7 @@ public class MainActivity extends ListActivity {
 
         @Override
         public String getItem(int position) {
-            return "http://static.nikreiman.com/numbers/" + position + ".png";
+            return "https://raw.github.com/lexs/webimageloader/develop/extras/numbers/" + position + ".png";
         }
 
         @Override
