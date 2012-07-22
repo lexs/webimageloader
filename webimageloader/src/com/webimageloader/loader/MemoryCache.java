@@ -2,9 +2,9 @@ package com.webimageloader.loader;
 
 import com.webimageloader.Request;
 import com.webimageloader.util.Android;
+import com.webimageloader.util.LruCache;
 
 import android.graphics.Bitmap;
-import android.support.v4.util.LruCache;
 import android.util.Log;
 
 public class MemoryCache {
