@@ -86,7 +86,7 @@ public class ImageLoaderApplication extends Application {
         ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         int memClass = am.getMemoryClass();
 
-        // Use part of the available memory for this memory cache.
+        // Use part of the available memory for memory cache.
         final int memoryCacheSize = 1024 * 1024 * memClass / MEMORY_DIVIDER;
 
         Log.d(TAG, "Using memory cache of size: " + humanReadableByteCount(memoryCacheSize, false));
