@@ -28,7 +28,7 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
-        loader = (ImageLoader) getApplicationContext().getSystemService(ImageLoaderApplication.IMAGE_LOADER_SERVICE);
+        loader = ImageLoaderApplication.getLoader(this);
 
         View reloadButton = findViewById(R.id.button_reload);
         reloadButton.setOnClickListener(new OnClickListener() {

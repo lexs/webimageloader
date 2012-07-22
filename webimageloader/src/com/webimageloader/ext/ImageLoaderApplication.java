@@ -42,6 +42,10 @@ public class ImageLoaderApplication extends Application {
         imageLoader.destroy();
     }
 
+    public static ImageLoader getLoader(Context context) {
+        return (ImageLoader) context.getApplicationContext().getSystemService(IMAGE_LOADER_SERVICE);
+    }
+
     protected ImageLoader.Builder getBuilder() {
         // Get memory class of this device, exceeding this amount will throw an
         // OutOfMemory exception.
