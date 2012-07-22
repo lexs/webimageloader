@@ -139,7 +139,7 @@ public class LruCache<K, V> {
      * @param maxSize the maximum size of the cache before returning. May be -1
      *     to evict even 0-sized elements.
      */
-    private void trimToSize(int maxSize) {
+    public void trimToSize(int maxSize) {
         while (true) {
             K key;
             V value;
