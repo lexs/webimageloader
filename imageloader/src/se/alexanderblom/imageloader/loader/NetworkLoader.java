@@ -23,11 +23,15 @@ public class NetworkLoader implements Loader {
     private static final String TAG = "NetworkLoader";
 
     private Map<String, URLStreamHandler> streamHandlers;
+    private int connectTimeout;
+    private int readTimeout;
 
     private ExecutorHelper executorHelper;
 
-    public NetworkLoader(Map<String, URLStreamHandler> streamHandlers) {
+    public NetworkLoader(Map<String, URLStreamHandler> streamHandlers, int connectionTimeout, int readTimeout) {
         this.streamHandlers = Collections.unmodifiableMap(streamHandlers);
+        this.connectTimeout = connectionTimeout;
+        this.readTimeout = readTimeout;
 
         ExecutorService executor = Executors.newFixedThreadPool(2, new PriorityThreadFactory(Process.THREAD_PRIORITY_BACKGROUND));
         executorHelper = new ExecutorHelper(executor);
@@ -81,6 +85,15 @@ public class NetworkLoader implements Loader {
             URLStreamHandler streamHandler = getURLStreamHandler(protocol);
 
             URLConnection urlConnection = new URL(null, url, streamHandler).openConnection();
+
+            if (connectTimeout > 0) {
+                urlConnection.setConnectTimeout(connectTimeout);
+            }
+
+            if (readTimeout > 0) {
+                urlConnection.setReadTimeout(readTimeout);
+            }
+
             InputStream is = urlConnection.getInputStream();
 
             Log.v(TAG, "Loaded " + request + " from network");

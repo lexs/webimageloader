@@ -181,6 +181,9 @@ public class ImageLoader {
         private DiskLoader diskLoader;
         private MemoryCache memoryCache;
 
+        private int connectionTimeout;
+        private int readTimeout;
+
         public Builder() {
             streamHandlers = new HashMap<String, URLStreamHandler>();
         }
@@ -216,8 +219,20 @@ public class ImageLoader {
             return this;
         }
 
+        public Builder setConnectionTimeout(int connectionTimeout) {
+            this.connectionTimeout = connectionTimeout;
+
+            return this;
+        }
+
+        public Builder setReadTimeout(int readTimeout) {
+            this.readTimeout = readTimeout;
+
+            return this;
+        }
+
         public ImageLoader build() {
-            NetworkLoader networkLoader = new NetworkLoader(streamHandlers);
+            NetworkLoader networkLoader = new NetworkLoader(streamHandlers, connectionTimeout, readTimeout);
             LoaderManager loaderManager = new LoaderManager(memoryCache, diskLoader, networkLoader);
 
             return new ImageLoader(loaderManager);
