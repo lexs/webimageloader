@@ -27,7 +27,7 @@ public class MemoryCache {
     private LruCache<String, Bitmap> cache;
 
     public MemoryCache(int maxSize) {
-        cache = new Cache(maxSize);
+        cache = new BitmapCache(maxSize);
     }
 
     public int size() {
@@ -63,8 +63,8 @@ public class MemoryCache {
         return new DebugInfo(cache.hitCount(), cache.missCount(), cache.putCount(), cache.evictionCount());
     }
 
-    private static class Cache extends LruCache<String, Bitmap> {
-        public Cache(int maxSize) {
+    private static class BitmapCache extends LruCache<String, Bitmap> {
+        public BitmapCache(int maxSize) {
             super(maxSize);
         }
 
