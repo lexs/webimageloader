@@ -59,6 +59,10 @@ public class ImageLoader {
         }
     }
 
+    public MemoryCache getMemoryCache() {
+        return loaderManager.getMemoryCache();
+    }
+
     public Bitmap loadSynchronously(String url) throws IOException {
         final WaitFuture future = new WaitFuture();
 

@@ -5,9 +5,11 @@ import java.util.Random;
 
 import se.alexanderblom.imageloader.ImageLoader;
 import se.alexanderblom.imageloader.ext.ImageHelper;
+import se.alexanderblom.imageloader.loader.MemoryCache;
 import android.app.ListActivity;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +28,8 @@ public class MainActivity extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setContentView(R.layout.activity_main);
+
         int random = Math.abs(new Random().nextInt());
         File cacheDir = new File(getCacheDir(), String.valueOf(random));
         imageLoader = new ImageLoader.Builder()
@@ -35,6 +39,9 @@ public class MainActivity extends ListActivity {
 
         imageHelper = new ImageHelper(this, imageLoader);
         imageHelper.setLoadingResource(android.R.drawable.sym_def_app_icon);
+
+        StatsView statsView = (StatsView) findViewById(R.id.stats);
+        statsView.setMemoryCache(imageLoader.getMemoryCache());
 
         setListAdapter(new Adapter(this));
     }
@@ -74,6 +81,48 @@ public class MainActivity extends ListActivity {
             textView.setText("Image #" + position);
 
             return v;
+        }
+    }
+
+    private static class StatsView extends TextView {
+        private MemoryCache memoryCache;
+
+        public StatsView(Context context) {
+            super(context);
+        }
+
+        public StatsView(Context context, AttributeSet attrs) {
+            super(context, attrs);
+        }
+
+        public StatsView(Context context, AttributeSet attrs, int defStyle) {
+            super(context, attrs, defStyle);
+        }
+
+        public void setMemoryCache(MemoryCache memoryCache) {
+            this.memoryCache = memoryCache;
+
+            scheduleUpdates();
+        }
+
+        private void scheduleUpdates() {
+            post(new Runnable() {
+                @Override
+                public void run() {
+                    MemoryCache.DebugInfo info = memoryCache.getDebugInfo();
+
+                    String text = "Memory cache stats\n"
+                            + "Hit count: " + info.hitCount + "\n"
+                            + "Miss count: " + info.missCount + "\n"
+                            + "Put count: " + info.putCount + "\n"
+                            + "Eviction count: " + info.evictionCount;
+
+
+                    setText(text);
+
+                    postDelayed(this, 1000);
+                }
+            });
         }
     }
 }
