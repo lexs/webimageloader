@@ -31,12 +31,13 @@ public class Hasher {
 
     private static String bytesToHexString(byte[] bytes) {
         // http://stackoverflow.com/a/5446120/253583
-        StringBuilder sb = new StringBuilder(bytes.length * 2);
+        char[] buf = new char[bytes.length * 2];
+        int c = 0;
         for (byte b : bytes) {
-            sb.append(HEX_CHARS[(b & 0xF0) >> 4]);
-            sb.append(HEX_CHARS[b & 0x0F]);
+            buf[c++] = HEX_CHARS[(b & 0xF0) >> 4];
+            buf[c++] = HEX_CHARS[b & 0x0F];
         }
 
-        return sb.toString();
+        return new String(buf);
     }
 }
