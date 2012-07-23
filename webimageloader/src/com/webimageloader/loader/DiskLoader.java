@@ -49,7 +49,7 @@ public class DiskLoader implements Loader, Closeable {
     private DiskLoader(DiskLruCache cache) {
         this.cache = cache;
 
-        ExecutorService executor = Executors.newSingleThreadExecutor(new PriorityThreadFactory(Process.THREAD_PRIORITY_BACKGROUND));
+        ExecutorService executor = Executors.newSingleThreadExecutor(new PriorityThreadFactory("Disk", Process.THREAD_PRIORITY_BACKGROUND));
         executorHelper = new ExecutorHelper(executor);
     }
 

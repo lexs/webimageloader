@@ -34,7 +34,7 @@ public class NetworkLoader implements Loader {
         this.connectTimeout = connectionTimeout;
         this.readTimeout = readTimeout;
 
-        ExecutorService executor = Executors.newFixedThreadPool(2, new PriorityThreadFactory(Process.THREAD_PRIORITY_BACKGROUND));
+        ExecutorService executor = Executors.newFixedThreadPool(2, new PriorityThreadFactory("Network", Process.THREAD_PRIORITY_BACKGROUND));
         executorHelper = new ExecutorHelper(executor);
     }
 
