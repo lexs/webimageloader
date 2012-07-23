@@ -95,7 +95,9 @@ public class MainActivity extends ListActivity {
         public void setMemoryCache(MemoryCache memoryCache) {
             this.memoryCache = memoryCache;
 
-            scheduleUpdates();
+            if (memoryCache != null) {
+                scheduleUpdates();
+            }
         }
 
         private void scheduleUpdates() {
