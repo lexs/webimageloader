@@ -16,7 +16,6 @@ import com.webimageloader.concurrent.ListenerFuture;
 import com.webimageloader.util.Android;
 import com.webimageloader.util.PriorityThreadFactory;
 
-import android.net.Uri;
 import android.os.Process;
 import android.util.Log;
 
