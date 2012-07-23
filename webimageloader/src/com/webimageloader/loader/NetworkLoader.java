@@ -61,8 +61,8 @@ public class NetworkLoader implements Loader {
     }
 
     private static String getProtocol(String url) {
-        Uri uri = Uri.parse(url);
-        return uri.getScheme();
+        int i = url.indexOf(':');
+        return i == -1 ? null : url.substring(0, i);
     }
 
     private URLStreamHandler getURLStreamHandler(String protocol) {
