@@ -15,6 +15,7 @@ import com.webimageloader.Request;
 import com.webimageloader.concurrent.ExecutorHelper;
 import com.webimageloader.concurrent.ListenerFuture;
 import com.webimageloader.util.DiskLruCache;
+import com.webimageloader.util.Hasher;
 import com.webimageloader.util.IOUtil;
 import com.webimageloader.util.PriorityThreadFactory;
 import com.webimageloader.util.DiskLruCache.Editor;
@@ -41,6 +42,7 @@ public class DiskLoader implements Loader, Closeable {
     private ExecutorHelper executorHelper;
 
     private DiskLruCache cache;
+    private Hasher hasher;
 
     public static DiskLoader open(File directory, long maxSize) throws IOException {
         return new DiskLoader(DiskLruCache.open(directory, APP_VERSION, VALUE_COUNT, maxSize));
@@ -51,6 +53,8 @@ public class DiskLoader implements Loader, Closeable {
 
         ExecutorService executor = Executors.newSingleThreadExecutor(new PriorityThreadFactory("Disk", Process.THREAD_PRIORITY_BACKGROUND));
         executorHelper = new ExecutorHelper(executor);
+
+        hasher = new Hasher();
     }
 
     @Override
@@ -202,28 +206,14 @@ public class DiskLoader implements Loader, Closeable {
      * A hashing method that changes a string (like a URL) into a hash suitable
      * for using as a disk filename.
      */
-    private static String hashKeyForDisk(Request request) {
+    private String hashKeyForDisk(Request request) {
         String key = request.getCacheKey();
 
-        try {
-            byte[] bytes = MessageDigest.getInstance("SHA-1").digest(key.getBytes());
+        // We don't except to have a lot of threads
+        // so it's okay to synchronize access
 
-            return bytesToHexString(bytes);
-        } catch (NoSuchAlgorithmException e) {
-            return String.valueOf(key.hashCode());
+        synchronized (hasher) {
+            return hasher.hash(key);
         }
-    }
-
-    private static String bytesToHexString(byte[] bytes) {
-        // http://stackoverflow.com/questions/332079
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < bytes.length; i++) {
-            String hex = Integer.toHexString(0xFF & bytes[i]);
-            if (hex.length() == 1) {
-                sb.append('0');
-            }
-            sb.append(hex);
-        }
-        return sb.toString();
     }
 }
