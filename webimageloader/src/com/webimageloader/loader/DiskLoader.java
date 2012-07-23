@@ -1,5 +1,7 @@
 package com.webimageloader.loader;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -113,9 +115,8 @@ public class DiskLoader implements Loader, Closeable {
                 }
 
                 try {
-                    // TODO: Buffer
-                    OutputStream os = editor.newOutputStream(INPUT_IMAGE);
-                    copy(is, os);
+                    OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
+                    copy(new BufferedInputStream(is), os);
                     os.close();
                     editor.commit();
 
@@ -140,8 +141,7 @@ public class DiskLoader implements Loader, Closeable {
                 }
 
                 try {
-                    // TODO: Buffer
-                    OutputStream os = editor.newOutputStream(INPUT_IMAGE);
+                    OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
                     b.compress(COMPRESS_FORMAT, COMPRESS_QUALITY, os);
                     os.close();
                     editor.commit();
