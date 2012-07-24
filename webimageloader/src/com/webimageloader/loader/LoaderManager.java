@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import com.webimageloader.Request;
 import com.webimageloader.transformation.Transformation;
 
 import android.graphics.Bitmap;
@@ -51,11 +50,11 @@ public class LoaderManager {
         return memoryCache;
     }
 
-    public Bitmap getBitmap(Object tag, Request request) {
+    public Bitmap getBitmap(Object tag, LoaderRequest request) {
         return pendingRequests.getBitmap(tag, request);
     }
 
-    public Bitmap load(Object tag, Request request, final Listener listener) {
+    public Bitmap load(Object tag, LoaderRequest request, final Listener listener) {
         Bitmap b = pendingRequests.getBitmap(tag, request);
         if (b != null) {
             return b;
@@ -98,13 +97,13 @@ public class LoaderManager {
         private static final String TAG = "TransformingLoader";
 
         @Override
-        public void load(Request request, Iterator<Loader> chain, final Listener listener) {
+        public void load(LoaderRequest request, Iterator<Loader> chain, final Listener listener) {
             Log.d(TAG, "Transforming " + request);
 
             final Transformation transformation = request.getTransformation();
 
             // Modify request
-            Request modified = request.withoutTransformation();
+            LoaderRequest modified = request.withoutTransformation();
             chain.next().load(modified, chain, new Listener() {
                 @Override
                 public void onStreamLoaded(InputStream is) {
@@ -134,7 +133,7 @@ public class LoaderManager {
         }
 
         @Override
-        public void cancel(Request request) {
+        public void cancel(LoaderRequest request) {
             // We can't cancel anything as we don't run the
             // transformation on our own thread
         }

@@ -1,18 +1,18 @@
-package com.webimageloader;
+package com.webimageloader.loader;
 
 import com.webimageloader.transformation.Transformation;
 
-public class Request {
+public class LoaderRequest {
     private String url;
     private Transformation transformation;
 
     private String cacheKey = null;
 
-    public Request(String url) {
+    public LoaderRequest(String url) {
         this(url, null);
     }
 
-    public Request(String url, Transformation transformation) {
+    public LoaderRequest(String url, Transformation transformation) {
         if (url == null) {
             throw new NullPointerException("url may not be null");
         }
@@ -21,8 +21,8 @@ public class Request {
         this.transformation = transformation;
     }
 
-    public Request withoutTransformation() {
-        return new Request(url);
+    public LoaderRequest withoutTransformation() {
+        return new LoaderRequest(url);
     }
 
     public String getUrl() {
@@ -61,10 +61,10 @@ public class Request {
         if (obj == null) {
             return false;
         }
-        if (!(obj instanceof Request)) {
+        if (!(obj instanceof LoaderRequest)) {
             return false;
         }
-        Request other = (Request) obj;
+        LoaderRequest other = (LoaderRequest) obj;
         if (!getCacheKey().equals(other.getCacheKey())) {
             return false;
         }

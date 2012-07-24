@@ -11,7 +11,6 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.webimageloader.Request;
 import com.webimageloader.concurrent.ExecutorHelper;
 import com.webimageloader.concurrent.ListenerFuture;
 import com.webimageloader.util.DiskLruCache;
@@ -65,7 +64,7 @@ public class DiskLoader implements Loader, Closeable {
     }
 
     @Override
-    public void load(final Request request, final Iterator<Loader> chain, final Listener listener) {
+    public void load(final LoaderRequest request, final Iterator<Loader> chain, final Listener listener) {
         executorHelper.run(request, listener, new ListenerFuture.Task() {
             @Override
             public void run(Listener listener) throws Exception {
@@ -92,15 +91,15 @@ public class DiskLoader implements Loader, Closeable {
     }
 
     @Override
-    public void cancel(Request request) {
+    public void cancel(LoaderRequest request) {
         executorHelper.cancel(request);
     }
 
     private class NextListener implements Listener {
-        private Request request;
+        private LoaderRequest request;
         private Listener listener;
 
-        public NextListener(Request request, Listener listener) {
+        public NextListener(LoaderRequest request, Listener listener) {
             this.request = request;
             this.listener = listener;
         }
@@ -164,9 +163,9 @@ public class DiskLoader implements Loader, Closeable {
     }
 
     private class ReadTask implements ListenerFuture.Task {
-        private Request request;
+        private LoaderRequest request;
 
-        public ReadTask(Request request) {
+        public ReadTask(LoaderRequest request) {
             this.request = request;
         }
 
@@ -204,7 +203,7 @@ public class DiskLoader implements Loader, Closeable {
      * A hashing method that changes a string (like a URL) into a hash suitable
      * for using as a disk filename.
      */
-    private String hashKeyForDisk(Request request) {
+    private String hashKeyForDisk(LoaderRequest request) {
         String key = request.getCacheKey();
 
         // We don't except to have a lot of threads

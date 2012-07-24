@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.webimageloader.Request;
 import com.webimageloader.concurrent.ExecutorHelper;
 import com.webimageloader.concurrent.ListenerFuture;
 import com.webimageloader.util.Android;
@@ -38,13 +37,13 @@ public class NetworkLoader implements Loader {
     }
 
     @Override
-    public void load(Request request, Iterator<Loader> chain, Listener listener) {
+    public void load(LoaderRequest request, Iterator<Loader> chain, Listener listener) {
         ListenerFuture.Task task = new DownloadTask(request);
         executorHelper.run(request, listener, task);
     }
 
     @Override
-    public void cancel(Request request) {
+    public void cancel(LoaderRequest request) {
         executorHelper.cancel(request);
     }
 
@@ -69,9 +68,9 @@ public class NetworkLoader implements Loader {
     }
 
     private class DownloadTask implements ListenerFuture.Task {
-        private Request request;
+        private LoaderRequest request;
 
-        public DownloadTask(Request request) {
+        public DownloadTask(LoaderRequest request) {
             this.request = request;
         }
 

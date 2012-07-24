@@ -11,6 +11,7 @@ import com.webimageloader.loader.DiskLoader;
 import com.webimageloader.loader.LoaderManager;
 import com.webimageloader.loader.MemoryCache;
 import com.webimageloader.loader.NetworkLoader;
+import com.webimageloader.loader.LoaderRequest;
 import com.webimageloader.transformation.Transformation;
 import com.webimageloader.util.WaitFuture;
 
@@ -67,7 +68,7 @@ public class ImageLoader {
     public Bitmap loadSynchronously(String url) throws IOException {
         final WaitFuture future = new WaitFuture();
 
-        Request request = new Request(url);
+        LoaderRequest request = new LoaderRequest(url);
         Bitmap b = load(new Object(), request, new LoaderManager.Listener() {
             @Override
             public void onLoaded(Bitmap b) {
@@ -101,7 +102,7 @@ public class ImageLoader {
     }
 
     public void preload(String url) {
-        load(new Object(), new Request(url), EMPTY_LISTENER);
+        load(new Object(), new LoaderRequest(url), EMPTY_LISTENER);
     }
 
     public <T> Bitmap load(T tag, String url, Listener<T> listener) {
@@ -117,15 +118,15 @@ public class ImageLoader {
      * @return the bitmap if the url was in memory cache
      */
     public <T> Bitmap load(T tag, String url, Transformation transformation, Listener<T> listener) {
-        Request request = new Request(url, transformation);
+        LoaderRequest request = new LoaderRequest(url, transformation);
         return load(tag, request, listener);
     }
 
-    private <T> Bitmap load(T tag, Request request,  Listener<T> listener) {
+    private <T> Bitmap load(T tag, LoaderRequest request,  Listener<T> listener) {
         return load(tag, request, handlerManager.getListener(tag, listener));
     }
 
-    private Bitmap load(Object tag, Request request, LoaderManager.Listener listener) {
+    private Bitmap load(Object tag, LoaderRequest request, LoaderManager.Listener listener) {
         return loaderManager.load(tag, request, listener);
     }
 
