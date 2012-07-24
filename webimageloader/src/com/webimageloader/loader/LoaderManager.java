@@ -73,10 +73,15 @@ public class LoaderManager {
         if (transformation != null) {
             // Use special chain with transformation
             ArrayList<Loader> loaderChain = new ArrayList<Loader>();
-            loaderChain.add(diskLoader);
-            loaderChain.add(transformingLoader);
-            loaderChain.add(diskLoader);
-            loaderChain.add(networkLoader);
+            if (diskLoader != null) {
+                loaderChain.add(diskLoader);
+                loaderChain.add(transformingLoader);
+                loaderChain.add(diskLoader);
+                loaderChain.add(networkLoader);
+            } else {
+                loaderChain.add(transformingLoader);
+                loaderChain.add(networkLoader);
+            }
 
             chain = loaderChain;
         }
