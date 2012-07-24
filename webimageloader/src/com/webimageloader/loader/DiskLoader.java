@@ -145,8 +145,8 @@ public class DiskLoader implements Loader, Closeable {
                     os.close();
                     editor.commit();
 
-                    // Read back the file we just saved
-                    executorHelper.run(request, listener, new ReadTask(request));
+                    // Send the same bitmap to our listener
+                    listener.onBitmapLoaded(b);
                 } catch (IOException e) {
                     editor.abort();
                     throw e;
