@@ -68,7 +68,7 @@ public class ImageLoader {
     public Bitmap loadSynchronously(String url) throws IOException {
         final WaitFuture future = new WaitFuture();
 
-        LoaderRequest request = new LoaderRequest(url);
+        Request request = new Request(url);
         Bitmap b = load(new Object(), request, new LoaderManager.Listener() {
             @Override
             public void onLoaded(Bitmap b) {
@@ -102,7 +102,7 @@ public class ImageLoader {
     }
 
     public void preload(String url) {
-        load(new Object(), new LoaderRequest(url), EMPTY_LISTENER);
+        load(new Object(), new Request(url), EMPTY_LISTENER);
     }
 
     public <T> Bitmap load(T tag, String url, Listener<T> listener) {
@@ -122,8 +122,16 @@ public class ImageLoader {
         return load(tag, request, listener);
     }
 
+    public <T> Bitmap load(T tag, Request request,  Listener<T> listener) {
+        return load(tag, request.toLoaderRequest(), listener);
+    }
+
     private <T> Bitmap load(T tag, LoaderRequest request,  Listener<T> listener) {
         return load(tag, request, handlerManager.getListener(tag, listener));
+    }
+
+    private Bitmap load(Object tag, Request request, LoaderManager.Listener listener) {
+        return load(tag, request.toLoaderRequest(), listener);
     }
 
     private Bitmap load(Object tag, LoaderRequest request, LoaderManager.Listener listener) {
