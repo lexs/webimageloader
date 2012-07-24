@@ -6,8 +6,7 @@ WebImageLoader is a library designed to take to hassle out of handling images on
 Usage
 =====
 
-WebImageLoader makes no assumptions about how you want to use your loader so you'll have to
-create it yourself.
+Use the builder to build an ImageLoader that suits your needs.
 
 ```java
 // Get memory class of this device, exceeding this amount will throw an
@@ -24,7 +23,7 @@ ImageLoader imageLoader = new ImageLoader.Builder()
         .enableMemoryCache(memoryCacheSize);
 ```
 
-You can also use the provided Application class if you want.
+Or use the provided Applications class for convienience and reasonable defaults (which you can override!)
 
 ```xml
 <application android:name="com.webimageloader.ext.ImageLoaderApplication">
@@ -32,7 +31,7 @@ You can also use the provided Application class if you want.
 </application>
 ```
 
-This will create a ImageLoader with reasonable defaults.
+Retrive your loader like this.
 
 ```java
 ImageLoader imageLoader = ImageLoaderApplication.getLoader(context);
@@ -79,6 +78,32 @@ Bitmap b = loader.load(imageView, "http://example.com/image.png", new Listener<I
 if (b != null) {
     imageView.setImageBitmap(b);
 }
+```
+
+Transformations
+---------------
+
+You can transform (and cache!) the images you get.
+
+```java
+final int width = 100;
+final int height = 100;
+        
+Transformation t = new SimpleTransformation() {
+    @Override
+    public String getIdentifier() {
+        // Pass a unique identifier for caching
+        return "scale-" + width + "x" + height;
+    }
+    
+    @Override
+    public Bitmap transform(Bitmap b) {
+        return Bitmap.createScaledBitmap(b, width, height, true);
+    }
+};
+
+new ImageHelper(this, imageLoader)
+        .load(imageView, "http://example.com/image.png", t);
 ```
 
 Developed By
