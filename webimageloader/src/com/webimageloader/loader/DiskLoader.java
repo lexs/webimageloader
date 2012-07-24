@@ -107,53 +107,64 @@ public class DiskLoader implements Loader, Closeable {
         @Override
         public void onStreamLoaded(InputStream is) {
             try {
-                final String key = hashKeyForDisk(request);
+                String key = hashKeyForDisk(request);
                 Editor editor = cache.edit(key);
                 if (editor == null) {
                     throw new IOException("File is already being edited");
                 }
 
+                OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
                 try {
-                    OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
                     copy(new BufferedInputStream(is), os);
-                    os.close();
                     editor.commit();
 
                     // Read back the file we just saved
                     executorHelper.run(request, listener, new ReadTask(request));
                 } catch (IOException e) {
+                    // We failed writing to the cache, we can't really do
+                    // anything to clean this up
                     editor.abort();
-                    throw e;
+                    listener.onError(e);
+                } finally {
+                    IOUtil.closeQuietly(os);
                 }
             } catch (IOException e) {
-                listener.onError(e);
+                // We failed opening the cache, this
+                // means that the InputStream is still untouched.
+                // Pass it trough to the listener without caching.
+                Log.e(TAG, "Failed opening cache", e);
+                listener.onStreamLoaded(is);
             }
         }
 
         @Override
         public void onBitmapLoaded(Bitmap b) {
             try {
-                final String key = hashKeyForDisk(request);
+                String key = hashKeyForDisk(request);
                 Editor editor = cache.edit(key);
                 if (editor == null) {
                     throw new IOException("File is already being edited");
                 }
 
+                OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
                 try {
-                    OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
+                    // TODO: Maybe guess format from url
                     b.compress(COMPRESS_FORMAT, COMPRESS_QUALITY, os);
-                    os.close();
                     editor.commit();
-
-                    // Send the same bitmap to our listener
-                    listener.onBitmapLoaded(b);
                 } catch (IOException e) {
+                    // We failed writing to the cache
                     editor.abort();
                     throw e;
+                } finally {
+                    IOUtil.closeQuietly(os);
                 }
             } catch (IOException e) {
-                listener.onError(e);
+                Log.e(TAG, "Failed saving bitmap to cache", e);
             }
+
+            // We can always pass on the bitmap we got, even if
+            // we didn't manage to write it to cache
+            listener.onBitmapLoaded(b);
         }
 
         @Override
