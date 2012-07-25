@@ -66,29 +66,31 @@ public class PendingRequests {
     }
 
     protected synchronized void deliverResult(LoaderRequest request, Bitmap b) {
-        PendingListeners listeners = pendingsRequests.remove(request);
-        if (listeners == null) {
-            Log.v(TAG, "Request no longer pending: " + request);
-            return;
+        PendingListeners listeners = removeRequest(request);
+        if (listeners != null) {
+            saveToMemoryCache(request, b);
+
+            listeners.deliverResult(b);
         }
-
-        saveToMemoryCache(request, b);
-
-        filterTagsForRequest(listeners, request);
-        listeners.deliverResult(b);
-        pendingsTags.keySet().removeAll(listeners.getTags());
     }
 
     protected synchronized void deliverError(LoaderRequest request, Throwable t) {
-        PendingListeners listeners = pendingsRequests.get(request);
+        PendingListeners listeners = removeRequest(request);
+        if (listeners != null) {
+            listeners.deliverError(t);
+        }
+    }
+
+    private PendingListeners removeRequest(LoaderRequest request) {
+        PendingListeners listeners = pendingsRequests.remove(request);
         if (listeners == null) {
             Log.v(TAG, "Request no longer pending: " + request);
-            return;
+        } else {
+            filterTagsForRequest(listeners, request);
+            pendingsTags.keySet().removeAll(listeners.getTags());
         }
 
-        filterTagsForRequest(listeners, request);
-        listeners.deliverError(t);
-        pendingsTags.keySet().removeAll(listeners.getTags());
+        return listeners;
     }
 
     private void cancelPotentialWork(Object tag) {
