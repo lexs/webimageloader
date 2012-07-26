@@ -79,7 +79,8 @@ public class ImageHelper {
 
                 TransitionDrawable d = new TransitionDrawable(new Drawable[] {
                         old,
-                        new BitmapDrawable(context.getResources(), b) });
+                        new BitmapDrawable(context.getResources(), b)
+                });
 
                 v.setImageDrawable(d);
                 d.startTransition(300);
