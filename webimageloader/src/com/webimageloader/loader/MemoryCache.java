@@ -3,6 +3,7 @@ package com.webimageloader.loader;
 import com.webimageloader.util.Android;
 import com.webimageloader.util.LruCache;
 
+import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.util.Log;
 
@@ -68,6 +69,7 @@ public class MemoryCache {
         }
 
         @Override
+        @TargetApi(12)
         protected int sizeOf(String key, Bitmap value) {
             if (Android.isAPI(12)) {
                 return value.getByteCount();

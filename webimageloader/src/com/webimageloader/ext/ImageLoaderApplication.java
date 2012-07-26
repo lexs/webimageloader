@@ -5,6 +5,7 @@ import java.io.File;
 import com.webimageloader.ImageLoader;
 import com.webimageloader.loader.MemoryCache;
 
+import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.Application;
 import android.content.Context;
@@ -55,6 +56,7 @@ public class ImageLoaderApplication extends Application {
     }
 
     @Override
+    @TargetApi(14)
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
 

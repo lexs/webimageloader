@@ -56,6 +56,7 @@ public class IOUtil {
      * @param context The context to use
      * @return The external cache dir
      */
+    @TargetApi(8)
     public static File getExternalCacheDir(Context context) {
         if (hasExternalCacheDir()) {
             File cacheDir = context.getExternalCacheDir();
