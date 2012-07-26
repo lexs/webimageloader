@@ -11,7 +11,6 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.webimageloader.concurrent.ExecutorHelper;
 import com.webimageloader.concurrent.ListenerFuture;
 import com.webimageloader.util.DiskLruCache;
 import com.webimageloader.util.Hasher;
@@ -24,7 +23,7 @@ import android.graphics.Bitmap;
 import android.os.Process;
 import android.util.Log;
 
-public class DiskLoader implements Loader, Closeable {
+public class DiskLoader extends BackgroundLoader implements Closeable {
     private static final String TAG = "DiskLoader";
 
     private static final int APP_VERSION = 1;
@@ -38,8 +37,6 @@ public class DiskLoader implements Loader, Closeable {
     private static final int INPUT_METADATA = 1;
     private static final int VALUE_COUNT = 1;
 
-    private ExecutorHelper executorHelper;
-
     private DiskLruCache cache;
     private Hasher hasher;
 
@@ -47,52 +44,44 @@ public class DiskLoader implements Loader, Closeable {
         return new DiskLoader(DiskLruCache.open(directory, APP_VERSION, VALUE_COUNT, maxSize));
     }
 
+    @Override
+    protected ExecutorService createExecutor() {
+        return Executors.newSingleThreadExecutor(new PriorityThreadFactory("Disk", Process.THREAD_PRIORITY_BACKGROUND));
+    }
+
     private DiskLoader(DiskLruCache cache) {
         this.cache = cache;
-
-        ExecutorService executor = Executors.newSingleThreadExecutor(new PriorityThreadFactory("Disk", Process.THREAD_PRIORITY_BACKGROUND));
-        executorHelper = new ExecutorHelper(executor);
 
         hasher = new Hasher();
     }
 
     @Override
     public void close() {
-        executorHelper.shutdown();
+        super.close();
 
         IOUtil.closeQuietly(cache);
     }
 
     @Override
-    public void load(final LoaderRequest request, final Iterator<Loader> chain, final Listener listener) {
-        executorHelper.run(request, listener, new ListenerFuture.Task() {
-            @Override
-            public void run(Listener listener) throws Exception {
-                String key = hashKeyForDisk(request);
-                Snapshot snapshot = cache.get(key);
-                if (snapshot != null) {
-                    try {
-                        Log.v(TAG, "Loaded " + request + " from disk");
+    protected void loadInBackground(LoaderRequest request, Iterator<Loader> chain, Listener listener) throws IOException {
+        String key = hashKeyForDisk(request);
+        Snapshot snapshot = cache.get(key);
+        if (snapshot != null) {
+            try {
+                Log.v(TAG, "Loaded " + request + " from disk");
 
-                        InputStream is = snapshot.getInputStream(INPUT_IMAGE);
-                        listener.onStreamLoaded(is);
-                        is.close();
+                InputStream is = snapshot.getInputStream(INPUT_IMAGE);
+                listener.onStreamLoaded(is);
+                is.close();
 
-                    } finally {
-                        snapshot.close();
-                    }
-                } else {
-                    // We need to get the next loader
-                    Loader next = chain.next();
-                    next.load(request, chain, new NextListener(request, listener));
-                }
+            } finally {
+                snapshot.close();
             }
-        });
-    }
-
-    @Override
-    public void cancel(LoaderRequest request) {
-        executorHelper.cancel(request);
+        } else {
+            // We need to get the next loader
+            Loader next = chain.next();
+            next.load(request, chain, new NextListener(request, listener));
+        }
     }
 
     private class NextListener implements Listener {
@@ -119,7 +108,7 @@ public class DiskLoader implements Loader, Closeable {
                     editor.commit();
 
                     // Read back the file we just saved
-                    executorHelper.run(request, listener, new ReadTask(request));
+                    run(request, listener, new ReadTask(request));
                 } catch (IOException e) {
                     // We failed writing to the cache, we can't really do
                     // anything to clean this up
