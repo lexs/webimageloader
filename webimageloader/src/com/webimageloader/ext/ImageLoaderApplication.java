@@ -4,6 +4,7 @@ import java.io.File;
 
 import com.webimageloader.ImageLoader;
 import com.webimageloader.loader.MemoryCache;
+import com.webimageloader.util.IOUtil;
 
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
@@ -94,7 +95,7 @@ public class ImageLoaderApplication extends Application {
         Log.d(TAG, "Using memory cache of size: " + humanReadableByteCount(memoryCacheSize, false));
         Log.d(TAG, "Using disk cache of size: " + humanReadableByteCount(DISK_CACHE_SIZE, false));
 
-        File cacheDir = new File(getExternalCacheDir(), "images");
+        File cacheDir = IOUtil.getDiskCacheDir(this, "images");
         return new ImageLoader.Builder()
                 .enableDiskCache(cacheDir, DISK_CACHE_SIZE)
                 .enableMemoryCache(memoryCacheSize)
