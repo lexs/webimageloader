@@ -1,5 +1,6 @@
 package com.webimageloader.loader;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
@@ -146,7 +147,12 @@ public class PendingRequests {
         @Override
         public void onStreamLoaded(InputStream is) {
             Bitmap b = BitmapUtils.decodeStream(is);
-            onBitmapLoaded(b);
+
+            if (b != null) {
+                onBitmapLoaded(b);
+            } else {
+                onError(new IOException("Failed to create bitmap, decodeStream() returned null"));
+            }
         }
 
         @Override
