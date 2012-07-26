@@ -89,7 +89,9 @@ public class ImageHelper {
         @Override
         public void onError(ImageView v, Throwable t) {
             Log.d(TAG, "Error loading bitmap", t);
-            v.setImageResource(errorResource);
+            if (errorResource > 0) {
+                v.setImageResource(errorResource);
+            }
         }
     }
 }
