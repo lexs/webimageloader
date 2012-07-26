@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="imported">
+    <target name="javadoc" depends="-set-debug-mode,-post-compile">
+        <javadoc packagenames="com.webimageloader.*"
+            classpath="${sdk.dir}/platforms/android-16/android.jar"
+            sourcepath="src"
+            destdir="../docs"
+            linkoffline="http://d.android.com/reference ${sdk.dir}/docs/reference"
+            stylesheetfile="${sdk.dir}/docs/assets/android-developer-docs.css" />
+    </target>
+</project>
