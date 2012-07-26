@@ -17,6 +17,7 @@ public class LoaderManager {
     private DiskLoader diskLoader;
     private NetworkLoader networkLoader;
     private TransformingLoader transformingLoader;
+    private MemoryLoader memoryLoader;
 
     private List<Loader> standardChain;
 
@@ -31,7 +32,11 @@ public class LoaderManager {
         this.memoryCache = memoryCache;
         this.diskLoader = diskLoader;
         this.networkLoader = networkLoader;
+
         transformingLoader = new TransformingLoader();
+        if (memoryCache != null) {
+            memoryLoader = new MemoryLoader(memoryCache);
+        }
 
         standardChain = new ArrayList<Loader>();
         if (diskLoader != null) {
@@ -73,15 +78,11 @@ public class LoaderManager {
         if (transformation != null) {
             // Use special chain with transformation
             ArrayList<Loader> loaderChain = new ArrayList<Loader>();
-            if (diskLoader != null) {
-                loaderChain.add(diskLoader);
-                loaderChain.add(transformingLoader);
-                loaderChain.add(diskLoader);
-                loaderChain.add(networkLoader);
-            } else {
-                loaderChain.add(transformingLoader);
-                loaderChain.add(networkLoader);
-            }
+            add(loaderChain, diskLoader);
+            add(loaderChain, transformingLoader);
+            add(loaderChain, memoryLoader);
+            add(loaderChain, diskLoader);
+            add(loaderChain, networkLoader);
 
             chain = loaderChain;
         }
@@ -95,6 +96,12 @@ public class LoaderManager {
     public void close() {
         if (diskLoader != null) {
             diskLoader.close();
+        }
+    }
+
+    private static <T> void add(List<T> list, T item) {
+        if (item != null) {
+            list.add(item);
         }
     }
 
