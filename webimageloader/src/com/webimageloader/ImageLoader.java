@@ -18,6 +18,7 @@ import android.content.ContentResolver;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 
 public class ImageLoader {
@@ -173,24 +174,29 @@ public class ImageLoader {
 
             @Override
             public void onLoaded(final Bitmap b) {
-                handler.postAtTime(new Runnable() {
+                post(new Runnable() {
                     @Override
                     public void run() {
                         listener.onSuccess(tag, b);
                     }
-                }, tag, 0);
+                });
             }
 
             @Override
             public void onError(final Throwable t) {
-                handler.postAtTime(new Runnable() {
+                post(new Runnable() {
                     @Override
                     public void run() {
                         listener.onError(tag, t);
                     }
-                }, tag, 0);
+                });
             }
 
+            private void post(Runnable r) {
+                Message m = Message.obtain(handler, r);
+                m.obj = tag;
+                handler.sendMessage(m);
+            }
         }
     }
 
