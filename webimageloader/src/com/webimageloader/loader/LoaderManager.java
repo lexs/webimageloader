@@ -1,5 +1,6 @@
 package com.webimageloader.loader;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -119,8 +120,12 @@ public class LoaderManager {
             chain.next().load(modified, chain, new Listener() {
                 @Override
                 public void onStreamLoaded(InputStream is) {
-                    Bitmap b = transformation.transform(is);
-                    deliverResult(b);
+                    try {
+                        Bitmap b = transformation.transform(is);
+                        deliverResult(b);
+                    } catch (IOException e) {
+                        listener.onError(e);
+                    }
                 }
 
                 @Override
