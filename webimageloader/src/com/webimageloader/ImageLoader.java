@@ -209,7 +209,7 @@ public class ImageLoader {
 
         public Builder enableDiskCache(File cacheDir, int maxSize) {
             try {
-                diskLoader = DiskLoader.open(cacheDir, 10 * 1024 * 1024);
+                diskLoader = DiskLoader.open(cacheDir, maxSize);
             } catch (IOException e) {
                 Log.e(TAG, "Disk cache not available", e);
             }
