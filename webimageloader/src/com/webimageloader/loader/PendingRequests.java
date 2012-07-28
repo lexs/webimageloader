@@ -146,18 +146,18 @@ public class PendingRequests {
         }
 
         @Override
-        public void onStreamLoaded(InputStream is) {
+        public void onStreamLoaded(InputStream is, Metadata metadata) {
             Bitmap b = BitmapUtils.decodeStream(is);
 
             if (b != null) {
-                onBitmapLoaded(b);
+                onBitmapLoaded(b, metadata);
             } else {
                 onError(new IOException("Failed to create bitmap, decodeStream() returned null"));
             }
         }
 
         @Override
-        public void onBitmapLoaded(Bitmap b) {
+        public void onBitmapLoaded(Bitmap b, Metadata metadata) {
             deliverResult(request, b);
         }
 

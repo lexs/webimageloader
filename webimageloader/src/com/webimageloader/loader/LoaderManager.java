@@ -119,26 +119,26 @@ public class LoaderManager {
             LoaderRequest modified = request.withoutTransformation();
             chain.next().load(modified, chain, new Listener() {
                 @Override
-                public void onStreamLoaded(InputStream is) {
+                public void onStreamLoaded(InputStream is, Metadata metadata) {
                     try {
                         Bitmap b = transformation.transform(is);
-                        deliverResult(b);
+                        deliverResult(b, metadata);
                     } catch (IOException e) {
                         listener.onError(e);
                     }
                 }
 
                 @Override
-                public void onBitmapLoaded(Bitmap b) {
+                public void onBitmapLoaded(Bitmap b, Metadata metadata) {
                     b = transformation.transform(b);
-                    deliverResult(b);
+                    deliverResult(b, metadata);
                 }
 
-                private void deliverResult(Bitmap b) {
+                private void deliverResult(Bitmap b, Metadata metadata) {
                     if (b == null) {
                         onError(new NullPointerException("Transformer returned null"));
                     } else {
-                        listener.onBitmapLoaded(b);
+                        listener.onBitmapLoaded(b, metadata);
                     }
                 }
 

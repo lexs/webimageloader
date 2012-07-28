@@ -71,7 +71,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                 Log.v(TAG, "Loaded " + request + " from disk");
 
                 InputStream is = snapshot.getInputStream(INPUT_IMAGE);
-                listener.onStreamLoaded(is);
+                listener.onStreamLoaded(is, new Metadata("image/jpeg", 0, 0));
                 is.close();
 
             } finally {
@@ -94,7 +94,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         }
 
         @Override
-        public void onStreamLoaded(InputStream is) {
+        public void onStreamLoaded(InputStream is, Metadata metadata) {
             try {
                 String key = hashKeyForDisk(request);
                 Editor editor = cache.edit(key);
@@ -108,7 +108,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                     editor.commit();
 
                     // Read back the file we just saved
-                    run(request, listener, new ReadTask(request));
+                    run(request, listener, new ReadTask(request, metadata));
                 } catch (IOException e) {
                     // We failed writing to the cache, we can't really do
                     // anything to clean this up
@@ -122,12 +122,12 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                 // means that the InputStream is still untouched.
                 // Pass it trough to the listener without caching.
                 Log.e(TAG, "Failed opening cache", e);
-                listener.onStreamLoaded(is);
+                listener.onStreamLoaded(is, metadata);
             }
         }
 
         @Override
-        public void onBitmapLoaded(Bitmap b) {
+        public void onBitmapLoaded(Bitmap b, Metadata metadata) {
             try {
                 String key = hashKeyForDisk(request);
                 Editor editor = cache.edit(key);
@@ -153,7 +153,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
 
             // We can always pass on the bitmap we got, even if
             // we didn't manage to write it to cache
-            listener.onBitmapLoaded(b);
+            listener.onBitmapLoaded(b, metadata);
         }
 
         @Override
@@ -164,9 +164,11 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
 
     private class ReadTask implements ListenerFuture.Task {
         private LoaderRequest request;
+        private Metadata metadata;
 
-        public ReadTask(LoaderRequest request) {
+        public ReadTask(LoaderRequest request, Metadata metadata) {
             this.request = request;
+            this.metadata = metadata;
         }
 
         @Override
@@ -180,7 +182,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
 
             try {
                 InputStream is = snapshot.getInputStream(INPUT_IMAGE);
-                listener.onStreamLoaded(is);
+                listener.onStreamLoaded(is, metadata);
                 is.close();
             } finally {
                 snapshot.close();

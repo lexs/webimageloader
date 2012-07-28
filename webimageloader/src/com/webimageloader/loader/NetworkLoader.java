@@ -55,10 +55,15 @@ public class NetworkLoader extends BackgroundLoader {
 
         InputStream is = urlConnection.getInputStream();
 
+        String contentType = urlConnection.getContentType();
+        long lastModified = urlConnection.getLastModified();
+        // TODO: Use cache-control: max-age instead
+        long expires = urlConnection.getExpiration();
+
         Log.v(TAG, "Loaded " + request + " from network");
 
         try {
-            listener.onStreamLoaded(is);
+            listener.onStreamLoaded(is, new Metadata(contentType, lastModified, expires));
         } finally {
             is.close();
         }

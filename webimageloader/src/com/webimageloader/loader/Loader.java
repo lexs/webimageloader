@@ -8,8 +8,8 @@ import android.graphics.Bitmap;
 
 public interface Loader {
     interface Listener {
-        void onStreamLoaded(InputStream is);
-        void onBitmapLoaded(Bitmap b);
+        void onStreamLoaded(InputStream is, Metadata metadata);
+        void onBitmapLoaded(Bitmap b, Metadata metadata);
         void onError(Throwable t);
     }
 
