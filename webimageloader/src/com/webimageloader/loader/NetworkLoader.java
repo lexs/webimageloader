@@ -15,6 +15,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.webimageloader.util.Android;
+import com.webimageloader.util.HeaderParser;
 import com.webimageloader.util.PriorityThreadFactory;
 
 public class NetworkLoader extends BackgroundLoader {
@@ -74,8 +75,7 @@ public class NetworkLoader extends BackgroundLoader {
 
         String contentType = urlConnection.getContentType();
         long lastModified = urlConnection.getLastModified();
-        // TODO: Use cache-control: max-age instead
-        long expires = urlConnection.getExpiration();
+        long expires = getExpires(urlConnection);
         String etag = urlConnection.getHeaderField("ETag");
 
         if (forceMaxAge != 0) {
@@ -103,6 +103,27 @@ public class NetworkLoader extends BackgroundLoader {
                 is.close();
             }
         }
+    }
+
+    private long getExpires(HttpURLConnection urlConnection) {
+        if (forceMaxAge > 0) {
+            return forceMaxAge;
+        }
+
+        // Prefer "max-age" before "expires"
+        long maxAge = HeaderParser.getMaxAge(urlConnection);
+        if (maxAge > 0) {
+            Log.d(TAG, "Found max-age: " + maxAge);
+            return System.currentTimeMillis() + maxAge * 1000;
+        }
+
+        long expires = urlConnection.getExpiration();
+        if (expires > 0) {
+            return expires;
+        }
+
+        // Use default
+        return System.currentTimeMillis() + DEFAULT_MAX_AGE;
     }
 
     /**
