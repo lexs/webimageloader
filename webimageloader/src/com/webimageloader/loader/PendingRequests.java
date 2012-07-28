@@ -162,6 +162,11 @@ public class PendingRequests {
         }
 
         @Override
+        public void onNotModified(Metadata metadata) {
+            // Nothing changed, we don't need to notify any listeners
+        }
+
+        @Override
         public void onError(Throwable t) {
             deliverError(request, t);
         }

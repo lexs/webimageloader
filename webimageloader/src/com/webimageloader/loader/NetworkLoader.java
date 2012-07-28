@@ -1,8 +1,8 @@
 package com.webimageloader.loader;
 
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.util.Collections;
 import java.util.Iterator;
@@ -43,7 +43,7 @@ public class NetworkLoader extends BackgroundLoader {
         String protocol = getProtocol(url);
         URLStreamHandler streamHandler = getURLStreamHandler(protocol);
 
-        URLConnection urlConnection = new URL(null, url, streamHandler).openConnection();
+        HttpURLConnection urlConnection = (HttpURLConnection) new URL(null, url, streamHandler).openConnection();
 
         if (connectTimeout > 0) {
             urlConnection.setConnectTimeout(connectTimeout);
@@ -53,19 +53,31 @@ public class NetworkLoader extends BackgroundLoader {
             urlConnection.setReadTimeout(readTimeout);
         }
 
-        InputStream is = urlConnection.getInputStream();
+        long modifiedSince = request.getModifiedSince();
+        if (modifiedSince != 0) {
+            urlConnection.setIfModifiedSince(modifiedSince);
+        }
 
         String contentType = urlConnection.getContentType();
         long lastModified = urlConnection.getLastModified();
         // TODO: Use cache-control: max-age instead
         long expires = urlConnection.getExpiration();
 
-        Log.v(TAG, "Loaded " + request + " from network");
+        Metadata metadata = new Metadata(contentType, lastModified, expires);
 
-        try {
-            listener.onStreamLoaded(is, new Metadata(contentType, lastModified, expires));
-        } finally {
-            is.close();
+        if (modifiedSince != 0 && urlConnection.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+            Log.v(TAG, request + " was not modified since last fetch");
+
+            listener.onStreamLoaded(null, metadata);
+        } else {
+            InputStream is = urlConnection.getInputStream();
+            Log.v(TAG, "Loaded " + request + " from network");
+
+            try {
+                listener.onStreamLoaded(is, metadata);
+            } finally {
+                is.close();
+            }
         }
     }
 

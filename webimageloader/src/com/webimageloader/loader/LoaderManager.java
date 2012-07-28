@@ -143,6 +143,11 @@ public class LoaderManager {
                 }
 
                 @Override
+                public void onNotModified(Metadata metadata) {
+                    listener.onNotModified(metadata);
+                }
+
+                @Override
                 public void onError(Throwable t) {
                     listener.onError(t);
                 }

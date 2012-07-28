@@ -10,6 +10,7 @@ public interface Loader {
     interface Listener {
         void onStreamLoaded(InputStream is, Metadata metadata);
         void onBitmapLoaded(Bitmap b, Metadata metadata);
+        void onNotModified(Metadata metadata);
         void onError(Throwable t);
     }
 

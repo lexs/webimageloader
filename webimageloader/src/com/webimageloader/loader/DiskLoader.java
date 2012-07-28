@@ -71,7 +71,14 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                 Log.v(TAG, "Loaded " + request + " from disk");
 
                 InputStream is = snapshot.getInputStream(INPUT_IMAGE);
+
                 Metadata metadata = readMetadata(snapshot);
+                if (System.currentTimeMillis() > metadata.getExpires()) {
+                    // Cache has expired
+                    Log.v(TAG, request + " has expired, updating");
+                    chain.next().load(request.ifModifiedSince(metadata.getLastModified()), chain, new NextListener(request, listener));
+                }
+
                 listener.onStreamLoaded(is, metadata);
                 is.close();
 
@@ -114,6 +121,8 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                 }
 
                 try {
+                    // TODO: Behavior is changed here as failing to open
+                    // the file now results in this catch block
                     writeStream(editor, is);
                     writeMetadata(editor, metadata);
 
@@ -165,6 +174,33 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
             // We can always pass on the bitmap we got, even if
             // we didn't manage to write it to cache
             listener.onBitmapLoaded(b, metadata);
+        }
+
+        @Override
+        public void onNotModified(Metadata metadata) {
+            try {
+                String key = hashKeyForDisk(request);
+                Editor editor = cache.edit(key);
+                if (editor == null) {
+                    throw new IOException("File is already being edited");
+                }
+
+                try {
+                    writeMetadata(editor, metadata);
+
+                    editor.commit();
+                } catch (IOException e) {
+                    // We failed writing to the cache
+                    editor.abort();
+
+                    // Let the outer catch handle this
+                    throw e;
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to update metadata", e);
+            }
+
+            listener.onNotModified(metadata);
         }
 
         @Override

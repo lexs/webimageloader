@@ -5,6 +5,7 @@ import com.webimageloader.transformation.Transformation;
 public class LoaderRequest {
     private String url;
     private Transformation transformation;
+    private long modifiedSince;
 
     private String cacheKey = null;
 
@@ -25,12 +26,23 @@ public class LoaderRequest {
         return new LoaderRequest(url);
     }
 
+    public LoaderRequest ifModifiedSince(long since) {
+        LoaderRequest r = new LoaderRequest(url, transformation);
+        r.modifiedSince = since;
+
+        return r;
+    }
+
     public String getUrl() {
         return url;
     }
 
     public Transformation getTransformation() {
         return transformation;
+    }
+
+    public long getModifiedSince() {
+        return modifiedSince;
     }
 
     public synchronized String getCacheKey() {
