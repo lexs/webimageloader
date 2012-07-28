@@ -1,11 +1,11 @@
 package com.webimageloader.util;
 
-import java.net.HttpURLConnection;
+import java.net.URLConnection;
 
 public class HeaderParser {
     private static final String MAX_AGE = "max-age";
 
-    public static long getMaxAge(HttpURLConnection urlConnection) {
+    public static long getMaxAge(URLConnection urlConnection) {
         String cacheControl = urlConnection.getHeaderField("Cache-Control");
         if (cacheControl == null) {
             return -1;

@@ -1,8 +1,10 @@
 package com.webimageloader.loader;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.util.Collections;
 import java.util.Iterator;
@@ -49,7 +51,7 @@ public class NetworkLoader extends BackgroundLoader {
         String protocol = getProtocol(url);
         URLStreamHandler streamHandler = getURLStreamHandler(protocol);
 
-        HttpURLConnection urlConnection = (HttpURLConnection) new URL(null, url, streamHandler).openConnection();
+        URLConnection urlConnection = new URL(null, url, streamHandler).openConnection();
 
         if (connectTimeout > 0) {
             urlConnection.setConnectTimeout(connectTimeout);
@@ -89,7 +91,7 @@ public class NetworkLoader extends BackgroundLoader {
         // Update metadata
         metadata = new Metadata(contentType, lastModified, expires, etag);
 
-        if (metadata != null && urlConnection.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+        if (getResponseCode(urlConnection) == HttpURLConnection.HTTP_NOT_MODIFIED) {
             Log.v(TAG, request + " was not modified since last fetch");
 
             listener.onNotModified(metadata);
@@ -105,7 +107,16 @@ public class NetworkLoader extends BackgroundLoader {
         }
     }
 
-    private long getExpires(HttpURLConnection urlConnection) {
+    private int getResponseCode(URLConnection urlConnection) throws IOException {
+        // We can't assume we have a HttpUrlConnection as resources uses a custom subclass
+        if (urlConnection instanceof HttpURLConnection) {
+            return ((HttpURLConnection) urlConnection).getResponseCode();
+        } else {
+            return -1;
+        }
+    }
+
+    private long getExpires(URLConnection urlConnection) {
         if (forceMaxAge > 0) {
             return forceMaxAge;
         }
