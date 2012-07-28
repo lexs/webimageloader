@@ -30,6 +30,12 @@ public class Metadata {
     }
 
     public Metadata(String contentType, long lastModified, long expires) {
+        // Don't allow contentType to be null, this causes errors
+        // when we write it to the outputstream later on
+        if (contentType == null) {
+            contentType = "";
+        }
+
         this.contentType = contentType;
         this.lastModified = lastModified;
         this.expires = expires;

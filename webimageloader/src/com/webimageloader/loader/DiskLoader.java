@@ -26,7 +26,7 @@ import android.util.Log;
 public class DiskLoader extends BackgroundLoader implements Closeable {
     private static final String TAG = "DiskLoader";
 
-    private static final int APP_VERSION = 1;
+    private static final int APP_VERSION = 2;
 
     private static final int DEFAULT_BUFFER_SIZE = 8192;
 
@@ -35,7 +35,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
 
     private static final int INPUT_IMAGE = 0;
     private static final int INPUT_METADATA = 1;
-    private static final int VALUE_COUNT = 1;
+    private static final int VALUE_COUNT = 2;
 
     private DiskLruCache cache;
     private Hasher hasher;
@@ -71,7 +71,8 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                 Log.v(TAG, "Loaded " + request + " from disk");
 
                 InputStream is = snapshot.getInputStream(INPUT_IMAGE);
-                listener.onStreamLoaded(is, new Metadata("image/jpeg", 0, 0));
+                Metadata metadata = readMetadata(snapshot);
+                listener.onStreamLoaded(is, metadata);
                 is.close();
 
             } finally {
@@ -81,6 +82,16 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
             // We need to get the next loader
             Loader next = chain.next();
             next.load(request, chain, new NextListener(request, listener));
+        }
+    }
+
+    private Metadata readMetadata(Snapshot snapshot) throws IOException {
+        InputStream is = snapshot.getInputStream(INPUT_METADATA);
+        try {
+            // TODO: Maybe buffer
+            return Metadata.from(is);
+        } finally {
+            is.close();
         }
     }
 
@@ -102,9 +113,10 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                     throw new IOException("File is already being edited");
                 }
 
-                OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
                 try {
-                    copy(new BufferedInputStream(is), os);
+                    writeStream(editor, is);
+                    writeMetadata(editor, metadata);
+
                     editor.commit();
 
                     // Read back the file we just saved
@@ -114,8 +126,6 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                     // anything to clean this up
                     editor.abort();
                     listener.onError(e);
-                } finally {
-                    IOUtil.closeQuietly(os);
                 }
             } catch (IOException e) {
                 // We failed opening the cache, this
@@ -135,17 +145,18 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                     throw new IOException("File is already being edited");
                 }
 
-                OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
                 try {
                     Bitmap.CompressFormat format = getCompressFormat(metadata.getContentType());
-                    b.compress(format, COMPRESS_QUALITY, os);
+                    writeBitmap(editor, b, format);
+                    writeMetadata(editor, metadata);
+
                     editor.commit();
                 } catch (IOException e) {
                     // We failed writing to the cache
                     editor.abort();
+
+                    // Let the outer catch handle this
                     throw e;
-                } finally {
-                    IOUtil.closeQuietly(os);
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Failed saving bitmap to cache", e);
@@ -159,6 +170,33 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         @Override
         public void onError(Throwable t) {
             listener.onError(t);
+        }
+
+        private void writeStream(Editor editor, InputStream is) throws IOException {
+            OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
+            try {
+                copy(new BufferedInputStream(is), os);
+            } finally {
+                IOUtil.closeQuietly(os);
+            }
+        }
+
+        private void writeMetadata(Editor editor, Metadata metadata) throws IOException {
+            OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_METADATA));
+            try {
+                metadata.writeTo(os);
+            } finally {
+                IOUtil.closeQuietly(os);
+            }
+        }
+
+        private void writeBitmap(Editor editor, Bitmap b, Bitmap.CompressFormat format) throws IOException {
+            OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
+            try {
+                b.compress(format, COMPRESS_QUALITY, os);
+            } finally {
+                IOUtil.closeQuietly(os);
+            }
         }
 
         private Bitmap.CompressFormat getCompressFormat(String contentType) {
