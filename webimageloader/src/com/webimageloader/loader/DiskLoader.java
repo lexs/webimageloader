@@ -76,7 +76,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                 if (System.currentTimeMillis() > metadata.getExpires()) {
                     // Cache has expired
                     Log.v(TAG, request + " has expired, updating");
-                    chain.next().load(request.ifModifiedSince(metadata.getLastModified()), chain, new NextListener(request, listener));
+                    chain.next().load(request.withMetadata(metadata), chain, new NextListener(request, listener));
                 }
 
                 listener.onStreamLoaded(is, metadata);

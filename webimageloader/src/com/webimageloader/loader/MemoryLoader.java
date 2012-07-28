@@ -17,7 +17,7 @@ public class MemoryLoader implements Loader {
         Bitmap b = cache.get(request);
         if (b != null) {
             // TODO: Store metadata in cache
-            listener.onBitmapLoaded(b, new Metadata("image/jpeg", 0, 0));
+            listener.onBitmapLoaded(b, new Metadata("image/jpeg", 0, 0, null));
         } else {
             // We don't want to cache the image we get back
             // so just pass the same listener

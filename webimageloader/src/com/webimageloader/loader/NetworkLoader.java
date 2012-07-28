@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import android.os.Process;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.webimageloader.util.Android;
@@ -53,22 +54,33 @@ public class NetworkLoader extends BackgroundLoader {
             urlConnection.setReadTimeout(readTimeout);
         }
 
-        long modifiedSince = request.getModifiedSince();
-        if (modifiedSince != 0) {
-            urlConnection.setIfModifiedSince(modifiedSince);
+        Metadata metadata = request.getMetadata();
+        if (metadata != null) {
+            // We have some information available
+            long modifiedSince = metadata.getLastModified();
+            if (modifiedSince != 0) {
+                urlConnection.setIfModifiedSince(modifiedSince);
+            }
+
+            String etag = metadata.getEtag();
+            if (!TextUtils.isEmpty(etag)) {
+                urlConnection.addRequestProperty("If-None-Match", etag);
+            }
         }
 
         String contentType = urlConnection.getContentType();
         long lastModified = urlConnection.getLastModified();
         // TODO: Use cache-control: max-age instead
         long expires = urlConnection.getExpiration();
+        String etag = urlConnection.getHeaderField("ETag");
 
-        Metadata metadata = new Metadata(contentType, lastModified, expires);
+        // Update metadata
+        metadata = new Metadata(contentType, lastModified, expires, etag);
 
-        if (modifiedSince != 0 && urlConnection.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+        if (metadata != null && urlConnection.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
             Log.v(TAG, request + " was not modified since last fetch");
 
-            listener.onStreamLoaded(null, metadata);
+            listener.onNotModified(metadata);
         } else {
             InputStream is = urlConnection.getInputStream();
             Log.v(TAG, "Loaded " + request + " from network");
