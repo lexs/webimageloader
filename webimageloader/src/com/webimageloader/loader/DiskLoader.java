@@ -120,10 +120,10 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                     throw new IOException("File is already being edited");
                 }
 
+                OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
                 try {
-                    // TODO: Behavior is changed here as failing to open
-                    // the file now results in this catch block
-                    writeStream(editor, is);
+                    copy(new BufferedInputStream(is), os);
+                    os.close();
                     writeMetadata(editor, metadata);
 
                     editor.commit();
@@ -206,15 +206,6 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         @Override
         public void onError(Throwable t) {
             listener.onError(t);
-        }
-
-        private void writeStream(Editor editor, InputStream is) throws IOException {
-            OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
-            try {
-                copy(new BufferedInputStream(is), os);
-            } finally {
-                IOUtil.closeQuietly(os);
-            }
         }
 
         private void writeMetadata(Editor editor, Metadata metadata) throws IOException {
