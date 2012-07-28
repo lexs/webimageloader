@@ -137,8 +137,8 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
 
                 OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
                 try {
-                    // TODO: Maybe guess format from url
-                    b.compress(COMPRESS_FORMAT, COMPRESS_QUALITY, os);
+                    Bitmap.CompressFormat format = getCompressFormat(metadata.getContentType());
+                    b.compress(format, COMPRESS_QUALITY, os);
                     editor.commit();
                 } catch (IOException e) {
                     // We failed writing to the cache
@@ -159,6 +159,17 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         @Override
         public void onError(Throwable t) {
             listener.onError(t);
+        }
+
+        private Bitmap.CompressFormat getCompressFormat(String contentType) {
+            if ("image/png".equals(contentType)) {
+                return Bitmap.CompressFormat.PNG;
+            } else if ("image/jpeg".equals(contentType)) {
+                return Bitmap.CompressFormat.JPEG;
+            } else {
+                // Unknown format, use default
+                return COMPRESS_FORMAT;
+            }
         }
     }
 
