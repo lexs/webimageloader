@@ -1,7 +1,18 @@
 WebImageLoader
 ==============
 
-WebImageLoader is a library designed to take to hassle out of handling images on the web.
+WebImageLoader is a library designed to take to hassle out of handling images on the web. It has the following features:
+
+* Images are downloaded on a background thread pool and saved to disk and memory.
+* Disk and memory cache size is configurable and can even be reconfigured on the fly.
+* Separate thread do load images back from disk after being cached, reducing I/O bottlenecks on most phones.
+* Reusing requests when the same image is requested multiple times.
+* Respects cache-control and expires headers and will refetch images when they expire (using conditional get).
+* Support image transformations which are also cached to disk and memory.
+* Support to do synchronous fetches while still taking advantage of the cache. 
+* Easy setup without singletons.
+* Compatible with API level 7 and up.
+* No additional dependencies.
 
 Usage
 =====
