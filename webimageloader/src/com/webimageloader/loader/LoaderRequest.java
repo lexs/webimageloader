@@ -59,10 +59,7 @@ public class LoaderRequest {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + getCacheKey().hashCode();
-        return result;
+        return getCacheKey().hashCode();
     }
 
     @Override
@@ -70,17 +67,13 @@ public class LoaderRequest {
         if (this == obj) {
             return true;
         }
-        if (obj == null) {
+
+        if (obj instanceof LoaderRequest) {
+            LoaderRequest request = (LoaderRequest) obj;
+            return getCacheKey().equals(request.getCacheKey());
+        } else {
             return false;
         }
-        if (!(obj instanceof LoaderRequest)) {
-            return false;
-        }
-        LoaderRequest other = (LoaderRequest) obj;
-        if (!getCacheKey().equals(other.getCacheKey())) {
-            return false;
-        }
-        return true;
     }
 
     @Override
