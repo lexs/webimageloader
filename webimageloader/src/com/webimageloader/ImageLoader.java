@@ -208,6 +208,7 @@ public class ImageLoader {
 
         private int connectionTimeout;
         private int readTimeout;
+        private long maxAge;
 
         public Builder() {
             streamHandlers = new HashMap<String, URLStreamHandler>();
@@ -256,8 +257,14 @@ public class ImageLoader {
             return this;
         }
 
+        public Builder setCacheMaxAge(long maxAge) {
+            this.maxAge = maxAge;
+
+            return this;
+        }
+
         public ImageLoader build() {
-            NetworkLoader networkLoader = new NetworkLoader(streamHandlers, connectionTimeout, readTimeout);
+            NetworkLoader networkLoader = new NetworkLoader(streamHandlers, connectionTimeout, readTimeout, maxAge);
             LoaderManager loaderManager = new LoaderManager(memoryCache, diskLoader, networkLoader);
 
             return new ImageLoader(loaderManager);

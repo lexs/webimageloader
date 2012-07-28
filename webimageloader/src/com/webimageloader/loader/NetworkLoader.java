@@ -25,11 +25,13 @@ public class NetworkLoader extends BackgroundLoader {
     private Map<String, URLStreamHandler> streamHandlers;
     private int connectTimeout;
     private int readTimeout;
+    private long forceMaxAge;
 
-    public NetworkLoader(Map<String, URLStreamHandler> streamHandlers, int connectionTimeout, int readTimeout) {
+    public NetworkLoader(Map<String, URLStreamHandler> streamHandlers, int connectionTimeout, int readTimeout, long maxAge) {
         this.streamHandlers = Collections.unmodifiableMap(streamHandlers);
         this.connectTimeout = connectionTimeout;
         this.readTimeout = readTimeout;
+        this.forceMaxAge = maxAge;
     }
 
     @Override
@@ -75,6 +77,10 @@ public class NetworkLoader extends BackgroundLoader {
         // TODO: Use cache-control: max-age instead
         long expires = urlConnection.getExpiration();
         String etag = urlConnection.getHeaderField("ETag");
+
+        if (forceMaxAge != 0) {
+            expires = forceMaxAge;
+        }
 
         if (expires == 0) {
             expires = System.currentTimeMillis() + DEFAULT_MAX_AGE;
