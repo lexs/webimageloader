@@ -124,7 +124,6 @@ public class NetworkLoader extends BackgroundLoader {
         // Prefer "max-age" before "expires"
         long maxAge = HeaderParser.getMaxAge(urlConnection);
         if (maxAge > 0) {
-            Log.d(TAG, "Found max-age: " + maxAge);
             return System.currentTimeMillis() + maxAge * 1000;
         }
 
