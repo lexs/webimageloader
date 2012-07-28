@@ -20,6 +20,8 @@ import com.webimageloader.util.PriorityThreadFactory;
 public class NetworkLoader extends BackgroundLoader {
     private static final String TAG = "NetworkLoader";
 
+    private static final long DEFAULT_MAX_AGE = 3 * 24 * 60 * 60 * 1000; // Three days
+
     private Map<String, URLStreamHandler> streamHandlers;
     private int connectTimeout;
     private int readTimeout;
@@ -73,6 +75,10 @@ public class NetworkLoader extends BackgroundLoader {
         // TODO: Use cache-control: max-age instead
         long expires = urlConnection.getExpiration();
         String etag = urlConnection.getHeaderField("ETag");
+
+        if (expires == 0) {
+            expires = System.currentTimeMillis() + DEFAULT_MAX_AGE;
+        }
 
         // Update metadata
         metadata = new Metadata(contentType, lastModified, expires, etag);
