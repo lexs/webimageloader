@@ -57,7 +57,8 @@ public class IOUtil {
      */
     @TargetApi(8)
     public static File getExternalCacheDir(Context context) {
-        if (hasExternalCacheDir()) {
+        // Do we have a built-in external cache dir method.
+        if (Android.isAPI(8)) {
             File cacheDir = context.getExternalCacheDir();
             if (cacheDir != null) {
                 return cacheDir;
@@ -67,13 +68,6 @@ public class IOUtil {
         // Before Froyo we need to construct the external cache dir ourselves
         final String cacheDir = "/Android/data/" + context.getPackageName() + "/cache/";
         return new File(Environment.getExternalStorageDirectory().getPath() + cacheDir);
-    }
-
-    /**
-     * Check if OS version has built-in external cache dir method.
-     */
-    public static boolean hasExternalCacheDir() {
-        return Android.isAPI(9);
     }
 
     private IOUtil() {}
