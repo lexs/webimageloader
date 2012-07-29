@@ -266,15 +266,13 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         }
     }
 
-    private static int copy(InputStream input, OutputStream output) throws IOException {
+    private static void copy(InputStream input, OutputStream output) throws IOException {
         byte[] buffer = new byte[BUFFER_SIZE];
-        int count = 0;
-        int n = 0;
-        while (-1 != (n = input.read(buffer))) {
-            output.write(buffer, 0, n);
-            count += n;
+
+        int i = 0;
+        while ((i = input.read(buffer)) != -1) {
+            output.write(buffer, 0, i);
         }
-        return count;
     }
 
     /**
