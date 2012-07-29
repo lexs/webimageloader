@@ -93,9 +93,9 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
     }
 
     private Metadata readMetadata(Snapshot snapshot) throws IOException {
-        InputStream is = snapshot.getInputStream(INPUT_METADATA);
+        // Use a small buffer as the metadata itself is small
+        InputStream is = new BufferedInputStream(snapshot.getInputStream(INPUT_METADATA), 1024);
         try {
-            // TODO: Maybe buffer
             return Metadata.from(is);
         } finally {
             is.close();
