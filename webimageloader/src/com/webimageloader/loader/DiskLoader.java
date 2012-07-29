@@ -28,7 +28,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
 
     private static final int APP_VERSION = 2;
 
-    private static final int DEFAULT_BUFFER_SIZE = 8192;
+    private static final int BUFFER_SIZE = 8192;
 
     private static final Bitmap.CompressFormat COMPRESS_FORMAT = Bitmap.CompressFormat.JPEG;
     private static final int COMPRESS_QUALITY = 75;
@@ -120,9 +120,9 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                     throw new IOException("File is already being edited");
                 }
 
-                OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
+                OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE), BUFFER_SIZE);
                 try {
-                    copy(new BufferedInputStream(is), os);
+                    copy(new BufferedInputStream(is, BUFFER_SIZE), os);
                     os.close();
                     writeMetadata(editor, metadata);
 
@@ -267,7 +267,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
     }
 
     private static int copy(InputStream input, OutputStream output) throws IOException {
-        byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+        byte[] buffer = new byte[BUFFER_SIZE];
         int count = 0;
         int n = 0;
         while (-1 != (n = input.read(buffer))) {
