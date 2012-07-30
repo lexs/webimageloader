@@ -209,7 +209,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         }
 
         private void writeMetadata(Editor editor, Metadata metadata) throws IOException {
-            OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_METADATA));
+            OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_METADATA), BUFFER_SIZE);
             try {
                 metadata.writeTo(os);
             } finally {
@@ -218,7 +218,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         }
 
         private void writeBitmap(Editor editor, Bitmap b, Bitmap.CompressFormat format) throws IOException {
-            OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE));
+            OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE), BUFFER_SIZE);
             try {
                 b.compress(format, COMPRESS_QUALITY, os);
             } finally {
