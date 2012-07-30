@@ -21,7 +21,7 @@ public class ImageHelper {
 
     private int loadingResource;
     private int errorResource;
-    private boolean fadeIn = true;
+    private boolean fadeIn = false;
 
     private LoadingListener listener;
 

@@ -31,6 +31,7 @@ public class MainActivity extends ListActivity {
         imageLoader = ImageLoaderApplication.getLoader(this);
 
         imageHelper = new ImageHelper(this, imageLoader);
+        imageHelper.setFadeIn(true);
         imageHelper.setLoadingResource(android.R.drawable.sym_def_app_icon);
 
         StatsView statsView = (StatsView) findViewById(R.id.stats);

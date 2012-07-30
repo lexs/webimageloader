@@ -59,7 +59,9 @@ public class MainActivity extends Activity {
         ImageView imageView = (ImageView) findViewById(id);
 
         Transformation t = new FlipTransformation();
-        new ImageHelper(this, loader).load(imageView, url, t);
+        new ImageHelper(this, loader)
+                .setFadeIn(true)
+                .load(imageView, url, t);
     }
 
     private static class FlipTransformation extends SimpleTransformation {

@@ -54,8 +54,9 @@ Loading images
 Loading images is simple if you want it to be.
 
 ```java
-// This will show a nice fadein when the image has loaded
+// This will show a nice fade in when the image has loaded
 new ImageHelper(context, imageLoader)
+        .setFadeIn(true)
         .load(imageView, "http://example.com/image.png");
 ```
 
