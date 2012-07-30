@@ -80,14 +80,6 @@ public class NetworkLoader extends BackgroundLoader {
         long expires = getExpires(urlConnection);
         String etag = urlConnection.getHeaderField("ETag");
 
-        if (forceMaxAge != 0) {
-            expires = forceMaxAge;
-        }
-
-        if (expires == 0) {
-            expires = System.currentTimeMillis() + DEFAULT_MAX_AGE;
-        }
-
         // Update metadata
         metadata = new Metadata(contentType, lastModified, expires, etag);
 
