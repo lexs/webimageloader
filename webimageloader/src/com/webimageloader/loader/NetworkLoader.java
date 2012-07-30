@@ -118,7 +118,7 @@ public class NetworkLoader extends BackgroundLoader {
 
     private long getExpires(URLConnection urlConnection) {
         if (forceMaxAge > 0) {
-            return forceMaxAge;
+            return System.currentTimeMillis() + forceMaxAge;
         }
 
         // Prefer "max-age" before "expires"
