@@ -13,7 +13,6 @@ public class LoaderManager {
     private MemoryCache memoryCache;
 
     private DiskLoader diskLoader;
-    private NetworkLoader networkLoader;
     private TransformingLoader transformingLoader;
     private MemoryLoader memoryLoader;
 
@@ -30,7 +29,6 @@ public class LoaderManager {
     public LoaderManager(MemoryCache memoryCache, DiskLoader diskLoader, NetworkLoader networkLoader) {
         this.memoryCache = memoryCache;
         this.diskLoader = diskLoader;
-        this.networkLoader = networkLoader;
 
         transformingLoader = new TransformingLoader();
         if (memoryCache != null) {
