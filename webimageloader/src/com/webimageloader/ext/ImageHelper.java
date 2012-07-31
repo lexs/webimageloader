@@ -13,6 +13,11 @@ import android.graphics.drawable.TransitionDrawable;
 import android.util.Log;
 import android.widget.ImageView;
 
+/**
+ * Helper class for loading images into a {@link ImageView}
+ *
+ * @author Alexander Blom <alexanderblom.se>
+ */
 public class ImageHelper {
     private static final String TAG = "ImageHelper";
 
@@ -25,6 +30,12 @@ public class ImageHelper {
 
     private LoadingListener listener;
 
+    /**
+     * Create a new {@link ImageHelper} using the specified loader
+     *
+     * @param context the context when getting resources
+     * @param loader the load to use
+     */
     public ImageHelper(Context context, ImageLoader loader) {
         this.context = context;
         this.loader = loader;
@@ -32,28 +43,62 @@ public class ImageHelper {
         listener = new LoadingListener();
     }
 
+    /**
+     * Set an image to be displayed when an image is loading
+     *
+     * @param loadingResource the resource to use
+     *
+     * @return this helper
+     */
     public ImageHelper setLoadingResource(int loadingResource) {
         this.loadingResource = loadingResource;
 
         return this;
     }
 
+    /**
+     * Set an image to be displayed if an error occurred
+     *
+     * @param errorResource the resource to use
+     * @return this helper
+     */
     public ImageHelper setErrorResource(int errorResource) {
         this.errorResource = errorResource;
 
         return this;
     }
 
+    /**
+     * Set wether to fade in after loading
+     *
+     * @param fadeIn true or false
+     * @return this helper
+     */
     public ImageHelper setFadeIn(boolean fadeIn) {
         this.fadeIn = fadeIn;
 
         return this;
     }
 
+    /**
+     * Load the specified url into this {@link ImageView}.
+     *
+     * @param v the target view
+     * @param url the url to load
+     *
+     * @see #load(ImageView, String, Transformation)
+     */
     public void load(ImageView v, String url) {
         load(v, url, null);
     }
 
+    /**
+     * Load the specified url into this {@link ImageView}.
+     *
+     * @param v the target view
+     * @param url the url to load
+     * @param transformation transformation to apply, can be null
+     */
     public void load(ImageView v, String url, Transformation transformation) {
         Bitmap b = loader.load(v, url, transformation, listener);
 

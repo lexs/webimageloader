@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 import com.webimageloader.content.ContentURLStreamHandler;
+import com.webimageloader.ext.ImageHelper;
 import com.webimageloader.loader.DiskLoader;
 import com.webimageloader.loader.LoaderManager;
 import com.webimageloader.loader.MemoryCache;
@@ -21,6 +22,13 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+/**
+ * This is the main class of WebImageLoader which can be constructed using a
+ * {@link Builder}. It's often more convenient to use the provided
+ * {@link ImageHelper} to load images.
+ *
+ * @author Alexander Blom <alexanderblom.se>
+ */
 public class ImageLoader {
     private static final String TAG = "ImageLoader";
 
@@ -32,8 +40,29 @@ public class ImageLoader {
         public void onError(Throwable t) {}
     };
 
+    /**
+     * Listener for a request which will always be called on the main thread of
+     * the application
+     *
+     * @author Alexander Blom <alexanderblom.se>
+     *
+     * @param <T> the tag class
+     */
     public interface Listener<T> {
+        /**
+         * Called if the request succeeded
+         *
+         * @param tag the tag which was passed in
+         * @param b the resulting bitmap
+         */
         void onSuccess(T tag, Bitmap b);
+
+        /**
+         * Called if the request failed
+         *
+         * @param tag the tag which was passed in
+         * @param t the reason the request failed
+         */
         void onError(T tag, Throwable t);
     }
 
@@ -61,18 +90,49 @@ public class ImageLoader {
         }
     }
 
+    /**
+     * Get the memory cache
+     *
+     * @return memory cache or null if not available
+     */
     public MemoryCache getMemoryCache() {
         return loaderManager.getMemoryCache();
     }
 
+    /**
+     * Load the specified request blocking the calling thread.
+     *
+     * @param url the url to load
+     * @return the bitmap
+     * @throws IOException if the load failed
+     *
+     * @see #loadSynchronously(Request)
+     */
     public Bitmap loadSynchronously(String url) throws IOException {
         return loadSynchronously(new Request(url));
     }
 
+    /**
+     * Load the specified request blocking the calling thread.
+     *
+     * @param url the url to load
+     * @param transformation can be null
+     * @return the bitmap
+     * @throws IOException if the load failed
+     *
+     * @see #loadSynchronously(Request)
+     */
     public Bitmap loadSynchronously(String url, Transformation transformation) throws IOException {
         return loadSynchronously(new Request(url).withTransformation(transformation));
     }
 
+    /**
+     * Load the specified request blocking the calling thread.
+     *
+     * @param request the request to load
+     * @return the bitmap
+     * @throws IOException if the load failed
+     */
     public Bitmap loadSynchronously(Request request) throws IOException {
         final WaitFuture future = new WaitFuture();
 
@@ -108,38 +168,91 @@ public class ImageLoader {
         }
     }
 
+    /**
+     * Used to prime the file and memory cache. It's safe to later call load
+     * with the same request, it will automatically be reused.
+     *
+     * @param url which resource to get
+     *
+     * @see #preload(Request)
+     */
     public void preload(String url) {
         preload(new Request(url));
     }
 
+    /**
+     * Used to prime the file and memory cache. It's safe to later call load
+     * with the same request, it will automatically be reused.
+     *
+     * @param url which resource to get
+     * @param transformation can be null
+     *
+     * @see #preload(Request)
+     */
     public void preload(String url, Transformation transformation) {
         preload(new Request(url).withTransformation(transformation));
     }
 
+    /**
+     * Used to prime the file and memory cache. It's safe to later call load
+     * with the same request, it will automatically be reused.
+     *
+     * @param request the request to preload
+     */
     public void preload(Request request) {
         load(new Object(), request, EMPTY_LISTENER);
     }
 
+    /**
+     * Load an image from an url with the given listener. Previously pending
+     * request for this tag will be automatically cancelled.
+     *
+     * @param tag used to determine when we this request should be cancelled
+     * @param url which resource to get
+     * @param listener called when the request has finished or failed
+     * @return the bitmap if it was already loaded
+     *
+     * @see #load(Object, Request, Listener)
+     */
     public <T> Bitmap load(T tag, String url, Listener<T> listener) {
         return load(tag, new Request(url), listener);
     }
 
+
     /**
+     * Load an image from an url with the given listener. Previously pending
+     * request for this tag will be automatically cancelled.
      *
-     * @param tag
-     * @param url
-     * @param transformation
-     * @param listener
-     * @return the bitmap if the url was in memory cache
+     * @param tag used to determine when we this request should be cancelled
+     * @param url which resource to get
+     * @param transformation can be null
+     * @param listener called when the request has finished or failed
+     * @return the bitmap if it was already loaded
+     *
+     * @see #load(Object, Request, Listener)
      */
     public <T> Bitmap load(T tag, String url, Transformation transformation, Listener<T> listener) {
         return load(tag, new Request(url).withTransformation(transformation), listener);
     }
 
+    /**
+     * Load an image from an url with the given listener. Previously pending
+     * request for this tag will be automatically cancelled.
+     *
+     * @param tag used to determine when we this request should be cancelled
+     * @param request what to to fetch
+     * @param listener called when the request has finished or failed
+     * @return the bitmap if it was already loaded
+     */
     public <T> Bitmap load(T tag, Request request,  Listener<T> listener) {
         return load(tag, request, handlerManager.getListener(tag, listener));
     }
 
+    /**
+     * Cancel any pending requests for this tag.
+     *
+     * @param tag the tag
+     */
     public <T> void cancel(T tag) {
         handlerManager.cancel(tag);
         loaderManager.cancel(tag);
@@ -209,6 +322,11 @@ public class ImageLoader {
         }
     }
 
+    /**
+     * Builder class used to construct a {@link ImageLoader}.
+     *
+     * @author Alexander Blom <alexanderblom.se>
+     */
     public static class Builder {
         private HashMap<String, URLStreamHandler> streamHandlers;
 

@@ -12,6 +12,12 @@ import android.app.Application;
 import android.content.Context;
 import android.util.Log;
 
+/**
+ * Helper class for creating a global {@link ImageLoader} with sane defaults.
+ *
+ * @author Alexander Blom <alexanderblom.se>
+ *
+ */
 public class ImageLoaderApplication extends Application {
     private static final String TAG = "ImageLoaderApplication";
 
