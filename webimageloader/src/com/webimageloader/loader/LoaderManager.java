@@ -37,9 +37,7 @@ public class LoaderManager {
         }
 
         standardChain = new ArrayList<Loader>();
-        if (diskLoader != null) {
-            standardChain.add(diskLoader);
-        }
+        add(standardChain, diskLoader);
         standardChain.add(networkLoader);
 
         // Ensure the standard chain is not modified and is safe to iterate
