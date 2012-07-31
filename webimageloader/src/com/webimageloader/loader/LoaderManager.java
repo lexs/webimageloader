@@ -87,6 +87,10 @@ public class LoaderManager {
         return null;
     }
 
+    public void cancel(Object tag) {
+        pendingRequests.cancel(tag);
+    }
+
     public void close() {
         if (diskLoader != null) {
             diskLoader.close();

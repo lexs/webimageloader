@@ -294,6 +294,29 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         }
     }
 
+    public void testTagCancel() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+        Object tag = new Object();
+
+        // Use wrong path so it will fail faster
+        loader.load(tag, WRONG_FILE_PATH, new Listener<Object>() {
+            @Override
+            public void onSuccess(Object tag, Bitmap b) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onError(Object tag, Throwable t) {
+                latch.countDown();
+            }
+        });
+
+        loader.cancel(tag);
+
+        // We should not get any callbacks
+        assertFalse(latch.await(TIMEOUT, TimeUnit.SECONDS));
+    }
+
     private static class MockURLStreamHandler extends URLStreamHandler {
         private AssetManager assets;
 

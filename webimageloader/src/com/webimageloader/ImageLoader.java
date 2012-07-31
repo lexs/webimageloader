@@ -140,6 +140,11 @@ public class ImageLoader {
         return load(tag, request, handlerManager.getListener(tag, listener));
     }
 
+    public <T> void cancel(T tag) {
+        handlerManager.cancel(tag);
+        loaderManager.cancel(tag);
+    }
+
     private Bitmap load(Object tag, Request request, LoaderManager.Listener listener) {
         return loaderManager.load(tag, request.toLoaderRequest(), listener);
     }
@@ -161,6 +166,10 @@ public class ImageLoader {
             handler.removeCallbacksAndMessages(tag);
 
             return new TagListener<T>(tag, listener);
+        }
+
+        public void cancel(Object tag) {
+            handler.removeCallbacksAndMessages(tag);
         }
 
         private class TagListener<T> implements LoaderManager.Listener {

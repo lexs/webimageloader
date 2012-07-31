@@ -21,7 +21,6 @@ public class PendingRequests {
     private WeakHashMap<Object, LoaderRequest> pendingsTags;
     private WeakHashMap<LoaderRequest, PendingListeners> pendingsRequests;
 
-
     public PendingRequests(MemoryCache memoryCache, List<Loader> loaders) {
         this.memoryCache = memoryCache;
         this.loaders = loaders;
@@ -64,6 +63,10 @@ public class PendingRequests {
 
             return null;
         }
+    }
+
+    public synchronized void cancel(Object tag) {
+        cancelPotentialWork(tag);
     }
 
     protected synchronized void deliverResult(LoaderRequest request, Bitmap b) {
