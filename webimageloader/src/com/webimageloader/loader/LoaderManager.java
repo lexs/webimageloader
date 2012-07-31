@@ -18,6 +18,7 @@ public class LoaderManager {
     private MemoryLoader memoryLoader;
 
     private List<Loader> standardChain;
+    private List<Loader> transformationChain;
 
     private PendingRequests pendingRequests;
 
@@ -36,13 +37,23 @@ public class LoaderManager {
             memoryLoader = new MemoryLoader(memoryCache);
         }
 
+        // Create standard chain
         standardChain = new ArrayList<Loader>();
         add(standardChain, diskLoader);
         standardChain.add(networkLoader);
 
+        // Create transformation chain
+        transformationChain = new ArrayList<Loader>();
+        add(transformationChain, diskLoader);
+        add(transformationChain, transformingLoader);
+        add(transformationChain, memoryLoader);
+        add(transformationChain, diskLoader);
+        add(transformationChain, networkLoader);
+
         // Ensure the standard chain is not modified and is safe to iterate
         // over in multiple threads
         standardChain = Collections.unmodifiableList(standardChain);
+        transformationChain = Collections.unmodifiableList(transformationChain);
 
         pendingRequests = new PendingRequests(memoryCache, standardChain);
     }
@@ -68,20 +79,9 @@ public class LoaderManager {
             return null;
         }
 
-        List<Loader> chain = standardChain;
-
-        Transformation transformation = request.getTransformation();
-        if (transformation != null) {
-            // Use special chain with transformation
-            ArrayList<Loader> loaderChain = new ArrayList<Loader>();
-            add(loaderChain, diskLoader);
-            add(loaderChain, transformingLoader);
-            add(loaderChain, memoryLoader);
-            add(loaderChain, diskLoader);
-            add(loaderChain, networkLoader);
-
-            chain = loaderChain;
-        }
+        // Use different chains depending if we have a transformation or not
+        Transformation t = request.getTransformation();
+        List<Loader> chain = t == null ? standardChain : transformationChain;
 
         Iterator<Loader> it = chain.iterator();
         it.next().load(request, it, l);
