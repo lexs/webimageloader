@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import android.net.TrafficStats;
 import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
@@ -24,6 +25,9 @@ public class NetworkLoader extends BackgroundLoader {
     private static final String TAG = "NetworkLoader";
 
     private static final long DEFAULT_MAX_AGE = 3 * 24 * 60 * 60 * 1000; // Three days
+
+    private static final int TAG_REGULAR = 0x7eb00000;
+    private static final int TAG_CONDITIONAL = 0x7eb0000c;
 
     private Map<String, URLStreamHandler> streamHandlers;
     private int connectTimeout;
@@ -63,6 +67,8 @@ public class NetworkLoader extends BackgroundLoader {
 
         Metadata metadata = request.getMetadata();
         if (metadata != null) {
+            tag(TAG_CONDITIONAL);
+
             // We have some information available
             long modifiedSince = metadata.getLastModified();
             if (modifiedSince != 0) {
@@ -73,6 +79,8 @@ public class NetworkLoader extends BackgroundLoader {
             if (!TextUtils.isEmpty(etag)) {
                 urlConnection.addRequestProperty("If-None-Match", etag);
             }
+        } else {
+            tag(TAG_REGULAR);
         }
 
         String contentType = urlConnection.getContentType();
@@ -126,6 +134,12 @@ public class NetworkLoader extends BackgroundLoader {
 
         // Use default
         return System.currentTimeMillis() + DEFAULT_MAX_AGE;
+    }
+
+    private void tag(int tag) {
+        if (Android.isAPI(14)) {
+            TrafficStats.setThreadStatsTag(tag);
+        }
     }
 
     /**
