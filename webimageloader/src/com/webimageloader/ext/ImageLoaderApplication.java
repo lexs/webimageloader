@@ -14,15 +14,16 @@ import android.util.Log;
 
 /**
  * Helper class for creating a global {@link ImageLoader} with sane defaults.
+ * Set this as your {@code android:application} in {@code AndroidManifest.xml}.
  *
  * @author Alexander Blom <alexanderblom.se>
- *
  */
 public class ImageLoaderApplication extends Application {
     private static final String TAG = "ImageLoaderApplication";
 
     public static final String IMAGE_LOADER_SERVICE = "image_loader";
 
+    private static final String CACHE_FOLDER_NAME = "images";
     private static final int MEMORY_DIVIDER = 8;
     private static final int DISK_CACHE_SIZE = 10 * 1024 * 1024;
 
@@ -85,10 +86,48 @@ public class ImageLoaderApplication extends Application {
         }
     }
 
+    /**
+     * Get the loader provided by this {@link Application}
+     *
+     * @param context the current context
+     * @return an {@link ImageLoader}
+     */
     public static ImageLoader getLoader(Context context) {
         return (ImageLoader) context.getApplicationContext().getSystemService(IMAGE_LOADER_SERVICE);
     }
 
+    /**
+     * Get folder name to use for the disk cache, by default "images"
+     *
+     * @return the folder name
+     */
+    protected String getCacheFolderName() {
+        return CACHE_FOLDER_NAME;
+    }
+
+    /**
+     * Get the size of the disk cache, by default 10Mb
+     *
+     * @return the disk cache size
+     */
+    protected int getDiskCacheSize() {
+        return DISK_CACHE_SIZE;
+    }
+
+    /**
+     * The divider of the total memory to use for memory cache
+     *
+     * @return the memory divider
+     */
+    protected int getMemoryDivider() {
+        return MEMORY_DIVIDER;
+    }
+
+    /**
+     * The builder used to construct the {@link ImageLoader} used by this {@link Application}.
+     *
+     * @return the builder
+     */
     protected ImageLoader.Builder getBuilder() {
         // Get memory class of this device, exceeding this amount will throw an
         // OutOfMemory exception.
@@ -96,14 +135,15 @@ public class ImageLoaderApplication extends Application {
         int memClass = am.getMemoryClass();
 
         // Use part of the available memory for memory cache.
-        final int memoryCacheSize = 1024 * 1024 * memClass / MEMORY_DIVIDER;
+        final int memoryCacheSize = 1024 * 1024 * memClass / getMemoryDivider();
 
+        int diskCache = getDiskCacheSize();
         Log.d(TAG, "Using memory cache of size: " + humanReadableByteCount(memoryCacheSize, false));
-        Log.d(TAG, "Using disk cache of size: " + humanReadableByteCount(DISK_CACHE_SIZE, false));
+        Log.d(TAG, "Using disk cache of size: " + humanReadableByteCount(diskCache, false));
 
-        File cacheDir = IOUtil.getDiskCacheDir(this, "images");
+        File cacheDir = IOUtil.getDiskCacheDir(this, getCacheFolderName());
         return new ImageLoader.Builder()
-                .enableDiskCache(cacheDir, DISK_CACHE_SIZE)
+                .enableDiskCache(cacheDir, diskCache)
                 .enableMemoryCache(memoryCacheSize)
                 .supportResources(getContentResolver());
     }
