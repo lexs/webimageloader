@@ -48,7 +48,7 @@ public class LoaderManager {
         add(transformationChain, diskLoader);
         add(transformationChain, networkLoader);
 
-        // Ensure the standard chain is not modified and is safe to iterate
+        // Ensure the chains are not modified and is safe to iterate
         // over in multiple threads
         standardChain = Collections.unmodifiableList(standardChain);
         transformationChain = Collections.unmodifiableList(transformationChain);
