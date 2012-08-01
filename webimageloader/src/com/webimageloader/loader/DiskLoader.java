@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.concurrent.ListenerFuture;
 import com.webimageloader.util.DiskLruCache;
 import com.webimageloader.util.Hasher;
@@ -68,14 +69,14 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         Snapshot snapshot = cache.get(key);
         if (snapshot != null) {
             try {
-                Log.v(TAG, "Loaded " + request + " from disk");
+                if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from disk");
 
                 InputStream is = snapshot.getInputStream(INPUT_IMAGE);
 
                 Metadata metadata = readMetadata(snapshot);
                 if (System.currentTimeMillis() > metadata.getExpires()) {
                     // Cache has expired
-                    Log.v(TAG, request + " has expired, updating");
+                    if (Logger.VERBOSE) Log.v(TAG, request + " has expired, updating");
                     chain.next().load(request.withMetadata(metadata), chain, new NextListener(request, listener));
                 }
 

@@ -28,6 +28,8 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
+        ImageLoader.Logger.logAll();
+
         loader = ImageLoaderApplication.getLoader(this);
 
         View reloadButton = findViewById(R.id.button_reload);

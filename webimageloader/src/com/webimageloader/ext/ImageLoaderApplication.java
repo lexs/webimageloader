@@ -3,6 +3,7 @@ package com.webimageloader.ext;
 import java.io.File;
 
 import com.webimageloader.ImageLoader;
+import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.loader.MemoryCache;
 import com.webimageloader.util.IOUtil;
 
@@ -58,7 +59,7 @@ public class ImageLoaderApplication extends Application {
 
         MemoryCache memoryCache = imageLoader.getMemoryCache();
         if (memoryCache != null) {
-            Log.d(TAG, "onLowMemory() called, eviciting all bitmaps");
+            if (Logger.DEBUG) Log.d(TAG, "onLowMemory() called, eviciting all bitmaps");
             memoryCache.evictAll();
         }
     }
@@ -76,12 +77,12 @@ public class ImageLoaderApplication extends Application {
         if (level >= TRIM_MEMORY_MODERATE) {
             // Nearing middle of list of cached background apps
             // Evict our entire bitmap cache
-            Log.d(TAG, "onTrimMemory(), level>=TRIM_MEMORY_MODERATE called, eviciting all bitmaps");
+            if (Logger.DEBUG) Log.d(TAG, "onTrimMemory(), level>=TRIM_MEMORY_MODERATE called, eviciting all bitmaps");
             memoryCache.evictAll();
         } else if (level >= TRIM_MEMORY_BACKGROUND) {
             // Entering list of cached background apps
             // Evict oldest half of our bitmap cache
-            Log.d(TAG, "onTrimMemory(), level>=TRIM_MEMORY_BACKGROUND called, evicing half of all bitmaps");
+            if (Logger.DEBUG) Log.d(TAG, "onTrimMemory(), level>=TRIM_MEMORY_BACKGROUND called, evicing half of all bitmaps");
             memoryCache.trimToSize(memoryCache.size() / 2);
         }
     }
@@ -138,8 +139,8 @@ public class ImageLoaderApplication extends Application {
         final int memoryCacheSize = 1024 * 1024 * memClass / getMemoryDivider();
 
         int diskCache = getDiskCacheSize();
-        Log.d(TAG, "Using memory cache of size: " + humanReadableByteCount(memoryCacheSize, false));
-        Log.d(TAG, "Using disk cache of size: " + humanReadableByteCount(diskCache, false));
+        if (Logger.DEBUG) Log.d(TAG, "Using memory cache of size: " + humanReadableByteCount(memoryCacheSize, false));
+        if (Logger.DEBUG) Log.d(TAG, "Using disk cache of size: " + humanReadableByteCount(diskCache, false));
 
         File cacheDir = IOUtil.getDiskCacheDir(this, getCacheFolderName());
         return new ImageLoader.Builder()

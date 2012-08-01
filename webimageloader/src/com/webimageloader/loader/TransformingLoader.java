@@ -7,6 +7,7 @@ import java.util.Iterator;
 import android.graphics.Bitmap;
 import android.util.Log;
 
+import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.transformation.Transformation;
 
 public class TransformingLoader implements Loader {
@@ -14,7 +15,7 @@ public class TransformingLoader implements Loader {
 
     @Override
     public void load(LoaderRequest request, Iterator<Loader> chain, final Listener listener) {
-        Log.d(TAG, "Transforming " + request);
+        if (Logger.VERBOSE) Log.v(TAG, "Transforming " + request);
 
         final Transformation transformation = request.getTransformation();
 

@@ -17,6 +17,7 @@ import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.util.Android;
 import com.webimageloader.util.HeaderParser;
 import com.webimageloader.util.PriorityThreadFactory;
@@ -92,12 +93,12 @@ public class NetworkLoader extends BackgroundLoader {
         metadata = new Metadata(contentType, lastModified, expires, etag);
 
         if (getResponseCode(urlConnection) == HttpURLConnection.HTTP_NOT_MODIFIED) {
-            Log.v(TAG, request + " was not modified since last fetch");
+            if (Logger.VERBOSE) Log.v(TAG, request + " was not modified since last fetch");
 
             listener.onNotModified(metadata);
         } else {
             InputStream is = urlConnection.getInputStream();
-            Log.v(TAG, "Loaded " + request + " from network");
+            if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from network");
 
             try {
                 listener.onStreamLoaded(is, metadata);

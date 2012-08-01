@@ -1,5 +1,6 @@
 package com.webimageloader.loader;
 
+import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.util.Android;
 import com.webimageloader.util.LruCache;
 
@@ -49,7 +50,7 @@ public class MemoryCache {
     public Bitmap get(LoaderRequest request) {
         Bitmap b = cache.get(request.getCacheKey());
         if (b != null) {
-            Log.v(TAG, "Loaded " + request + " from memory");
+            if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from memory");
         }
 
         return b;

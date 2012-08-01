@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.util.BitmapUtils;
 
 import android.graphics.Bitmap;
@@ -58,7 +59,7 @@ public class PendingRequests {
 
             return new RequestListener(request);
         } else {
-            Log.v(TAG, "Reusing request: " + request);
+            if (Logger.VERBOSE) Log.v(TAG, "Reusing request: " + request);
             listeners.add(tag, listener);
 
             return null;
@@ -88,7 +89,7 @@ public class PendingRequests {
     private PendingListeners removeRequest(LoaderRequest request) {
         PendingListeners listeners = pendingsRequests.remove(request);
         if (listeners == null) {
-            Log.v(TAG, "Request no longer pending: " + request);
+            if (Logger.VERBOSE) Log.v(TAG, "Request no longer pending: " + request);
         } else {
             filterTagsForRequest(listeners, request);
             pendingsTags.keySet().removeAll(listeners.getTags());

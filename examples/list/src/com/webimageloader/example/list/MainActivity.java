@@ -28,6 +28,8 @@ public class MainActivity extends ListActivity {
 
         setContentView(R.layout.activity_main);
 
+        ImageLoader.Logger.logAll();
+
         imageLoader = ImageLoaderApplication.getLoader(this);
 
         imageHelper = new ImageHelper(this, imageLoader);

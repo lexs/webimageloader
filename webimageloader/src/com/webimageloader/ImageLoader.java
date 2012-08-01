@@ -397,4 +397,19 @@ public class ImageLoader {
             return new ImageLoader(loaderManager);
         }
     }
+
+    public static class Logger {
+        public static boolean DEBUG = false;
+        public static boolean VERBOSE = false;
+
+        /**
+         * Log both debug and verbose messages
+         */
+        public static void logAll() {
+            DEBUG = true;
+            VERBOSE = true;
+        }
+
+        private Logger() {}
+    }
 }
