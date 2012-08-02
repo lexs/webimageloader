@@ -15,7 +15,7 @@ public class MemoryCache {
         public final Bitmap bitmap;
         public final Metadata metadata;
 
-        public Entry(Bitmap bitmap, Metadata metadata) {
+        private Entry(Bitmap bitmap, Metadata metadata) {
             this.bitmap = bitmap;
             this.metadata = metadata;
         }
