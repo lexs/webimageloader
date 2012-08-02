@@ -32,11 +32,11 @@ public class PendingRequests {
 
     public synchronized Bitmap getBitmap(Object tag, LoaderRequest request) {
         if (memoryCache != null) {
-            Bitmap b = memoryCache.get(request);
-            if (b != null) {
+            MemoryCache.Entry entry = memoryCache.get(request);
+            if (entry != null) {
                 // We got this bitmap, cancel old pending work
                 cancelPotentialWork(tag);
-                return b;
+                return entry.bitmap;
             }
         }
 
@@ -70,10 +70,10 @@ public class PendingRequests {
         cancelPotentialWork(tag);
     }
 
-    protected synchronized void deliverResult(LoaderRequest request, Bitmap b) {
+    protected synchronized void deliverResult(LoaderRequest request, Bitmap b, Metadata metadata) {
         PendingListeners listeners = removeRequest(request);
         if (listeners != null) {
-            saveToMemoryCache(request, b);
+            saveToMemoryCache(request, b, metadata);
 
             listeners.deliverResult(b);
         }
@@ -132,9 +132,9 @@ public class PendingRequests {
         }
     }
 
-    private void saveToMemoryCache(LoaderRequest request, Bitmap b) {
+    private void saveToMemoryCache(LoaderRequest request, Bitmap b, Metadata metadata) {
         if (memoryCache != null) {
-            memoryCache.set(request, b);
+            memoryCache.set(request, b, metadata);
         }
     }
 
@@ -162,12 +162,13 @@ public class PendingRequests {
 
         @Override
         public void onBitmapLoaded(Bitmap b, Metadata metadata) {
-            deliverResult(request, b);
+            deliverResult(request, b, metadata);
         }
 
         @Override
         public void onNotModified(Metadata metadata) {
             // Nothing changed, we don't need to notify any listeners
+            // TODO: We should probably update the memory cache
         }
 
         @Override
