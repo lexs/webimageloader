@@ -66,7 +66,7 @@ public class MemoryCache {
         return entry;
     }
 
-    public void set(LoaderRequest request, Bitmap b, Metadata metadata) {
+    public void put(LoaderRequest request, Bitmap b, Metadata metadata) {
         cache.put(request.getCacheKey(), new Entry(b, metadata));
     }
 

@@ -134,7 +134,7 @@ public class PendingRequests {
 
     private void saveToMemoryCache(LoaderRequest request, Bitmap b, Metadata metadata) {
         if (memoryCache != null) {
-            memoryCache.set(request, b, metadata);
+            memoryCache.put(request, b, metadata);
         }
     }
 
