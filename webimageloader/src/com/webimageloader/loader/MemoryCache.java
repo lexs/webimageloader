@@ -67,11 +67,23 @@ public class MemoryCache {
     }
 
     public void put(LoaderRequest request, Bitmap b, Metadata metadata) {
-        cache.put(request.getCacheKey(), new Entry(b, metadata));
+        // Add the bitmap to the cache if we can fit at least six images of this size,
+        // this way we avoid caching large images that will evict all other entries
+        if (sizeOf(b) < cache.maxSize() / 6) {
+            cache.put(request.getCacheKey(), new Entry(b, metadata));
+        }
     }
 
     public DebugInfo getDebugInfo() {
         return new DebugInfo(cache.hitCount(), cache.missCount(), cache.putCount(), cache.evictionCount());
+    }
+
+    private static int sizeOf(Bitmap b) {
+        if (Android.isAPI(12)) {
+            return b.getByteCount();
+        } else {
+            return b.getRowBytes() * b.getHeight();
+        }
     }
 
     private static class BitmapCache extends LruCache<String, Entry> {
@@ -84,11 +96,7 @@ public class MemoryCache {
         protected int sizeOf(String key, Entry value) {
             Bitmap b = value.bitmap;
 
-            if (Android.isAPI(12)) {
-                return b.getByteCount();
-            } else {
-                return b.getRowBytes() * b.getHeight();
-            }
+           return MemoryCache.sizeOf(b);
         }
     }
 }
