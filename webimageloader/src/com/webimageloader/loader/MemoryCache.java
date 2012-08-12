@@ -78,6 +78,7 @@ public class MemoryCache {
         return new DebugInfo(cache.hitCount(), cache.missCount(), cache.putCount(), cache.evictionCount());
     }
 
+    @TargetApi(12)
     private static int sizeOf(Bitmap b) {
         if (Android.isAPI(12)) {
             return b.getByteCount();
@@ -92,11 +93,10 @@ public class MemoryCache {
         }
 
         @Override
-        @TargetApi(12)
         protected int sizeOf(String key, Entry value) {
             Bitmap b = value.bitmap;
 
-           return MemoryCache.sizeOf(b);
+            return MemoryCache.sizeOf(b);
         }
     }
 }
