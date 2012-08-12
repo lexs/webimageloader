@@ -6,6 +6,14 @@ import java.net.URLStreamHandler;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
+import android.content.ContentResolver;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.util.Log;
+
 import com.webimageloader.content.ContentURLStreamHandler;
 import com.webimageloader.ext.ImageHelper;
 import com.webimageloader.loader.DiskLoader;
@@ -14,13 +22,6 @@ import com.webimageloader.loader.MemoryCache;
 import com.webimageloader.loader.NetworkLoader;
 import com.webimageloader.transformation.Transformation;
 import com.webimageloader.util.WaitFuture;
-
-import android.content.ContentResolver;
-import android.graphics.Bitmap;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.util.Log;
 
 /**
  * This is the main class of WebImageLoader which can be constructed using a
@@ -328,6 +329,8 @@ public class ImageLoader {
      * @author Alexander Blom <alexanderblom.se>
      */
     public static class Builder {
+        private Context context;
+
         private HashMap<String, URLStreamHandler> streamHandlers;
 
         private DiskLoader diskLoader;
@@ -337,7 +340,9 @@ public class ImageLoader {
         private int readTimeout;
         private long maxAge;
 
-        public Builder() {
+        public Builder(Context context) {
+            this.context = context.getApplicationContext();
+
             streamHandlers = new HashMap<String, URLStreamHandler>();
         }
 
@@ -353,15 +358,6 @@ public class ImageLoader {
 
         public Builder enableMemoryCache(int maxSize) {
             memoryCache = new MemoryCache(maxSize);
-
-            return this;
-        }
-
-        public Builder supportResources(ContentResolver resolver) {
-            URLStreamHandler handler = new ContentURLStreamHandler(resolver);
-            streamHandlers.put(ContentResolver.SCHEME_CONTENT, handler);
-            streamHandlers.put(ContentResolver.SCHEME_FILE, handler);
-            streamHandlers.put(ContentResolver.SCHEME_ANDROID_RESOURCE, handler);
 
             return this;
         }
@@ -391,6 +387,11 @@ public class ImageLoader {
         }
 
         public ImageLoader build() {
+            URLStreamHandler handler = new ContentURLStreamHandler(context.getContentResolver());
+            streamHandlers.put(ContentResolver.SCHEME_CONTENT, handler);
+            streamHandlers.put(ContentResolver.SCHEME_FILE, handler);
+            streamHandlers.put(ContentResolver.SCHEME_ANDROID_RESOURCE, handler);
+
             NetworkLoader networkLoader = new NetworkLoader(streamHandlers, connectionTimeout, readTimeout, maxAge);
             LoaderManager loaderManager = new LoaderManager(memoryCache, diskLoader, networkLoader);
 

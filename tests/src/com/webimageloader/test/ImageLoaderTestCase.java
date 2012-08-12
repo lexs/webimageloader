@@ -44,10 +44,9 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     protected void setUp() throws Exception {
         int random = Math.abs(new Random().nextInt());
         File cacheDir = new File(getContext().getCacheDir(), String.valueOf(random));
-        loader = new ImageLoader.Builder()
+        loader = new ImageLoader.Builder(getContext())
                 .enableDiskCache(cacheDir, TEN_MEGABYTES)
                 .enableMemoryCache(TEN_MEGABYTES)
-                //.supportResources(createMockResolver())
                 .addURLSchemeHandler("mock", new MockURLStreamHandler(getContext().getAssets()))
                 .build();
 
@@ -68,7 +67,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     public void testNoDiskCacheFallback() throws IOException {
         File invalidCacheDir = new File("../");
 
-        ImageLoader loader = new ImageLoader.Builder()
+        ImageLoader loader = new ImageLoader.Builder(getContext())
         .enableDiskCache(invalidCacheDir, TEN_MEGABYTES)
         .enableMemoryCache(TEN_MEGABYTES)
         .addURLSchemeHandler("mock", new MockURLStreamHandler(getContext().getAssets()))

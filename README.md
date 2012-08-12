@@ -29,7 +29,7 @@ int memClass = am.getMemoryClass();
 final int memoryCacheSize = 1024 * 1024 * memClass / 8;
 
 File cacheDir = new File(getExternalCacheDir(), "images");
-ImageLoader imageLoader = new ImageLoader.Builder()
+ImageLoader imageLoader = new ImageLoader.Builder(context)
         .enableDiskCache(cacheDir, 10 * 1024 * 1024)
         .enableMemoryCache(memoryCacheSize);
 ```

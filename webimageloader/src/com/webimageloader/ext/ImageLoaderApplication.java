@@ -143,10 +143,9 @@ public class ImageLoaderApplication extends Application {
         if (Logger.DEBUG) Log.d(TAG, "Using disk cache of size: " + humanReadableByteCount(diskCache, false));
 
         File cacheDir = IOUtil.getDiskCacheDir(this, getCacheFolderName());
-        return new ImageLoader.Builder()
+        return new ImageLoader.Builder(this)
                 .enableDiskCache(cacheDir, diskCache)
-                .enableMemoryCache(memoryCacheSize)
-                .supportResources(getContentResolver());
+                .enableMemoryCache(memoryCacheSize);
     }
 
     // http://stackoverflow.com/a/3758880/253583
