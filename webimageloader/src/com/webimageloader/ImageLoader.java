@@ -106,10 +106,10 @@ public class ImageLoader {
      * @return the bitmap
      * @throws IOException if the load failed
      *
-     * @see #loadSynchronously(Request)
+     * @see #loadBlocking(Request)
      */
-    public Bitmap loadSynchronously(String url) throws IOException {
-        return loadSynchronously(new Request(url));
+    public Bitmap loadBlocking(String url) throws IOException {
+        return loadBlocking(new Request(url));
     }
 
     /**
@@ -120,10 +120,10 @@ public class ImageLoader {
      * @return the bitmap
      * @throws IOException if the load failed
      *
-     * @see #loadSynchronously(Request)
+     * @see #loadBlocking(Request)
      */
-    public Bitmap loadSynchronously(String url, Transformation transformation) throws IOException {
-        return loadSynchronously(new Request(url).withTransformation(transformation));
+    public Bitmap loadBlocking(String url, Transformation transformation) throws IOException {
+        return loadBlocking(new Request(url).withTransformation(transformation));
     }
 
     /**
@@ -133,7 +133,7 @@ public class ImageLoader {
      * @return the bitmap
      * @throws IOException if the load failed
      */
-    public Bitmap loadSynchronously(Request request) throws IOException {
+    public Bitmap loadBlocking(Request request) throws IOException {
         final WaitFuture future = new WaitFuture();
 
         Bitmap b = load(new Object(), request, new LoaderManager.Listener() {

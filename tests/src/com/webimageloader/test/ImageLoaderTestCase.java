@@ -60,7 +60,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     }
 
     public void testSameThread() throws IOException {
-        Bitmap b = loader.loadSynchronously(CORRECT_MOCK_FILE_PATH);
+        Bitmap b = loader.loadBlocking(CORRECT_MOCK_FILE_PATH);
 
         assertTrue(correctFile.sameAs(b));
     }
@@ -74,7 +74,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         .addURLSchemeHandler("mock", new MockURLStreamHandler(getContext().getAssets()))
         .build();
 
-        Bitmap b = loader.loadSynchronously(CORRECT_MOCK_FILE_PATH);
+        Bitmap b = loader.loadBlocking(CORRECT_MOCK_FILE_PATH);
 
         assertTrue(correctFile.sameAs(b));
     }
@@ -130,7 +130,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
 
     public void testMissingImage() throws IOException {
         try {
-            loader.loadSynchronously(WRONG_FILE_PATH);
+            loader.loadBlocking(WRONG_FILE_PATH);
             fail("Should have thrown an exception");
         } catch (FileNotFoundException e) {
             // Expected
@@ -138,7 +138,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     }
 
     public void testMemory() throws IOException {
-        loader.loadSynchronously(CORRECT_MOCK_FILE_PATH);
+        loader.loadBlocking(CORRECT_MOCK_FILE_PATH);
         Bitmap b = loader.load(new Object(), CORRECT_MOCK_FILE_PATH, EMPTY_LISTENER);
         assertNotNull(b);
     }
