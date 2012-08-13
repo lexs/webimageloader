@@ -2,7 +2,6 @@ package com.webimageloader.loader;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -91,7 +90,6 @@ public class PendingRequests {
         if (listeners == null) {
             if (Logger.VERBOSE) Log.v(TAG, "Request no longer pending: " + request);
         } else {
-            filterTagsForRequest(listeners, request);
             pendingsTags.keySet().removeAll(listeners.getTags());
         }
 
@@ -111,23 +109,6 @@ public class PendingRequests {
 
             for (Loader loader : loaders) {
                 loader.cancel(request);
-            }
-        }
-    }
-
-    /**
-     * Remove tags not pending for this request
-     */
-    private void filterTagsForRequest(PendingListeners listeners, LoaderRequest request) {
-        // Tags pending for this request
-        Set<Object> tags = listeners.getTags();
-
-        for (Iterator<Object> it = tags.iterator(); it.hasNext(); ) {
-            Object tag = it.next();
-
-            // Check if tag is still pending
-            if (!stillPending(tag, request)) {
-                it.remove();
             }
         }
     }
