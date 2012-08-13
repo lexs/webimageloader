@@ -15,7 +15,7 @@ public class LoaderRequest {
 
     public LoaderRequest(String url, Transformation transformation) {
         if (url == null) {
-            throw new NullPointerException("url may not be null");
+            throw new IllegalArgumentException("url may not be null");
         }
 
         this.url = url;

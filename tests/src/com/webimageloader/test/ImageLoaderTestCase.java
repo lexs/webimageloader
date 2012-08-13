@@ -44,10 +44,9 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     protected void setUp() throws Exception {
         int random = Math.abs(new Random().nextInt());
         File cacheDir = new File(getContext().getCacheDir(), String.valueOf(random));
-        loader = new ImageLoader.Builder()
+        loader = new ImageLoader.Builder(getContext())
                 .enableDiskCache(cacheDir, TEN_MEGABYTES)
                 .enableMemoryCache(TEN_MEGABYTES)
-                //.supportResources(createMockResolver())
                 .addURLSchemeHandler("mock", new MockURLStreamHandler(getContext().getAssets()))
                 .build();
 
@@ -60,7 +59,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     }
 
     public void testSameThread() throws IOException {
-        Bitmap b = loader.loadSynchronously(CORRECT_MOCK_FILE_PATH);
+        Bitmap b = loader.loadBlocking(CORRECT_MOCK_FILE_PATH);
 
         assertTrue(correctFile.sameAs(b));
     }
@@ -68,13 +67,13 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     public void testNoDiskCacheFallback() throws IOException {
         File invalidCacheDir = new File("../");
 
-        ImageLoader loader = new ImageLoader.Builder()
+        ImageLoader loader = new ImageLoader.Builder(getContext())
         .enableDiskCache(invalidCacheDir, TEN_MEGABYTES)
         .enableMemoryCache(TEN_MEGABYTES)
         .addURLSchemeHandler("mock", new MockURLStreamHandler(getContext().getAssets()))
         .build();
 
-        Bitmap b = loader.loadSynchronously(CORRECT_MOCK_FILE_PATH);
+        Bitmap b = loader.loadBlocking(CORRECT_MOCK_FILE_PATH);
 
         assertTrue(correctFile.sameAs(b));
     }
@@ -110,7 +109,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
 
         final Holder<Throwable> h = new Holder<Throwable>();
 
-        loader.load(new Object(), WRONG_FILE_PATH, new Listener<Object>() {
+        loader.load(null, WRONG_FILE_PATH, new Listener<Object>() {
             @Override
             public void onSuccess(Object tag, Bitmap b) {
                 latch.countDown();
@@ -130,7 +129,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
 
     public void testMissingImage() throws IOException {
         try {
-            loader.loadSynchronously(WRONG_FILE_PATH);
+            loader.loadBlocking(WRONG_FILE_PATH);
             fail("Should have thrown an exception");
         } catch (FileNotFoundException e) {
             // Expected
@@ -138,8 +137,8 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     }
 
     public void testMemory() throws IOException {
-        loader.loadSynchronously(CORRECT_MOCK_FILE_PATH);
-        Bitmap b = loader.load(new Object(), CORRECT_MOCK_FILE_PATH, EMPTY_LISTENER);
+        loader.loadBlocking(CORRECT_MOCK_FILE_PATH);
+        Bitmap b = loader.load(null, CORRECT_MOCK_FILE_PATH, EMPTY_LISTENER);
         assertNotNull(b);
     }
 
@@ -148,7 +147,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
 
         final Holder<Bitmap> h = new Holder<Bitmap>();
 
-        loader.load(new Object(), CORRECT_MOCK_FILE_PATH, new Listener<Object>() {
+        loader.load(null, CORRECT_MOCK_FILE_PATH, new Listener<Object>() {
             @Override
             public void onSuccess(Object tag, Bitmap b) {
                 h.value = b;
@@ -173,7 +172,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
 
         final Holder<Throwable> h = new Holder<Throwable>();
 
-        loader.load(new Object(), WRONG_FILE_PATH, new Listener<Object>() {
+        loader.load(null, WRONG_FILE_PATH, new Listener<Object>() {
             @Override
             public void onSuccess(Object tag, Bitmap b) {
                 latch.countDown();
@@ -195,7 +194,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         final CountDownLatch latch = new CountDownLatch(5);
 
         for (int i = 0; i < 5; i++) {
-            loader.load(new Object(), CORRECT_MOCK_FILE_PATH, new Listener<Object>() {
+            loader.load(null, CORRECT_MOCK_FILE_PATH, new Listener<Object>() {
                 @Override
                 public void onSuccess(Object tag, Bitmap b) {
                     latch.countDown();
@@ -217,7 +216,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         final Holder<Bitmap> h1 = new Holder<Bitmap>();
         final Holder<Bitmap> h2 = new Holder<Bitmap>();
 
-        loader.load(new Object(), CORRECT_MOCK_FILE_PATH, new Listener<Object>() {
+        loader.load(null, CORRECT_MOCK_FILE_PATH, new Listener<Object>() {
             @Override
             public void onSuccess(Object tag, Bitmap b) {
                 h1.value = b;
@@ -231,7 +230,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
             }
         });
 
-        loader.load(new Object(), CORRECT_MOCK_FILE_PATH, new Listener<Object>() {
+        loader.load(null, CORRECT_MOCK_FILE_PATH, new Listener<Object>() {
             @Override
             public void onSuccess(Object tag, Bitmap b) {
                 h2.value = b;

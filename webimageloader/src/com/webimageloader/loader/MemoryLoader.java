@@ -2,9 +2,6 @@ package com.webimageloader.loader;
 
 import java.util.Iterator;
 
-import android.graphics.Bitmap;
-
-
 public class MemoryLoader implements Loader {
     private MemoryCache cache;
 
@@ -14,10 +11,9 @@ public class MemoryLoader implements Loader {
 
     @Override
     public void load(LoaderRequest request, Iterator<Loader> chain, Listener listener) {
-        Bitmap b = cache.get(request);
-        if (b != null) {
-            // TODO: Store metadata in cache
-            listener.onBitmapLoaded(b, new Metadata("image/jpeg", 0, 0, null));
+        MemoryCache.Entry entry = cache.get(request);
+        if (entry != null) {
+            listener.onBitmapLoaded(entry.bitmap, entry.metadata);
         } else {
             // We don't want to cache the image we get back
             // so just pass the same listener

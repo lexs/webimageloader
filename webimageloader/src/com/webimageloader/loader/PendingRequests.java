@@ -2,8 +2,10 @@ package com.webimageloader.loader;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -19,24 +21,25 @@ public class PendingRequests {
     private MemoryCache memoryCache;
     private List<Loader> loaders;
 
-    private WeakHashMap<Object, LoaderRequest> pendingsTags;
-    private WeakHashMap<LoaderRequest, PendingListeners> pendingsRequests;
+    private Map<Object, LoaderRequest> pendingsTags;
+    private Map<LoaderRequest, PendingListeners> pendingsRequests;
 
     public PendingRequests(MemoryCache memoryCache, List<Loader> loaders) {
         this.memoryCache = memoryCache;
         this.loaders = loaders;
 
+        // Use WeakHashMap to ensure tags can be GC'd
         pendingsTags = new WeakHashMap<Object, LoaderRequest>();
-        pendingsRequests = new WeakHashMap<LoaderRequest, PendingListeners>();
+        pendingsRequests = new HashMap<LoaderRequest, PendingListeners>();
     }
 
     public synchronized Bitmap getBitmap(Object tag, LoaderRequest request) {
         if (memoryCache != null) {
-            Bitmap b = memoryCache.get(request);
-            if (b != null) {
+            MemoryCache.Entry entry = memoryCache.get(request);
+            if (entry != null) {
                 // We got this bitmap, cancel old pending work
                 cancelPotentialWork(tag);
-                return b;
+                return entry.bitmap;
             }
         }
 
@@ -44,13 +47,14 @@ public class PendingRequests {
     }
 
     public synchronized Loader.Listener addRequest(Object tag, LoaderRequest request, LoaderManager.Listener listener) {
-        if (stillPending(tag, request)) {
+        if (tag != null && stillPending(tag, request)) {
             return null;
         }
 
-        cancelPotentialWork(tag);
-
-        pendingsTags.put(tag, request);
+        if (tag != null) {
+            cancelPotentialWork(tag);
+            pendingsTags.put(tag, request);
+        }
 
         PendingListeners listeners = pendingsRequests.get(request);
         if (listeners == null) {
@@ -70,10 +74,10 @@ public class PendingRequests {
         cancelPotentialWork(tag);
     }
 
-    protected synchronized void deliverResult(LoaderRequest request, Bitmap b) {
+    protected synchronized void deliverResult(LoaderRequest request, Bitmap b, Metadata metadata) {
         PendingListeners listeners = removeRequest(request);
         if (listeners != null) {
-            saveToMemoryCache(request, b);
+            saveToMemoryCache(request, b, metadata);
 
             listeners.deliverResult(b);
         }
@@ -91,7 +95,6 @@ public class PendingRequests {
         if (listeners == null) {
             if (Logger.VERBOSE) Log.v(TAG, "Request no longer pending: " + request);
         } else {
-            filterTagsForRequest(listeners, request);
             pendingsTags.keySet().removeAll(listeners.getTags());
         }
 
@@ -104,7 +107,6 @@ public class PendingRequests {
             return;
         }
 
-        // TODO: Why can this be null
         PendingListeners listeners = pendingsRequests.get(request);
         if (!listeners.remove(tag)) {
             pendingsRequests.remove(request);
@@ -115,26 +117,9 @@ public class PendingRequests {
         }
     }
 
-    /**
-     * Remove tags not pending for this request
-     */
-    private void filterTagsForRequest(PendingListeners listeners, LoaderRequest request) {
-        // Tags pending for this request
-        Set<Object> tags = listeners.getTags();
-
-        for (Iterator<Object> it = tags.iterator(); it.hasNext(); ) {
-            Object tag = it.next();
-
-            // Check if tag is still pending
-            if (!stillPending(tag, request)) {
-                it.remove();
-            }
-        }
-    }
-
-    private void saveToMemoryCache(LoaderRequest request, Bitmap b) {
+    private void saveToMemoryCache(LoaderRequest request, Bitmap b, Metadata metadata) {
         if (memoryCache != null) {
-            memoryCache.set(request, b);
+            memoryCache.put(request, b, metadata);
         }
     }
 
@@ -162,12 +147,13 @@ public class PendingRequests {
 
         @Override
         public void onBitmapLoaded(Bitmap b, Metadata metadata) {
-            deliverResult(request, b);
+            deliverResult(request, b, metadata);
         }
 
         @Override
         public void onNotModified(Metadata metadata) {
             // Nothing changed, we don't need to notify any listeners
+            // TODO: We should probably update the memory cache
         }
 
         @Override
@@ -177,16 +163,24 @@ public class PendingRequests {
     }
 
     private static class PendingListeners {
-        private WeakHashMap<Object, LoaderManager.Listener> listeners;
+        private Map<Object, LoaderManager.Listener> listeners;
+        private List<LoaderManager.Listener> extraListeners;
 
         public PendingListeners(Object tag, LoaderManager.Listener listener) {
-            listeners = new WeakHashMap<Object, LoaderManager.Listener>();
+            // Use a WeakHashMap to ensure tags can be GC'd, also use 1 a initial
+            // capacity as we expect a low number of listeners per request
+            listeners = new WeakHashMap<Object, LoaderManager.Listener>(1);
+            extraListeners = new ArrayList<LoaderManager.Listener>(1);
 
             add(tag, listener);
         }
 
         public void add(Object tag, LoaderManager.Listener listener) {
-            listeners.put(tag, listener);
+            if (tag == null) {
+                extraListeners.add(listener);
+            } else {
+                listeners.put(tag, listener);
+            }
         }
 
         /**
@@ -196,7 +190,7 @@ public class PendingRequests {
         public boolean remove(Object tag) {
             listeners.remove(tag);
 
-            if (listeners.isEmpty()) {
+            if (listeners.isEmpty() && extraListeners.isEmpty()) {
                 return false;
             } else {
                 return true;
@@ -211,10 +205,18 @@ public class PendingRequests {
             for (LoaderManager.Listener listener : listeners.values()) {
                 listener.onLoaded(b);
             }
+
+            for (LoaderManager.Listener listener : extraListeners) {
+                listener.onLoaded(b);
+            }
         }
 
         public void deliverError(Throwable t) {
             for (LoaderManager.Listener listener : listeners.values()) {
+                listener.onError(t);
+            }
+
+            for (LoaderManager.Listener listener : extraListeners) {
                 listener.onError(t);
             }
         }

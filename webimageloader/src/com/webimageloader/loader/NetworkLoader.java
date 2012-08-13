@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import android.annotation.TargetApi;
 import android.net.TrafficStats;
 import android.os.Process;
 import android.text.TextUtils;
@@ -137,6 +138,7 @@ public class NetworkLoader extends BackgroundLoader {
         return System.currentTimeMillis() + DEFAULT_MAX_AGE;
     }
 
+    @TargetApi(14)
     private void tag(int tag) {
         if (Android.isAPI(14)) {
             TrafficStats.setThreadStatsTag(tag);

@@ -85,11 +85,12 @@ public class ImageHelper {
      *
      * @param v the target view
      * @param url the url to load
+     * @return this helper
      *
      * @see #load(ImageView, String, Transformation)
      */
-    public void load(ImageView v, String url) {
-        load(v, url, null);
+    public ImageHelper load(ImageView v, String url) {
+        return load(v, url, null);
     }
 
     /**
@@ -98,8 +99,9 @@ public class ImageHelper {
      * @param v the target view
      * @param url the url to load
      * @param transformation transformation to apply, can be null
+     * @return this helper
      */
-    public void load(ImageView v, String url, Transformation transformation) {
+    public ImageHelper load(ImageView v, String url, Transformation transformation) {
         Bitmap b = loader.load(v, url, transformation, listener);
 
         if (b != null) {
@@ -109,6 +111,8 @@ public class ImageHelper {
         } else {
             v.setImageBitmap(null);
         }
+
+        return this;
     }
 
     private class LoadingListener implements Listener<ImageView> {

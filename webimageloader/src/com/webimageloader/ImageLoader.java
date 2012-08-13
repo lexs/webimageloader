@@ -6,6 +6,14 @@ import java.net.URLStreamHandler;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
+import android.content.ContentResolver;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.util.Log;
+
 import com.webimageloader.content.ContentURLStreamHandler;
 import com.webimageloader.ext.ImageHelper;
 import com.webimageloader.loader.DiskLoader;
@@ -15,17 +23,13 @@ import com.webimageloader.loader.NetworkLoader;
 import com.webimageloader.transformation.Transformation;
 import com.webimageloader.util.WaitFuture;
 
-import android.content.ContentResolver;
-import android.graphics.Bitmap;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.util.Log;
-
 /**
  * This is the main class of WebImageLoader which can be constructed using a
  * {@link Builder}. It's often more convenient to use the provided
  * {@link ImageHelper} to load images.
+ * <p>
+ * It's safe to call the methods on this class from any thread. However, callbacks
+ * will always be done on the UI thread.
  *
  * @author Alexander Blom <alexanderblom.se>
  */
@@ -42,7 +46,10 @@ public class ImageLoader {
 
     /**
      * Listener for a request which will always be called on the main thread of
-     * the application
+     * the application. You should try to avoid keeping a reference to the tag,
+     * for example by declaring this as a static inner class and then using the
+     * passed tag when handling the callbacks. This allows us to properly let
+     * the tag be GC'ed.
      *
      * @author Alexander Blom <alexanderblom.se>
      *
@@ -106,10 +113,10 @@ public class ImageLoader {
      * @return the bitmap
      * @throws IOException if the load failed
      *
-     * @see #loadSynchronously(Request)
+     * @see #loadBlocking(Request)
      */
-    public Bitmap loadSynchronously(String url) throws IOException {
-        return loadSynchronously(new Request(url));
+    public Bitmap loadBlocking(String url) throws IOException {
+        return loadBlocking(new Request(url));
     }
 
     /**
@@ -120,10 +127,10 @@ public class ImageLoader {
      * @return the bitmap
      * @throws IOException if the load failed
      *
-     * @see #loadSynchronously(Request)
+     * @see #loadBlocking(Request)
      */
-    public Bitmap loadSynchronously(String url, Transformation transformation) throws IOException {
-        return loadSynchronously(new Request(url).withTransformation(transformation));
+    public Bitmap loadBlocking(String url, Transformation transformation) throws IOException {
+        return loadBlocking(new Request(url).withTransformation(transformation));
     }
 
     /**
@@ -133,10 +140,10 @@ public class ImageLoader {
      * @return the bitmap
      * @throws IOException if the load failed
      */
-    public Bitmap loadSynchronously(Request request) throws IOException {
+    public Bitmap loadBlocking(Request request) throws IOException {
         final WaitFuture future = new WaitFuture();
 
-        Bitmap b = load(new Object(), request, new LoaderManager.Listener() {
+        Bitmap b = load(null, request, new LoaderManager.Listener() {
             @Override
             public void onLoaded(Bitmap b) {
                 future.set(b);
@@ -152,19 +159,30 @@ public class ImageLoader {
             return b;
         }
 
-        try {
-            return future.get();
-        } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
+        boolean interrupted = false;
 
-            // Rethrow as original exception if possible
-            if (cause instanceof IOException) {
-                throw (IOException) cause;
-            } else {
-                throw new IOException("Failed to fetch image", e.getCause());
+        try {
+            while (true) {
+                try {
+                    return future.get();
+                } catch (ExecutionException e) {
+                    Throwable cause = e.getCause();
+
+                    // Rethrow as original exception if possible
+                    if (cause instanceof IOException) {
+                        throw (IOException) cause;
+                    } else {
+                        throw new IOException("Failed to fetch image", e.getCause());
+                    }
+                } catch (InterruptedException e) {
+                    // Fall through and retry
+                    interrupted = true;
+                }
             }
-        } catch (InterruptedException e) {
-            throw new IOException("Interruped while fetching image", e);
+        } finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -200,7 +218,7 @@ public class ImageLoader {
      * @param request the request to preload
      */
     public void preload(Request request) {
-        load(new Object(), request, EMPTY_LISTENER);
+        load(null, request, EMPTY_LISTENER);
     }
 
     /**
@@ -328,6 +346,8 @@ public class ImageLoader {
      * @author Alexander Blom <alexanderblom.se>
      */
     public static class Builder {
+        private Context context;
+
         private HashMap<String, URLStreamHandler> streamHandlers;
 
         private DiskLoader diskLoader;
@@ -337,7 +357,9 @@ public class ImageLoader {
         private int readTimeout;
         private long maxAge;
 
-        public Builder() {
+        public Builder(Context context) {
+            this.context = context.getApplicationContext();
+
             streamHandlers = new HashMap<String, URLStreamHandler>();
         }
 
@@ -353,15 +375,6 @@ public class ImageLoader {
 
         public Builder enableMemoryCache(int maxSize) {
             memoryCache = new MemoryCache(maxSize);
-
-            return this;
-        }
-
-        public Builder supportResources(ContentResolver resolver) {
-            URLStreamHandler handler = new ContentURLStreamHandler(resolver);
-            streamHandlers.put(ContentResolver.SCHEME_CONTENT, handler);
-            streamHandlers.put(ContentResolver.SCHEME_FILE, handler);
-            streamHandlers.put(ContentResolver.SCHEME_ANDROID_RESOURCE, handler);
 
             return this;
         }
@@ -391,6 +404,11 @@ public class ImageLoader {
         }
 
         public ImageLoader build() {
+            URLStreamHandler handler = new ContentURLStreamHandler(context.getContentResolver());
+            streamHandlers.put(ContentResolver.SCHEME_CONTENT, handler);
+            streamHandlers.put(ContentResolver.SCHEME_FILE, handler);
+            streamHandlers.put(ContentResolver.SCHEME_ANDROID_RESOURCE, handler);
+
             NetworkLoader networkLoader = new NetworkLoader(streamHandlers, connectionTimeout, readTimeout, maxAge);
             LoaderManager loaderManager = new LoaderManager(memoryCache, diskLoader, networkLoader);
 

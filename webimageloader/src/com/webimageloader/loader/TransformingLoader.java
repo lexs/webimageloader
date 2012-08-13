@@ -40,7 +40,7 @@ public class TransformingLoader implements Loader {
 
             private void deliverResult(Bitmap b, Metadata metadata) {
                 if (b == null) {
-                    onError(new NullPointerException("Transformer returned null"));
+                    onError(new IllegalStateException("Transformer returned null"));
                 } else {
                     listener.onBitmapLoaded(b, metadata);
                 }

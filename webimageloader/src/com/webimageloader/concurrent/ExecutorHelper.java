@@ -9,7 +9,6 @@ import java.util.concurrent.Future;
 import com.webimageloader.loader.LoaderRequest;
 import com.webimageloader.loader.Loader.Listener;
 
-
 public class ExecutorHelper {
     private Map<LoaderRequest, Future<?>> futures;
 
