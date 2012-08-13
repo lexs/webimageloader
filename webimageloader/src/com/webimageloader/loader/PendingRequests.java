@@ -106,7 +106,6 @@ public class PendingRequests {
             return;
         }
 
-        // TODO: Why can this be null
         PendingListeners listeners = pendingsRequests.get(request);
         if (!listeners.remove(tag)) {
             pendingsRequests.remove(request);
