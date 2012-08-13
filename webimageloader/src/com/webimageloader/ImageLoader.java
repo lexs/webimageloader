@@ -43,7 +43,10 @@ public class ImageLoader {
 
     /**
      * Listener for a request which will always be called on the main thread of
-     * the application
+     * the application. You should try to avoid keeping a reference to the tag,
+     * for example by declaring this as a static inner class and then using the
+     * passed tag when handling the callbacks. This allows us to properly let
+     * the tag be GC'ed.
      *
      * @author Alexander Blom <alexanderblom.se>
      *
