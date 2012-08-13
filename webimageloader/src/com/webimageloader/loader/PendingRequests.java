@@ -3,6 +3,7 @@ package com.webimageloader.loader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -18,13 +19,14 @@ public class PendingRequests {
     private MemoryCache memoryCache;
     private List<Loader> loaders;
 
-    private WeakHashMap<Object, LoaderRequest> pendingsTags;
-    private WeakHashMap<LoaderRequest, PendingListeners> pendingsRequests;
+    private Map<Object, LoaderRequest> pendingsTags;
+    private Map<LoaderRequest, PendingListeners> pendingsRequests;
 
     public PendingRequests(MemoryCache memoryCache, List<Loader> loaders) {
         this.memoryCache = memoryCache;
         this.loaders = loaders;
 
+        // Use WeakHashMap to ensure tags can be GC'd
         pendingsTags = new WeakHashMap<Object, LoaderRequest>();
         pendingsRequests = new WeakHashMap<LoaderRequest, PendingListeners>();
     }
@@ -159,9 +161,10 @@ public class PendingRequests {
     }
 
     private static class PendingListeners {
-        private WeakHashMap<Object, LoaderManager.Listener> listeners;
+        private Map<Object, LoaderManager.Listener> listeners;
 
         public PendingListeners(Object tag, LoaderManager.Listener listener) {
+            // Use a WeakHashMap to ensure tags can be GC'd
             listeners = new WeakHashMap<Object, LoaderManager.Listener>();
 
             add(tag, listener);
