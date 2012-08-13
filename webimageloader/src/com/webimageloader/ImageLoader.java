@@ -27,6 +27,9 @@ import com.webimageloader.util.WaitFuture;
  * This is the main class of WebImageLoader which can be constructed using a
  * {@link Builder}. It's often more convenient to use the provided
  * {@link ImageHelper} to load images.
+ * <p>
+ * It's safe to call the methods on this class from any thread. However, callbacks
+ * will always be done on the UI thread.
  *
  * @author Alexander Blom <alexanderblom.se>
  */
