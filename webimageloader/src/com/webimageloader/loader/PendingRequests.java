@@ -3,6 +3,7 @@ package com.webimageloader.loader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,7 +30,7 @@ public class PendingRequests {
 
         // Use WeakHashMap to ensure tags can be GC'd
         pendingsTags = new WeakHashMap<Object, LoaderRequest>();
-        pendingsRequests = new WeakHashMap<LoaderRequest, PendingListeners>();
+        pendingsRequests = new HashMap<LoaderRequest, PendingListeners>();
     }
 
     public synchronized Bitmap getBitmap(Object tag, LoaderRequest request) {
