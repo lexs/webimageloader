@@ -2,6 +2,7 @@ package com.webimageloader.loader;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,13 +46,14 @@ public class PendingRequests {
     }
 
     public synchronized Loader.Listener addRequest(Object tag, LoaderRequest request, LoaderManager.Listener listener) {
-        if (stillPending(tag, request)) {
+        if (tag != null && stillPending(tag, request)) {
             return null;
         }
 
-        cancelPotentialWork(tag);
-
-        pendingsTags.put(tag, request);
+        if (tag != null) {
+            cancelPotentialWork(tag);
+            pendingsTags.put(tag, request);
+        }
 
         PendingListeners listeners = pendingsRequests.get(request);
         if (listeners == null) {
@@ -162,16 +164,23 @@ public class PendingRequests {
 
     private static class PendingListeners {
         private Map<Object, LoaderManager.Listener> listeners;
+        private List<LoaderManager.Listener> extraListeners;
 
         public PendingListeners(Object tag, LoaderManager.Listener listener) {
-            // Use a WeakHashMap to ensure tags can be GC'd
-            listeners = new WeakHashMap<Object, LoaderManager.Listener>();
+            // Use a WeakHashMap to ensure tags can be GC'd, also use 1 a initial
+            // capacity as we expect a low number of listeners per request
+            listeners = new WeakHashMap<Object, LoaderManager.Listener>(1);
+            extraListeners = new ArrayList<LoaderManager.Listener>(1);
 
             add(tag, listener);
         }
 
         public void add(Object tag, LoaderManager.Listener listener) {
-            listeners.put(tag, listener);
+            if (tag == null) {
+                extraListeners.add(listener);
+            } else {
+                listeners.put(tag, listener);
+            }
         }
 
         /**
@@ -181,7 +190,7 @@ public class PendingRequests {
         public boolean remove(Object tag) {
             listeners.remove(tag);
 
-            if (listeners.isEmpty()) {
+            if (listeners.isEmpty() && extraListeners.isEmpty()) {
                 return false;
             } else {
                 return true;
@@ -196,10 +205,18 @@ public class PendingRequests {
             for (LoaderManager.Listener listener : listeners.values()) {
                 listener.onLoaded(b);
             }
+
+            for (LoaderManager.Listener listener : extraListeners) {
+                listener.onLoaded(b);
+            }
         }
 
         public void deliverError(Throwable t) {
             for (LoaderManager.Listener listener : listeners.values()) {
+                listener.onError(t);
+            }
+
+            for (LoaderManager.Listener listener : extraListeners) {
                 listener.onError(t);
             }
         }

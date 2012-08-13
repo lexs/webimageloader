@@ -137,7 +137,7 @@ public class ImageLoader {
     public Bitmap loadBlocking(Request request) throws IOException {
         final WaitFuture future = new WaitFuture();
 
-        Bitmap b = load(new Object(), request, new LoaderManager.Listener() {
+        Bitmap b = load(null, request, new LoaderManager.Listener() {
             @Override
             public void onLoaded(Bitmap b) {
                 future.set(b);
@@ -212,7 +212,7 @@ public class ImageLoader {
      * @param request the request to preload
      */
     public void preload(Request request) {
-        load(new Object(), request, EMPTY_LISTENER);
+        load(null, request, EMPTY_LISTENER);
     }
 
     /**
