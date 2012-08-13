@@ -19,8 +19,8 @@ public class ListenerFuture implements Runnable {
     public void run() {
         try {
             task.run(listener);
-        } catch (Exception e) {
-            listener.onError(e);
+        } catch (Throwable t) {
+            listener.onError(t);
         }
     }
 }
