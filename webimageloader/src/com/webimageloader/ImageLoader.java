@@ -153,19 +153,30 @@ public class ImageLoader {
             return b;
         }
 
-        try {
-            return future.get();
-        } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
+        boolean interrupted = false;
 
-            // Rethrow as original exception if possible
-            if (cause instanceof IOException) {
-                throw (IOException) cause;
-            } else {
-                throw new IOException("Failed to fetch image", e.getCause());
+        try {
+            while (true) {
+                try {
+                    return future.get();
+                } catch (ExecutionException e) {
+                    Throwable cause = e.getCause();
+
+                    // Rethrow as original exception if possible
+                    if (cause instanceof IOException) {
+                        throw (IOException) cause;
+                    } else {
+                        throw new IOException("Failed to fetch image", e.getCause());
+                    }
+                } catch (InterruptedException e) {
+                    // Fall through and retry
+                    interrupted = true;
+                }
             }
-        } catch (InterruptedException e) {
-            throw new IOException("Interruped while fetching image", e);
+        } finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
