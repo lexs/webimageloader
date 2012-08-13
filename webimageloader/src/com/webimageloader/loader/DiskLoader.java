@@ -74,15 +74,15 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                 InputStream is = snapshot.getInputStream(INPUT_IMAGE);
 
                 Metadata metadata = readMetadata(snapshot);
+
+                listener.onStreamLoaded(is, metadata);
+                is.close();
+
                 if (System.currentTimeMillis() > metadata.getExpires()) {
                     // Cache has expired
                     if (Logger.VERBOSE) Log.v(TAG, request + " has expired, updating");
                     chain.next().load(request.withMetadata(metadata), chain, new NextListener(request, listener));
                 }
-
-                listener.onStreamLoaded(is, metadata);
-                is.close();
-
             } finally {
                 snapshot.close();
             }
