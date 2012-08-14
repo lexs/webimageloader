@@ -353,8 +353,8 @@ public class ImageLoader {
         private DiskLoader diskLoader;
         private MemoryCache memoryCache;
 
-        private int connectionTimeout;
-        private int readTimeout;
+        private int connectionTimeout = Constants.DEFAULT_CONNECTION_TIMEOUT;
+        private int readTimeout = Constants.DEFAULT_READ_TIMEOUT;
         private long maxAge;
 
         public Builder(Context context) {
