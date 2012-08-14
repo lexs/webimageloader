@@ -2,6 +2,7 @@ package com.webimageloader;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
@@ -357,12 +358,22 @@ public class ImageLoader {
         private int readTimeout = Constants.DEFAULT_READ_TIMEOUT;
         private long maxAge;
 
+        /**
+         * Create a new builder
+         * @param context the context
+         */
         public Builder(Context context) {
             this.context = context.getApplicationContext();
 
             streamHandlers = new HashMap<String, URLStreamHandler>();
         }
 
+        /**
+         * Enable the disk cache
+         * @param cacheDir cache location
+         * @param maxSize max size of the cache
+         * @return
+         */
         public Builder enableDiskCache(File cacheDir, int maxSize) {
             try {
                 diskLoader = DiskLoader.open(cacheDir, maxSize);
@@ -373,36 +384,73 @@ public class ImageLoader {
             return this;
         }
 
+        /**
+         * Enable the memory cache
+         * @param maxSize max size of the cache
+         * @return this builder
+         */
         public Builder enableMemoryCache(int maxSize) {
             memoryCache = new MemoryCache(maxSize);
 
             return this;
         }
 
+        /**
+         * Add a URL scheme handler
+         * @param scheme the scheme to handle
+         * @param handler the handler
+         * @return this builder
+         *
+         * @see URLStreamHandler
+         */
         public Builder addURLSchemeHandler(String scheme, URLStreamHandler handler) {
             streamHandlers.put(scheme, handler);
 
             return this;
         }
 
+        /**
+         * Set connection timeout, by default 10 seconds
+         * @param connectionTimeout the connection timeout
+         * @return this builder
+         *
+         * @see URLConnection#setConnectTimeout(int)
+         */
         public Builder setConnectionTimeout(int connectionTimeout) {
             this.connectionTimeout = connectionTimeout;
 
             return this;
         }
 
+
+        /**
+         * Set read timeout, by default 15 seconds
+         * @param readTimeout the read timeout
+         * @return this builder
+         *
+         * @see URLConnection#setReadTimeout(int)
+         */
         public Builder setReadTimeout(int readTimeout) {
             this.readTimeout = readTimeout;
 
             return this;
         }
 
+        /**
+         * Override max-age and expires headers
+         * @param maxAge max-age to use for all requests
+         * @return this builder
+         */
         public Builder setCacheMaxAge(long maxAge) {
             this.maxAge = maxAge;
 
             return this;
         }
 
+        /**
+         * Build the {@link ImageLoader} from the settings in this builder
+         * @return a {@link ImageLoader}
+         */
         public ImageLoader build() {
             URLStreamHandler handler = new ContentURLStreamHandler(context.getContentResolver());
             streamHandlers.put(ContentResolver.SCHEME_CONTENT, handler);
@@ -416,6 +464,11 @@ public class ImageLoader {
         }
     }
 
+    /**
+     * Handles logging for all {@link ImageLoader} instances
+     *
+     * @author Alexander Blom <alexanderblom.se>
+     */
     public static class Logger {
         public static boolean DEBUG = false;
         public static boolean VERBOSE = false;
