@@ -347,6 +347,8 @@ public class ImageLoader {
      * @author Alexander Blom <alexanderblom.se>
      */
     public static class Builder {
+        public static final long MAX_AGE_INFINITY = Constants.MAX_AGE_INFINITY;
+        
         private Context context;
 
         private HashMap<String, URLStreamHandler> streamHandlers;
@@ -356,7 +358,9 @@ public class ImageLoader {
 
         private int connectionTimeout = Constants.DEFAULT_CONNECTION_TIMEOUT;
         private int readTimeout = Constants.DEFAULT_READ_TIMEOUT;
-        private long maxAge;
+        
+        private long defaultMaxAge = Constants.DEFAULT_MAX_AGE;
+        private long forcedMaxAge = Constants.MAX_AGE_NOT_FORCED;
 
         /**
          * Create a new builder
@@ -437,12 +441,23 @@ public class ImageLoader {
         }
 
         /**
+         * Set what max-age to use when a response doesn't have one set
+         * @param maxAge default max-age, 0 means infinity
+         * @return this builder
+         */
+        public Builder setDefaultCacheMaxAge(long maxAge) {
+            this.defaultMaxAge = maxAge;
+            
+            return this;
+        }
+        
+        /**
          * Override max-age and expires headers
-         * @param maxAge max-age to use for all requests
+         * @param maxAge max-age to use for all requests, 0 means infinity
          * @return this builder
          */
         public Builder setCacheMaxAge(long maxAge) {
-            this.maxAge = maxAge;
+            this.forcedMaxAge = maxAge;
 
             return this;
         }
@@ -457,7 +472,7 @@ public class ImageLoader {
             streamHandlers.put(ContentResolver.SCHEME_FILE, handler);
             streamHandlers.put(ContentResolver.SCHEME_ANDROID_RESOURCE, handler);
 
-            NetworkLoader networkLoader = new NetworkLoader(streamHandlers, connectionTimeout, readTimeout, maxAge);
+            NetworkLoader networkLoader = new NetworkLoader(streamHandlers, connectionTimeout, readTimeout, defaultMaxAge, forcedMaxAge);
             LoaderManager loaderManager = new LoaderManager(memoryCache, diskLoader, networkLoader);
 
             return new ImageLoader(loaderManager);

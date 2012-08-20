@@ -18,6 +18,7 @@ import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.webimageloader.Constants;
 import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.util.Android;
 import com.webimageloader.util.HeaderParser;
@@ -26,21 +27,21 @@ import com.webimageloader.util.PriorityThreadFactory;
 public class NetworkLoader extends BackgroundLoader {
     private static final String TAG = "NetworkLoader";
 
-    private static final long DEFAULT_MAX_AGE = 3 * 24 * 60 * 60 * 1000; // Three days
-
     private static final int TAG_REGULAR = 0x7eb00000;
     private static final int TAG_CONDITIONAL = 0x7eb0000c;
 
     private Map<String, URLStreamHandler> streamHandlers;
     private int connectTimeout;
     private int readTimeout;
-    private long forceMaxAge;
+    private long defaultMaxAge;
+    private long forcedMaxAge;
 
-    public NetworkLoader(Map<String, URLStreamHandler> streamHandlers, int connectionTimeout, int readTimeout, long maxAge) {
+    public NetworkLoader(Map<String, URLStreamHandler> streamHandlers, int connectionTimeout, int readTimeout, long defaultMaxAge, long forcedMaxAge) {
         this.streamHandlers = Collections.unmodifiableMap(streamHandlers);
         this.connectTimeout = connectionTimeout;
         this.readTimeout = readTimeout;
-        this.forceMaxAge = maxAge;
+        this.defaultMaxAge = defaultMaxAge;
+        this.forcedMaxAge = forcedMaxAge;
     }
 
     @Override
@@ -119,8 +120,10 @@ public class NetworkLoader extends BackgroundLoader {
     }
 
     private long getExpires(URLConnection urlConnection) {
-        if (forceMaxAge > 0) {
-            return System.currentTimeMillis() + forceMaxAge;
+        if (forcedMaxAge > 0) {
+            return System.currentTimeMillis() + forcedMaxAge;
+        } else if (forcedMaxAge == Constants.MAX_AGE_INFINITY) {
+            return Metadata.NEVER_EXPIRES;
         }
 
         // Prefer "max-age" before "expires"
@@ -135,7 +138,7 @@ public class NetworkLoader extends BackgroundLoader {
         }
 
         // Use default
-        return System.currentTimeMillis() + DEFAULT_MAX_AGE;
+        return System.currentTimeMillis() + defaultMaxAge;
     }
 
     @TargetApi(14)
