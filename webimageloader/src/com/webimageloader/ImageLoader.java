@@ -2,6 +2,7 @@ package com.webimageloader;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.util.HashMap;
@@ -305,17 +306,19 @@ public class ImageLoader {
         }
 
         private class TagListener<T> implements LoaderManager.Listener {
-            private T tag;
+            private WeakReference<T> reference;
             private Listener<T> listener;
 
             public TagListener(T tag, Listener<T> listener) {
-                this.tag = tag;
+                this.reference = new WeakReference<T>(tag);
                 this.listener = listener;
             }
 
             @Override
             public void onLoaded(final Bitmap b) {
-                post(new Runnable() {
+                final T tag = getTag();
+                
+                post(tag, new Runnable() {
                     @Override
                     public void run() {
                         listener.onSuccess(tag, b);
@@ -325,15 +328,26 @@ public class ImageLoader {
 
             @Override
             public void onError(final Throwable t) {
-                post(new Runnable() {
+                final T tag = getTag();
+                
+                post(tag, new Runnable() {
                     @Override
                     public void run() {
                         listener.onError(tag, t);
                     }
                 });
             }
+            
+            private T getTag() {
+                T tag = reference.get();
+                if (tag == null) {
+                    throw new RuntimeException("Listener called but tag was GC'ed");
+                }
+                
+                return tag;
+            }
 
-            private void post(Runnable r) {
+            private void post(T tag, Runnable r) {
                 Message m = Message.obtain(handler, r);
                 m.obj = tag;
                 handler.sendMessage(m);
