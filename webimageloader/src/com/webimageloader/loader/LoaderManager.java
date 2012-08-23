@@ -46,7 +46,7 @@ public class LoaderManager {
         // Create standard chain
         standardChain = new ArrayList<Loader>();
         add(standardChain, diskLoader);
-        standardChain.add(networkLoader);
+        add(standardChain, networkLoader);
 
         // Create transformation chain
         transformationChain = new ArrayList<Loader>();
