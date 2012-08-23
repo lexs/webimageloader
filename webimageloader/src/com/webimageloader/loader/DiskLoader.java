@@ -116,11 +116,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         @Override
         public void onStreamLoaded(InputStream is, Metadata metadata) {
             try {
-                String key = hashKeyForDisk(request);
-                Editor editor = cache.edit(key);
-                if (editor == null) {
-                    throw new IOException("File is already being edited");
-                }
+                Editor editor = getEditor(request);
 
                 OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE), BUFFER_SIZE);
                 try {
@@ -181,11 +177,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         @Override
         public void onNotModified(Metadata metadata) {
             try {
-                String key = hashKeyForDisk(request);
-                Editor editor = cache.edit(key);
-                if (editor == null) {
-                    throw new IOException("File is already being edited");
-                }
+                Editor editor = getEditor(request);
 
                 try {
                     writeMetadata(editor, metadata);
@@ -208,6 +200,17 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         @Override
         public void onError(Throwable t) {
             listener.onError(t);
+        }
+        
+        private Editor getEditor(LoaderRequest request) throws IOException {
+            String key = hashKeyForDisk(request);
+            
+            Editor editor = cache.edit(key);
+            if (editor == null) {
+                throw new IOException("File is already being edited");
+            }
+            
+            return editor;
         }
 
         private void writeMetadata(Editor editor, Metadata metadata) throws IOException {
