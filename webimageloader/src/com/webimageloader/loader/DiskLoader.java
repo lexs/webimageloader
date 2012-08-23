@@ -146,11 +146,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         @Override
         public void onBitmapLoaded(Bitmap b, Metadata metadata) {
             try {
-                String key = hashKeyForDisk(request);
-                Editor editor = cache.edit(key);
-                if (editor == null) {
-                    throw new IOException("File is already being edited");
-                }
+                Editor editor = getEditor(request);
 
                 try {
                     Bitmap.CompressFormat format = getCompressFormat(metadata.getContentType());
