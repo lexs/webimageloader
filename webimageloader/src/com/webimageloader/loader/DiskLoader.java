@@ -65,8 +65,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
 
     @Override
     protected void loadInBackground(LoaderRequest request, Iterator<Loader> chain, Listener listener) throws IOException {
-        String key = hashKeyForDisk(request);
-        Snapshot snapshot = cache.get(key);
+        Snapshot snapshot = getSnapshot(request);
         if (snapshot != null) {
             try {
                 if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from disk");
@@ -102,6 +101,22 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         } finally {
             is.close();
         }
+    }
+    
+    private Snapshot getSnapshot(LoaderRequest request) throws IOException {
+        String key = hashKeyForDisk(request);
+        return cache.get(key);
+    }
+    
+    private Editor getEditor(LoaderRequest request) throws IOException {
+        String key = hashKeyForDisk(request);
+        
+        Editor editor = cache.edit(key);
+        if (editor == null) {
+            throw new IOException("File is already being edited");
+        }
+        
+        return editor;
     }
 
     private class NextListener implements Listener {
@@ -198,17 +213,6 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
             listener.onError(t);
         }
         
-        private Editor getEditor(LoaderRequest request) throws IOException {
-            String key = hashKeyForDisk(request);
-            
-            Editor editor = cache.edit(key);
-            if (editor == null) {
-                throw new IOException("File is already being edited");
-            }
-            
-            return editor;
-        }
-
         private void writeMetadata(Editor editor, Metadata metadata) throws IOException {
             OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_METADATA), BUFFER_SIZE);
             try {
@@ -250,9 +254,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
 
         @Override
         public void run(Listener listener) throws Exception {
-            String key = hashKeyForDisk(request);
-
-            Snapshot snapshot = cache.get(key);
+            Snapshot snapshot = getSnapshot(request);
             if (snapshot == null) {
                 throw new IllegalStateException("File not available");
             }
