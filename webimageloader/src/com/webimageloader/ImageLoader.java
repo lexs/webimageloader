@@ -38,14 +38,6 @@ import com.webimageloader.util.WaitFuture;
 public class ImageLoader {
     private static final String TAG = "ImageLoader";
 
-    private static final LoaderManager.Listener EMPTY_LISTENER = new LoaderManager.Listener() {
-        @Override
-        public void onLoaded(Bitmap b) {}
-
-        @Override
-        public void onError(Throwable t) {}
-    };
-
     /**
      * Listener for a request which will always be called on the main thread of
      * the application. You should try to avoid keeping a reference to the tag,
@@ -145,7 +137,7 @@ public class ImageLoader {
     public Bitmap loadBlocking(Request request) throws IOException {
         final WaitFuture future = new WaitFuture();
 
-        Bitmap b = load(null, request, new LoaderManager.Listener() {
+        Bitmap b = loadInternal(null, request, new LoaderManager.Listener() {
             @Override
             public void onLoaded(Bitmap b) {
                 future.set(b);
@@ -220,7 +212,7 @@ public class ImageLoader {
      * @param request the request to preload
      */
     public void preload(Request request) {
-        load(null, request, EMPTY_LISTENER);
+        loadInternal(null, request, null);
     }
 
     /**
@@ -232,7 +224,7 @@ public class ImageLoader {
      * @param listener called when the request has finished or failed
      * @return the bitmap if it was already loaded
      *
-     * @see #load(Object, Request, Listener)
+     * @see #loadInternal(Object, Request, Listener)
      */
     public <T> Bitmap load(T tag, String url, Listener<T> listener) {
         return load(tag, new Request(url), listener);
@@ -249,7 +241,7 @@ public class ImageLoader {
      * @param listener called when the request has finished or failed
      * @return the bitmap if it was already loaded
      *
-     * @see #load(Object, Request, Listener)
+     * @see #loadInternal(Object, Request, Listener)
      */
     public <T> Bitmap load(T tag, String url, Transformation transformation, Listener<T> listener) {
         return load(tag, new Request(url).withTransformation(transformation), listener);
@@ -265,7 +257,7 @@ public class ImageLoader {
      * @return the bitmap if it was already loaded
      */
     public <T> Bitmap load(T tag, Request request,  Listener<T> listener) {
-        return load(tag, request, handlerManager.getListener(tag, listener));
+        return loadInternal(tag, request, handlerManager.getListener(tag, listener));
     }
 
     /**
@@ -278,7 +270,7 @@ public class ImageLoader {
         loaderManager.cancel(tag);
     }
 
-    private Bitmap load(Object tag, Request request, LoaderManager.Listener listener) {
+    private Bitmap loadInternal(Object tag, Request request, LoaderManager.Listener listener) {
         return loaderManager.load(tag, request.toLoaderRequest(), listener);
     }
 
