@@ -224,7 +224,7 @@ public class ImageLoader {
      * @param listener called when the request has finished or failed
      * @return the bitmap if it was already loaded
      *
-     * @see #loadInternal(Object, Request, Listener)
+     * @see #load(Object, Request, Listener)
      */
     public <T> Bitmap load(T tag, String url, Listener<T> listener) {
         return load(tag, new Request(url), listener);
@@ -241,7 +241,7 @@ public class ImageLoader {
      * @param listener called when the request has finished or failed
      * @return the bitmap if it was already loaded
      *
-     * @see #loadInternal(Object, Request, Listener)
+     * @see #load(Object, Request, Listener)
      */
     public <T> Bitmap load(T tag, String url, Transformation transformation, Listener<T> listener) {
         return load(tag, new Request(url).withTransformation(transformation), listener);
@@ -399,7 +399,7 @@ public class ImageLoader {
          * Enable the disk cache
          * @param cacheDir cache location
          * @param maxSize max size of the cache
-         * @return
+         * @return this builder
          */
         public Builder enableDiskCache(File cacheDir, int maxSize) {
             try {
