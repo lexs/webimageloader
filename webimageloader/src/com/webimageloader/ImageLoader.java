@@ -298,19 +298,21 @@ public class ImageLoader {
             // so we'll remove it
             handler.removeCallbacksAndMessages(tag);
 
-            return new TagListener<T>(tag, listener);
+            if (tag == null) {
+                return new SimpleTagListener<T>(listener);
+            } else {
+                return new TagListener<T>(tag, listener);
+            }
         }
 
         public void cancel(Object tag) {
             handler.removeCallbacksAndMessages(tag);
         }
-
-        private class TagListener<T> implements LoaderManager.Listener {
-            private WeakReference<T> reference;
+        
+        private class SimpleTagListener<T> implements LoaderManager.Listener {
             private Listener<T> listener;
 
-            public TagListener(T tag, Listener<T> listener) {
-                this.reference = new WeakReference<T>(tag);
+            public SimpleTagListener(Listener<T> listener) {
                 this.listener = listener;
             }
 
@@ -338,19 +340,34 @@ public class ImageLoader {
                 });
             }
             
-            private T getTag() {
-                T tag = reference.get();
-                if (tag == null) {
-                    throw new RuntimeException("Listener called but tag was GC'ed");
-                }
-                
-                return tag;
+            protected T getTag() {
+                return null;
             }
 
             private void post(T tag, Runnable r) {
                 Message m = Message.obtain(handler, r);
                 m.obj = tag;
                 handler.sendMessage(m);
+            }
+        }
+
+        private class TagListener<T> extends SimpleTagListener<T> {
+            private WeakReference<T> reference;
+
+            public TagListener(T tag, Listener<T> listener) {
+                super(listener);
+                
+                this.reference = new WeakReference<T>(tag);
+            }
+
+            @Override
+            protected T getTag() {
+                T tag = reference.get();
+                if (tag == null) {
+                    throw new RuntimeException("Listener called but tag was GC'ed");
+                }
+                
+                return tag;
             }
         }
     }
