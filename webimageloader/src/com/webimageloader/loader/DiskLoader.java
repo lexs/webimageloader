@@ -120,7 +120,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
 
                 OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE), BUFFER_SIZE);
                 try {
-                    copy(new BufferedInputStream(is, BUFFER_SIZE), os);
+                    IOUtil.copy(new BufferedInputStream(is, BUFFER_SIZE), os);
                     os.close();
                     writeMetadata(editor, metadata);
 
@@ -268,15 +268,6 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
             } finally {
                 snapshot.close();
             }
-        }
-    }
-
-    private static void copy(InputStream input, OutputStream output) throws IOException {
-        byte[] buffer = new byte[BUFFER_SIZE];
-
-        int i = 0;
-        while ((i = input.read(buffer)) != -1) {
-            output.write(buffer, 0, i);
         }
     }
 
