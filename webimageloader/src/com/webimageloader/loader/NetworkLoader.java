@@ -7,6 +7,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -32,19 +33,19 @@ public class NetworkLoader extends BackgroundLoader {
     private static final int TAG_CONDITIONAL = 0x7eb0000c;
 
     private Map<String, URLStreamHandler> streamHandlers;
-    private int connectTimeout;
+    private int connectionTimeout;
     private int readTimeout;
     private long defaultMaxAge;
     private long forcedMaxAge;
-
-    public NetworkLoader(Map<String, URLStreamHandler> streamHandlers, int connectionTimeout, int readTimeout, long defaultMaxAge, long forcedMaxAge) {
-        this.streamHandlers = Collections.unmodifiableMap(streamHandlers);
-        this.connectTimeout = connectionTimeout;
-        this.readTimeout = readTimeout;
-        this.defaultMaxAge = defaultMaxAge;
-        this.forcedMaxAge = forcedMaxAge;
+    
+    public NetworkLoader(Builder builder) {
+        this.streamHandlers = Collections.unmodifiableMap(builder.streamHandlers);
+        this.connectionTimeout = builder.connectionTimeout;
+        this.readTimeout = builder.readTimeout;
+        this.defaultMaxAge = builder.defaultMaxAge;
+        this.forcedMaxAge = builder.forcedMaxAge;
     }
-
+    
     @Override
     protected ExecutorService createExecutor() {
         return Executors.newFixedThreadPool(2, new PriorityThreadFactory("Network", Process.THREAD_PRIORITY_BACKGROUND));
@@ -132,8 +133,8 @@ public class NetworkLoader extends BackgroundLoader {
 
         URLConnection urlConnection = url.openConnection();
         
-        if (connectTimeout > 0) {
-            urlConnection.setConnectTimeout(connectTimeout);
+        if (connectionTimeout > 0) {
+            urlConnection.setConnectTimeout(connectionTimeout);
         }
 
         if (readTimeout > 0) {
@@ -192,5 +193,49 @@ public class NetworkLoader extends BackgroundLoader {
             }
         }
         
+    }
+    
+    public static class Builder {
+        private HashMap<String, URLStreamHandler> streamHandlers;
+        
+        private int connectionTimeout = Constants.DEFAULT_CONNECTION_TIMEOUT;
+        private int readTimeout = Constants.DEFAULT_READ_TIMEOUT;
+        
+        private long defaultMaxAge = Constants.DEFAULT_MAX_AGE;
+        private long forcedMaxAge = Constants.MAX_AGE_NOT_FORCED;
+        
+        public Builder() {
+            streamHandlers = new HashMap<String, URLStreamHandler>();
+        }
+        
+        public Builder addURLSchemeHandler(String scheme, URLStreamHandler handler) {
+            streamHandlers.put(scheme, handler);
+
+            return this;
+        }
+        
+        public Builder setConnectionTimeout(int connectionTimeout) {
+            this.connectionTimeout = connectionTimeout;
+
+            return this;
+        }
+
+        public Builder setReadTimeout(int readTimeout) {
+            this.readTimeout = readTimeout;
+
+            return this;
+        }
+        
+        public Builder setDefaultCacheMaxAge(long maxAge) {
+            this.defaultMaxAge = maxAge;
+            
+            return this;
+        }
+        
+        public Builder setCacheMaxAge(long maxAge) {
+            this.forcedMaxAge = maxAge;
+
+            return this;
+        }
     }
 }

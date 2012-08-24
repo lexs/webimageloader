@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
-import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 import android.content.ContentResolver;
@@ -374,16 +373,10 @@ public class ImageLoader {
         
         private Context context;
 
-        private HashMap<String, URLStreamHandler> streamHandlers;
+        private NetworkLoader.Builder networkBuilder;
 
         private DiskLoader diskLoader;
         private MemoryCache memoryCache;
-
-        private int connectionTimeout = Constants.DEFAULT_CONNECTION_TIMEOUT;
-        private int readTimeout = Constants.DEFAULT_READ_TIMEOUT;
-        
-        private long defaultMaxAge = Constants.DEFAULT_MAX_AGE;
-        private long forcedMaxAge = Constants.MAX_AGE_NOT_FORCED;
 
         /**
          * Create a new builder
@@ -392,7 +385,7 @@ public class ImageLoader {
         public Builder(Context context) {
             this.context = context.getApplicationContext();
 
-            streamHandlers = new HashMap<String, URLStreamHandler>();
+            networkBuilder = new NetworkLoader.Builder();
         }
 
         /**
@@ -431,7 +424,7 @@ public class ImageLoader {
          * @see URLStreamHandler
          */
         public Builder addURLSchemeHandler(String scheme, URLStreamHandler handler) {
-            streamHandlers.put(scheme, handler);
+            networkBuilder.addURLSchemeHandler(scheme, handler);
 
             return this;
         }
@@ -444,7 +437,7 @@ public class ImageLoader {
          * @see URLConnection#setConnectTimeout(int)
          */
         public Builder setConnectionTimeout(int connectionTimeout) {
-            this.connectionTimeout = connectionTimeout;
+            networkBuilder.setConnectionTimeout(connectionTimeout);
 
             return this;
         }
@@ -458,7 +451,7 @@ public class ImageLoader {
          * @see URLConnection#setReadTimeout(int)
          */
         public Builder setReadTimeout(int readTimeout) {
-            this.readTimeout = readTimeout;
+            networkBuilder.setReadTimeout(readTimeout);
 
             return this;
         }
@@ -469,7 +462,7 @@ public class ImageLoader {
          * @return this builder
          */
         public Builder setDefaultCacheMaxAge(long maxAge) {
-            this.defaultMaxAge = maxAge;
+            networkBuilder.setDefaultCacheMaxAge(maxAge);
             
             return this;
         }
@@ -480,7 +473,7 @@ public class ImageLoader {
          * @return this builder
          */
         public Builder setCacheMaxAge(long maxAge) {
-            this.forcedMaxAge = maxAge;
+            networkBuilder.setCacheMaxAge(maxAge);
 
             return this;
         }
@@ -491,11 +484,11 @@ public class ImageLoader {
          */
         public ImageLoader build() {
             URLStreamHandler handler = new ContentURLStreamHandler(context.getContentResolver());
-            streamHandlers.put(ContentResolver.SCHEME_CONTENT, handler);
-            streamHandlers.put(ContentResolver.SCHEME_FILE, handler);
-            streamHandlers.put(ContentResolver.SCHEME_ANDROID_RESOURCE, handler);
+            networkBuilder.addURLSchemeHandler(ContentResolver.SCHEME_CONTENT, handler);
+            networkBuilder.addURLSchemeHandler(ContentResolver.SCHEME_FILE, handler);
+            networkBuilder.addURLSchemeHandler(ContentResolver.SCHEME_ANDROID_RESOURCE, handler);
 
-            NetworkLoader networkLoader = new NetworkLoader(streamHandlers, connectionTimeout, readTimeout, defaultMaxAge, forcedMaxAge);
+            NetworkLoader networkLoader = new NetworkLoader(networkBuilder);
             LoaderManager loaderManager = new LoaderManager(memoryCache, diskLoader, networkLoader);
 
             return new ImageLoader(loaderManager);
