@@ -18,9 +18,9 @@ public class BitmapUtils {
         Bitmap b = BitmapFactory.decodeStream(is);
         if (b == null) {
             throw new IOException("Failed to create bitmap, decodeStream() returned null");
-        } else {
-            return b;
         }
+
+        return b;
     }
 
     private BitmapUtils() {}
