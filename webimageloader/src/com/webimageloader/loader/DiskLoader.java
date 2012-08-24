@@ -130,7 +130,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         }
 
         @Override
-        public void onStreamLoaded(InputSupplier input, Metadata metadata) {
+        public void onStreamLoaded(InputSupplier input, final Metadata metadata) {
             try {
                 Editor editor = getEditor(request);
 
@@ -143,7 +143,13 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                     editor.commit();
 
                     // Read back the file we just saved
-                    run(request, listener, new ReadTask(request, metadata));
+                    run(request, listener, new ListenerFuture.Task() {
+                        @Override
+                        public void run(Listener listener) throws Exception {
+                            DiskInputSupplier input = new DiskInputSupplier(request);
+                            listener.onStreamLoaded(input, metadata);
+                        }
+                    });
                 } catch (IOException e) {
                     // We failed writing to the cache, we can't really do
                     // anything to clean this up
@@ -244,22 +250,6 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         }
     }
 
-    private class ReadTask implements ListenerFuture.Task {
-        private LoaderRequest request;
-        private Metadata metadata;
-
-        public ReadTask(LoaderRequest request, Metadata metadata) {
-            this.request = request;
-            this.metadata = metadata;
-        }
-
-        @Override
-        public void run(Listener listener) throws Exception {
-            DiskInputSupplier input = new DiskInputSupplier(request);
-            listener.onStreamLoaded(input, metadata);
-        }
-    }
-    
     private class DiskInputSupplier implements InputSupplier {
         private String key;
         private Snapshot snapshot;
