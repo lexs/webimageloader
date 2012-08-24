@@ -11,7 +11,7 @@ import com.webimageloader.util.InputSupplier;
 /**
  * Scale an image to the specified size, it is safe to use
  * this transformation on very large images as it loads the
- * images using a sample size, as descriped in Android Training
+ * images using a sample size, as described in Android Training
  * 
  * @author Alexander Blom <alexanderblom.se>
  */
