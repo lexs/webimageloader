@@ -134,12 +134,9 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
             try {
                 Editor editor = getEditor(request);
 
-                // TODO: Proper try clause
-                InputStream is = input.getInput();
                 OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE), BUFFER_SIZE);
                 try {
-                    IOUtil.copy(new BufferedInputStream(is, BUFFER_SIZE), os);
-                    is.close();
+                    IOUtil.copy(input, os);
                     os.close();
                     writeMetadata(editor, metadata);
 
