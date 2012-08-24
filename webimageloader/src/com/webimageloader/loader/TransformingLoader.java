@@ -1,7 +1,6 @@
 package com.webimageloader.loader;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Iterator;
 
 import android.graphics.Bitmap;
@@ -9,6 +8,7 @@ import android.util.Log;
 
 import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.transformation.Transformation;
+import com.webimageloader.util.InputSupplier;
 
 public class TransformingLoader implements Loader {
     private static final String TAG = "TransformingLoader";
@@ -23,9 +23,9 @@ public class TransformingLoader implements Loader {
         LoaderRequest modified = request.withoutTransformation();
         chain.next().load(modified, chain, new Listener() {
             @Override
-            public void onStreamLoaded(InputStream is, Metadata metadata) {
+            public void onStreamLoaded(InputSupplier input, Metadata metadata) {
                 try {
-                    Bitmap b = transformation.transform(is);
+                    Bitmap b = transformation.transform(input);
                     deliverResult(b, metadata);
                 } catch (IOException e) {
                     listener.onError(e);

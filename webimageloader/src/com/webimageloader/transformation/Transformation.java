@@ -1,7 +1,8 @@
 package com.webimageloader.transformation;
 
 import java.io.IOException;
-import java.io.InputStream;
+
+import com.webimageloader.util.InputSupplier;
 
 import android.graphics.Bitmap;
 
@@ -19,13 +20,13 @@ public interface Transformation {
     String getIdentifier();
 
     /**
-     * Transform this {@link InputStream} to a {@link Bitmap}.
+     * Transform this {@link InputSupplier} to a {@link Bitmap}.
      *
-     * @param is original {@link InputStream}
+     * @param input original {@link InputSupplier}
      * @return transformed {@link Bitmap}
      * @throws IOException if the conversion failed
      */
-    Bitmap transform(InputStream is) throws IOException;
+    Bitmap transform(InputSupplier input) throws IOException;
 
     /**
      * Transform this {@link Bitmap} to a new {@link Bitmap}.

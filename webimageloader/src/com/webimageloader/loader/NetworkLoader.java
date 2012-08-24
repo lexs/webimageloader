@@ -22,6 +22,7 @@ import com.webimageloader.Constants;
 import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.util.Android;
 import com.webimageloader.util.HeaderParser;
+import com.webimageloader.util.InputSupplier;
 import com.webimageloader.util.PriorityThreadFactory;
 
 public class NetworkLoader extends BackgroundLoader {
@@ -53,20 +54,10 @@ public class NetworkLoader extends BackgroundLoader {
     protected void loadInBackground(LoaderRequest request, Iterator<Loader> chain, Listener listener) throws Exception {
         String url = request.getUrl();
 
-        disableConnectionReuseIfNecessary();
-
         String protocol = getProtocol(url);
         URLStreamHandler streamHandler = getURLStreamHandler(protocol);
 
-        URLConnection urlConnection = new URL(null, url, streamHandler).openConnection();
-
-        if (connectTimeout > 0) {
-            urlConnection.setConnectTimeout(connectTimeout);
-        }
-
-        if (readTimeout > 0) {
-            urlConnection.setReadTimeout(readTimeout);
-        }
+        URLConnection urlConnection = openConnection(new URL(null, url, streamHandler));
 
         Metadata metadata = request.getMetadata();
         if (metadata != null) {
@@ -99,14 +90,9 @@ public class NetworkLoader extends BackgroundLoader {
 
             listener.onNotModified(metadata);
         } else {
-            InputStream is = urlConnection.getInputStream();
             if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from network");
 
-            try {
-                listener.onStreamLoaded(is, metadata);
-            } finally {
-                is.close();
-            }
+            listener.onStreamLoaded(new NetworkInputSupplier(urlConnection), metadata);
         }
     }
 
@@ -140,6 +126,22 @@ public class NetworkLoader extends BackgroundLoader {
         // Use default
         return System.currentTimeMillis() + defaultMaxAge;
     }
+    
+    private URLConnection openConnection(URL url) throws IOException {
+        disableConnectionReuseIfNecessary();
+
+        URLConnection urlConnection = url.openConnection();
+        
+        if (connectTimeout > 0) {
+            urlConnection.setConnectTimeout(connectTimeout);
+        }
+
+        if (readTimeout > 0) {
+            urlConnection.setReadTimeout(readTimeout);
+        }
+        
+        return urlConnection;
+    }
 
     @TargetApi(14)
     private void tag(int tag) {
@@ -166,5 +168,29 @@ public class NetworkLoader extends BackgroundLoader {
 
     private URLStreamHandler getURLStreamHandler(String protocol) {
         return streamHandlers.get(protocol);
+    }
+    
+    private class NetworkInputSupplier implements InputSupplier {
+        private URLConnection connection;
+        private URL url;
+        
+        public NetworkInputSupplier(URLConnection connection) {
+            this.connection = connection;
+            
+            url = connection.getURL();
+        }
+        
+        @Override
+        public InputStream getInput() throws IOException {
+            if (connection != null) {
+                InputStream is = connection.getInputStream();
+                connection = null;
+                
+                return is;
+            } else {
+                return openConnection(url).getInputStream();
+            }
+        }
+        
     }
 }

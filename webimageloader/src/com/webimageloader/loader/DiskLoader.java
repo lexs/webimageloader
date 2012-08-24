@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.File;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,6 +17,7 @@ import com.webimageloader.concurrent.ListenerFuture;
 import com.webimageloader.util.DiskLruCache;
 import com.webimageloader.util.Hasher;
 import com.webimageloader.util.IOUtil;
+import com.webimageloader.util.InputSupplier;
 import com.webimageloader.util.PriorityThreadFactory;
 import com.webimageloader.util.DiskLruCache.Editor;
 import com.webimageloader.util.DiskLruCache.Snapshot;
@@ -70,12 +72,11 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
             try {
                 if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from disk");
 
-                InputStream is = snapshot.getInputStream(INPUT_IMAGE);
 
                 Metadata metadata = readMetadata(snapshot);
+                DiskInputSupplier input = new DiskInputSupplier(hashKeyForDisk(request), snapshot);
 
-                listener.onStreamLoaded(is, metadata);
-                is.close();
+                listener.onStreamLoaded(input, metadata);
 
                 long expires = metadata.getExpires();
                 if (expires != Metadata.NEVER_EXPIRES && System.currentTimeMillis() > expires) {
@@ -129,13 +130,16 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         }
 
         @Override
-        public void onStreamLoaded(InputStream is, Metadata metadata) {
+        public void onStreamLoaded(InputSupplier input, Metadata metadata) {
             try {
                 Editor editor = getEditor(request);
 
+                // TODO: Proper try clause
+                InputStream is = input.getInput();
                 OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE), BUFFER_SIZE);
                 try {
                     IOUtil.copy(new BufferedInputStream(is, BUFFER_SIZE), os);
+                    is.close();
                     os.close();
                     writeMetadata(editor, metadata);
 
@@ -154,7 +158,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                 // means that the InputStream is still untouched.
                 // Pass it trough to the listener without caching.
                 Log.e(TAG, "Failed opening cache", e);
-                listener.onStreamLoaded(is, metadata);
+                listener.onStreamLoaded(input, metadata);
             }
         }
 
@@ -260,12 +264,43 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
             }
 
             try {
-                InputStream is = snapshot.getInputStream(INPUT_IMAGE);
-                listener.onStreamLoaded(is, metadata);
-                is.close();
+                DiskInputSupplier input = new DiskInputSupplier(hashKeyForDisk(request), snapshot);
+                listener.onStreamLoaded(input, metadata);
             } finally {
                 snapshot.close();
             }
+        }
+    }
+    
+    private class DiskInputSupplier implements InputSupplier {
+        private String key;
+        private Snapshot snapshot;
+        
+        public DiskInputSupplier(String key, Snapshot snapshot) {
+            this.key = key;
+            this.snapshot = snapshot;
+        }
+        
+        @Override
+        public InputStream getInput() throws IOException {
+            if (snapshot == null) {
+                snapshot = cache.get(key);
+                
+                if (snapshot == null) {
+                    throw new IOException("Snapshot not available");
+                }
+            }
+            
+            // Wrap input stream so we can close the snapshot
+            return new FilterInputStream(snapshot.getInputStream(INPUT_IMAGE)) {
+                @Override
+                public void close() throws IOException {
+                    super.close();
+
+                    snapshot.close();
+                    snapshot = null;
+                }
+            };
         }
     }
 
