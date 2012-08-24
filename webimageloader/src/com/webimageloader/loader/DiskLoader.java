@@ -119,6 +119,21 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         
         return editor;
     }
+    
+    /**
+     * A hashing method that changes a string (like a URL) into a hash suitable
+     * for using as a disk filename.
+     */
+    private String hashKeyForDisk(LoaderRequest request) {
+        String key = request.getCacheKey();
+
+        // We don't except to have a lot of threads
+        // so it's okay to synchronize access
+
+        synchronized (hasher) {
+            return hasher.hash(key);
+        }
+    }
 
     private class NextListener implements Listener {
         private LoaderRequest request;
@@ -283,21 +298,6 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                     snapshot = null;
                 }
             };
-        }
-    }
-
-    /**
-     * A hashing method that changes a string (like a URL) into a hash suitable
-     * for using as a disk filename.
-     */
-    private String hashKeyForDisk(LoaderRequest request) {
-        String key = request.getCacheKey();
-
-        // We don't except to have a lot of threads
-        // so it's okay to synchronize access
-
-        synchronized (hasher) {
-            return hasher.hash(key);
         }
     }
 }
