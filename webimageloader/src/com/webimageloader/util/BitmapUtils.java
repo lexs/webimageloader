@@ -8,13 +8,18 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 public class BitmapUtils {
-    public static Bitmap decodeStream(InputStream is) {
+    public static Bitmap decodeStream(InputStream is) throws IOException {
         // Handle a bug in older versions of Android, see
         // http://android-developers.blogspot.se/2010/07/multithreading-for-performance.html
         if (!Android.isAPI(9)) {
-            return BitmapFactory.decodeStream(new FlushedInputStream(is));
+            is = new FlushedInputStream(is);
+        }
+        
+        Bitmap b = BitmapFactory.decodeStream(is);
+        if (b == null) {
+            throw new IOException("Failed to create bitmap, decodeStream() returned null");
         } else {
-            return BitmapFactory.decodeStream(is);
+            return b;
         }
     }
 

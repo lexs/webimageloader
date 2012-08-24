@@ -24,10 +24,7 @@ public abstract class SimpleTransformation implements Transformation {
 
         try {
             Bitmap b = BitmapUtils.decodeStream(is);
-            if (b == null) {
-                throw new IOException("Failed to decode stream");
-            }
-            
+
             return transform(b);
         } finally {
             is.close();

@@ -142,12 +142,8 @@ public class PendingRequests {
                 
                 try {
                     Bitmap b = BitmapUtils.decodeStream(is);
-    
-                    if (b != null) {
-                        onBitmapLoaded(b, metadata);
-                    } else {
-                        throw new IOException("Failed to create bitmap, decodeStream() returned null");
-                    }
+                    
+                    onBitmapLoaded(b, metadata);
                 } finally {
                     is.close();
                 }
