@@ -74,7 +74,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
 
 
                 Metadata metadata = readMetadata(snapshot);
-                DiskInputSupplier input = new DiskInputSupplier(hashKeyForDisk(request), snapshot);
+                DiskInputSupplier input = new DiskInputSupplier(request, snapshot);
 
                 listener.onStreamLoaded(input, metadata);
 
@@ -255,17 +255,8 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
 
         @Override
         public void run(Listener listener) throws Exception {
-            Snapshot snapshot = getSnapshot(request);
-            if (snapshot == null) {
-                throw new IllegalStateException("File not available");
-            }
-
-            try {
-                DiskInputSupplier input = new DiskInputSupplier(hashKeyForDisk(request), snapshot);
-                listener.onStreamLoaded(input, metadata);
-            } finally {
-                snapshot.close();
-            }
+            DiskInputSupplier input = new DiskInputSupplier(request);
+            listener.onStreamLoaded(input, metadata);
         }
     }
     
@@ -273,8 +264,12 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         private String key;
         private Snapshot snapshot;
         
-        public DiskInputSupplier(String key, Snapshot snapshot) {
-            this.key = key;
+        public DiskInputSupplier(LoaderRequest request) {
+            this(request, null);
+        }
+        
+        public DiskInputSupplier(LoaderRequest request, Snapshot snapshot) {
+            this.key = hashKeyForDisk(request);
             this.snapshot = snapshot;
         }
         
