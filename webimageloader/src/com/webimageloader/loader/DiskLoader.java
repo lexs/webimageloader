@@ -71,7 +71,6 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
             try {
                 if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from disk");
 
-
                 Metadata metadata = readMetadata(snapshot);
                 DiskInputSupplier input = new DiskInputSupplier(request, snapshot);
 
@@ -128,7 +127,6 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
 
         // We don't except to have a lot of threads
         // so it's okay to synchronize access
-
         synchronized (hasher) {
             return hasher.hash(key);
         }
