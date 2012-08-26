@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.transformation.Transformation;
+import com.webimageloader.util.BitmapUtils;
 import com.webimageloader.util.InputSupplier;
 
 public class TransformingLoader implements Loader {
@@ -25,8 +26,10 @@ public class TransformingLoader implements Loader {
             @Override
             public void onStreamLoaded(InputSupplier input, Metadata metadata) {
                 try {
-                    Bitmap b = transformation.transform(input);
-                    deliverResult(b, metadata);
+                    Bitmap transformedBitmap = transformation.transform(input);
+                    Metadata transformedMetadata = getTransformedMetadata(metadata, transformation);
+
+                    deliverResult(transformedBitmap, transformedMetadata);
                 } catch (IOException e) {
                     listener.onError(e);
                 }
@@ -56,6 +59,17 @@ public class TransformingLoader implements Loader {
                 listener.onError(t);
             }
         });
+    }
+
+    private Metadata getTransformedMetadata(Metadata metadata, Transformation transformation) {
+        Bitmap.CompressFormat format = transformation.getCompressFormat();
+        if (format == null) {
+            // Transformed loader doesn't care about format, use the same
+            return metadata;
+        }
+
+        String contentType = BitmapUtils.getContentType(format);
+        return new Metadata(contentType, metadata.getLastModified(), metadata.getExpires(), metadata.getEtag());
     }
 
     @Override

@@ -12,10 +12,10 @@ import com.webimageloader.util.InputSupplier;
  * Scale an image to the specified size, it is safe to use
  * this transformation on very large images as it loads the
  * images using a sample size, as described in Android Training
- * 
+ *
  * @author Alexander Blom <alexanderblom.se>
  */
-public class ScaleTransformation implements Transformation {
+public class ScaleTransformation extends SimpleTransformation {
     private int reqWidth;
     private int reqHeight;
 
@@ -23,7 +23,7 @@ public class ScaleTransformation implements Transformation {
      * Create a new scale transformation which will scale the image to
      * the specified required size. The image can however be slightly larger
      * than the size specified.
-     * 
+     *
      * @param reqWidth required width, the image will not be smaller than this
      * @param reqHeight required height, the image will not be smaller than this
      */
@@ -51,7 +51,7 @@ public class ScaleTransformation implements Transformation {
         // First decode with inJustDecodeBounds=true to check dimensions
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
-        
+
         InputStream is = input.getInput();
         try {
             BitmapFactory.decodeStream(is, null, options);
@@ -64,7 +64,7 @@ public class ScaleTransformation implements Transformation {
 
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
-        
+
         is = input.getInput();
         try {
             return BitmapFactory.decodeStream(is, null, options);
@@ -72,7 +72,7 @@ public class ScaleTransformation implements Transformation {
             is.close();
         }
     }
-    
+
     private static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
         final int height = options.outHeight;

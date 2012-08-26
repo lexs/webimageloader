@@ -20,6 +20,14 @@ public interface Transformation {
     String getIdentifier();
 
     /**
+     * Get the format used when saving the result of this transformation. This
+     * can be useful for example when relying on alpha.
+     *
+     * @return the bitmap compress format, null for default
+     */
+    Bitmap.CompressFormat getCompressFormat();
+
+    /**
      * Transform this {@link InputSupplier} to a {@link Bitmap}.
      *
      * @param input original {@link InputSupplier}

@@ -12,19 +12,21 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import android.graphics.Bitmap;
+import android.os.Process;
+import android.util.Log;
+
+import com.webimageloader.Constants;
 import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.concurrent.ListenerFuture;
+import com.webimageloader.util.BitmapUtils;
 import com.webimageloader.util.DiskLruCache;
+import com.webimageloader.util.DiskLruCache.Editor;
+import com.webimageloader.util.DiskLruCache.Snapshot;
 import com.webimageloader.util.Hasher;
 import com.webimageloader.util.IOUtil;
 import com.webimageloader.util.InputSupplier;
 import com.webimageloader.util.PriorityThreadFactory;
-import com.webimageloader.util.DiskLruCache.Editor;
-import com.webimageloader.util.DiskLruCache.Snapshot;
-
-import android.graphics.Bitmap;
-import android.os.Process;
-import android.util.Log;
 
 public class DiskLoader extends BackgroundLoader implements Closeable {
     private static final String TAG = "DiskLoader";
@@ -32,9 +34,6 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
     private static final int APP_VERSION = 2;
 
     private static final int BUFFER_SIZE = 8192;
-
-    private static final Bitmap.CompressFormat COMPRESS_FORMAT = Bitmap.CompressFormat.JPEG;
-    private static final int COMPRESS_QUALITY = 75;
 
     private static final int INPUT_IMAGE = 0;
     private static final int INPUT_METADATA = 1;
@@ -103,23 +102,23 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
             is.close();
         }
     }
-    
+
     private Snapshot getSnapshot(LoaderRequest request) throws IOException {
         String key = hashKeyForDisk(request);
         return cache.get(key);
     }
-    
+
     private Editor getEditor(LoaderRequest request) throws IOException {
         String key = hashKeyForDisk(request);
-        
+
         Editor editor = cache.edit(key);
         if (editor == null) {
             throw new IOException("File is already being edited");
         }
-        
+
         return editor;
     }
-    
+
     /**
      * A hashing method that changes a string (like a URL) into a hash suitable
      * for using as a disk filename.
@@ -186,7 +185,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                 Editor editor = getEditor(request);
 
                 try {
-                    Bitmap.CompressFormat format = getCompressFormat(metadata.getContentType());
+                    Bitmap.CompressFormat format = BitmapUtils.getCompressFormat(metadata.getContentType());
                     writeBitmap(editor, b, format);
                     writeMetadata(editor, metadata);
 
@@ -234,7 +233,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         public void onError(Throwable t) {
             listener.onError(t);
         }
-        
+
         private void writeMetadata(Editor editor, Metadata metadata) throws IOException {
             OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_METADATA), BUFFER_SIZE);
             try {
@@ -247,20 +246,9 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         private void writeBitmap(Editor editor, Bitmap b, Bitmap.CompressFormat format) throws IOException {
             OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE), BUFFER_SIZE);
             try {
-                b.compress(format, COMPRESS_QUALITY, os);
+                b.compress(format, Constants.DEFAULT_COMPRESS_QUALITY, os);
             } finally {
                 IOUtil.closeQuietly(os);
-            }
-        }
-
-        private Bitmap.CompressFormat getCompressFormat(String contentType) {
-            if ("image/png".equals(contentType)) {
-                return Bitmap.CompressFormat.PNG;
-            } else if ("image/jpeg".equals(contentType)) {
-                return Bitmap.CompressFormat.JPEG;
-            } else {
-                // Unknown format, use default
-                return COMPRESS_FORMAT;
             }
         }
     }
@@ -268,26 +256,26 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
     private class DiskInputSupplier implements InputSupplier {
         private String key;
         private Snapshot snapshot;
-        
+
         public DiskInputSupplier(LoaderRequest request) {
             this(request, null);
         }
-        
+
         public DiskInputSupplier(LoaderRequest request, Snapshot snapshot) {
             this.key = hashKeyForDisk(request);
             this.snapshot = snapshot;
         }
-        
+
         @Override
         public InputStream getInput() throws IOException {
             if (snapshot == null) {
                 snapshot = cache.get(key);
-                
+
                 if (snapshot == null) {
                     throw new IOException("Snapshot not available");
                 }
             }
-            
+
             // Wrap input stream so we can close the snapshot
             return new FilterInputStream(snapshot.getInputStream(INPUT_IMAGE)) {
                 @Override
