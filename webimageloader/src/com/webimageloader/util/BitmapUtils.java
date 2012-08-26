@@ -23,7 +23,7 @@ public class BitmapUtils {
     }
 
     @TargetApi(14)
-	public static String getContentType(Bitmap.CompressFormat format) {
+    public static String getContentType(Bitmap.CompressFormat format) {
         switch (format) {
             case PNG:
                 return "image/png";
