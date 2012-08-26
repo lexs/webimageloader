@@ -22,6 +22,7 @@ import android.util.Log;
 import com.webimageloader.Constants;
 import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.util.Android;
+import com.webimageloader.util.FlushedInputStream;
 import com.webimageloader.util.HeaderParser;
 import com.webimageloader.util.InputSupplier;
 import com.webimageloader.util.PriorityThreadFactory;
@@ -37,7 +38,7 @@ public class NetworkLoader extends BackgroundLoader {
     private int readTimeout;
     private long defaultMaxAge;
     private long forcedMaxAge;
-    
+
     public NetworkLoader(Builder builder) {
         this.streamHandlers = Collections.unmodifiableMap(builder.streamHandlers);
         this.connectionTimeout = builder.connectionTimeout;
@@ -45,7 +46,7 @@ public class NetworkLoader extends BackgroundLoader {
         this.defaultMaxAge = builder.defaultMaxAge;
         this.forcedMaxAge = builder.forcedMaxAge;
     }
-    
+
     @Override
     protected ExecutorService createExecutor() {
         return Executors.newFixedThreadPool(2, new PriorityThreadFactory("Network", Process.THREAD_PRIORITY_BACKGROUND));
@@ -127,12 +128,12 @@ public class NetworkLoader extends BackgroundLoader {
         // Use default
         return System.currentTimeMillis() + defaultMaxAge;
     }
-    
+
     private URLConnection openConnection(URL url) throws IOException {
         disableConnectionReuseIfNecessary();
 
         URLConnection urlConnection = url.openConnection();
-        
+
         if (connectionTimeout > 0) {
             urlConnection.setConnectTimeout(connectionTimeout);
         }
@@ -140,7 +141,7 @@ public class NetworkLoader extends BackgroundLoader {
         if (readTimeout > 0) {
             urlConnection.setReadTimeout(readTimeout);
         }
-        
+
         return urlConnection;
     }
 
@@ -170,50 +171,56 @@ public class NetworkLoader extends BackgroundLoader {
     private URLStreamHandler getURLStreamHandler(String protocol) {
         return streamHandlers.get(protocol);
     }
-    
+
     private class NetworkInputSupplier implements InputSupplier {
         private URLConnection connection;
         private URL url;
-        
+
         public NetworkInputSupplier(URLConnection connection) {
             this.connection = connection;
-            
+
             url = connection.getURL();
         }
-        
+
         @Override
         public InputStream getInput() throws IOException {
             if (connection != null) {
                 InputStream is = connection.getInputStream();
                 connection = null;
-                
+
+                // Handle a bug in older versions of Android, see
+                // http://android-developers.blogspot.se/2010/07/multithreading-for-performance.html
+                if (!Android.isAPI(9)) {
+                    is = new FlushedInputStream(is);
+                }
+
                 return is;
             } else {
                 return openConnection(url).getInputStream();
             }
         }
-        
+
     }
-    
+
     public static class Builder {
         private HashMap<String, URLStreamHandler> streamHandlers;
-        
+
         private int connectionTimeout = Constants.DEFAULT_CONNECTION_TIMEOUT;
         private int readTimeout = Constants.DEFAULT_READ_TIMEOUT;
-        
+
         private long defaultMaxAge = Constants.DEFAULT_MAX_AGE;
         private long forcedMaxAge = Constants.MAX_AGE_NOT_FORCED;
-        
+
         public Builder() {
             streamHandlers = new HashMap<String, URLStreamHandler>();
         }
-        
+
         public Builder addURLSchemeHandler(String scheme, URLStreamHandler handler) {
             streamHandlers.put(scheme, handler);
 
             return this;
         }
-        
+
         public Builder setConnectionTimeout(int connectionTimeout) {
             this.connectionTimeout = connectionTimeout;
 
@@ -225,13 +232,13 @@ public class NetworkLoader extends BackgroundLoader {
 
             return this;
         }
-        
+
         public Builder setDefaultCacheMaxAge(long maxAge) {
             this.defaultMaxAge = maxAge;
-            
+
             return this;
         }
-        
+
         public Builder setCacheMaxAge(long maxAge) {
             this.forcedMaxAge = maxAge;
 
