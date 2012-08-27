@@ -31,10 +31,10 @@ final int memoryCacheSize = 1024 * 1024 * memClass / 8;
 File cacheDir = new File(getExternalCacheDir(), "images");
 ImageLoader imageLoader = new ImageLoader.Builder(context)
         .enableDiskCache(cacheDir, 10 * 1024 * 1024)
-        .enableMemoryCache(memoryCacheSize);
+        .enableMemoryCache(memoryCacheSize).build();
 ```
 
-Or use the provided Applications class for convienience and reasonable defaults (which you can override!)
+Or use the provided Applications class for convenience and reasonable defaults (which you can override!)
 
 ```xml
 <application android:name="com.webimageloader.ext.ImageLoaderApplication">
