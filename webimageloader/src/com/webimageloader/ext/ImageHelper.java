@@ -27,8 +27,10 @@ public class ImageHelper {
     private int loadingResource;
     private int errorResource;
     private boolean fadeIn = false;
+    private int fadeDuration = 300;
 
     private LoadingListener listener;
+
 
     /**
      * Create a new {@link ImageHelper} using the specified loader
@@ -69,13 +71,26 @@ public class ImageHelper {
     }
 
     /**
-     * Set wether to fade in after loading
+     * Set whether to fade in after loading
      *
      * @param fadeIn true or false
      * @return this helper
      */
     public ImageHelper setFadeIn(boolean fadeIn) {
         this.fadeIn = fadeIn;
+
+        return this;
+    }
+    
+    /**
+     * Enable and set the fade in duration.
+     *
+     * @param duration transition duration in milliseconds.
+     * @return this helper
+     */
+    public ImageHelper setFadeIn(int duration) {
+        this.fadeIn = true;
+		this.fadeDuration = duration;
 
         return this;
     }
@@ -132,7 +147,7 @@ public class ImageHelper {
                 });
 
                 v.setImageDrawable(d);
-                d.startTransition(300);
+                d.startTransition(fadeDuration);
             }
         }
 
