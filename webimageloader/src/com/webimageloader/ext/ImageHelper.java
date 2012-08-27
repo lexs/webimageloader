@@ -21,13 +21,15 @@ import android.widget.ImageView;
 public class ImageHelper {
     private static final String TAG = "ImageHelper";
 
+    private static final int DEFAULT_FADE_DURATION = 300;
+
     private Context context;
     private ImageLoader loader;
 
     private int loadingResource;
     private int errorResource;
     private boolean fadeIn = false;
-    private int fadeDuration = 300;
+    private int fadeDuration = DEFAULT_FADE_DURATION;
 
     private LoadingListener listener;
 
