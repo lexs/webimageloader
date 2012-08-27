@@ -81,7 +81,7 @@ public class ImageHelper {
 
         return this;
     }
-    
+
     /**
      * Enable and set the fade in duration.
      *
@@ -90,7 +90,7 @@ public class ImageHelper {
      */
     public ImageHelper setFadeIn(int duration) {
         this.fadeIn = true;
-		this.fadeDuration = duration;
+        this.fadeDuration = duration;
 
         return this;
     }
