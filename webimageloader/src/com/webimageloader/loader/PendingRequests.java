@@ -11,6 +11,7 @@ import java.util.WeakHashMap;
 
 import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.util.BitmapUtils;
+import com.webimageloader.util.InputSupplier;
 
 import android.graphics.Bitmap;
 import android.util.Log;
@@ -135,13 +136,19 @@ public class PendingRequests {
         }
 
         @Override
-        public void onStreamLoaded(InputStream is, Metadata metadata) {
-            Bitmap b = BitmapUtils.decodeStream(is);
-
-            if (b != null) {
-                onBitmapLoaded(b, metadata);
-            } else {
-                onError(new IOException("Failed to create bitmap, decodeStream() returned null"));
+        public void onStreamLoaded(InputSupplier input, Metadata metadata) {
+            try {
+                InputStream is = input.getInput();
+                
+                try {
+                    Bitmap b = BitmapUtils.decodeStream(is);
+                    
+                    onBitmapLoaded(b, metadata);
+                } finally {
+                    is.close();
+                }
+            } catch (IOException e) {
+                onError(e);
             }
         }
 

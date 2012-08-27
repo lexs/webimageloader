@@ -2,9 +2,9 @@ package com.webimageloader;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
-import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 import android.content.ContentResolver;
@@ -36,14 +36,6 @@ import com.webimageloader.util.WaitFuture;
  */
 public class ImageLoader {
     private static final String TAG = "ImageLoader";
-
-    private static final LoaderManager.Listener EMPTY_LISTENER = new LoaderManager.Listener() {
-        @Override
-        public void onLoaded(Bitmap b) {}
-
-        @Override
-        public void onError(Throwable t) {}
-    };
 
     /**
      * Listener for a request which will always be called on the main thread of
@@ -144,7 +136,7 @@ public class ImageLoader {
     public Bitmap loadBlocking(Request request) throws IOException {
         final WaitFuture future = new WaitFuture();
 
-        Bitmap b = load(null, request, new LoaderManager.Listener() {
+        Bitmap b = loadInternal(null, request, new LoaderManager.Listener() {
             @Override
             public void onLoaded(Bitmap b) {
                 future.set(b);
@@ -219,7 +211,7 @@ public class ImageLoader {
      * @param request the request to preload
      */
     public void preload(Request request) {
-        load(null, request, EMPTY_LISTENER);
+        loadInternal(null, request, null);
     }
 
     /**
@@ -264,7 +256,7 @@ public class ImageLoader {
      * @return the bitmap if it was already loaded
      */
     public <T> Bitmap load(T tag, Request request,  Listener<T> listener) {
-        return load(tag, request, handlerManager.getListener(tag, listener));
+        return loadInternal(tag, request, handlerManager.getListener(tag, listener));
     }
 
     /**
@@ -277,7 +269,7 @@ public class ImageLoader {
         loaderManager.cancel(tag);
     }
 
-    private Bitmap load(Object tag, Request request, LoaderManager.Listener listener) {
+    private Bitmap loadInternal(Object tag, Request request, LoaderManager.Listener listener) {
         return loaderManager.load(tag, request.toLoaderRequest(), listener);
     }
 
@@ -297,25 +289,29 @@ public class ImageLoader {
             // so we'll remove it
             handler.removeCallbacksAndMessages(tag);
 
-            return new TagListener<T>(tag, listener);
+            if (tag == null) {
+                return new SimpleTagListener<T>(listener);
+            } else {
+                return new TagListener<T>(tag, listener);
+            }
         }
 
         public void cancel(Object tag) {
             handler.removeCallbacksAndMessages(tag);
         }
-
-        private class TagListener<T> implements LoaderManager.Listener {
-            private T tag;
+        
+        private class SimpleTagListener<T> implements LoaderManager.Listener {
             private Listener<T> listener;
 
-            public TagListener(T tag, Listener<T> listener) {
-                this.tag = tag;
+            public SimpleTagListener(Listener<T> listener) {
                 this.listener = listener;
             }
 
             @Override
             public void onLoaded(final Bitmap b) {
-                post(new Runnable() {
+                final T tag = getTag();
+                
+                post(tag, new Runnable() {
                     @Override
                     public void run() {
                         listener.onSuccess(tag, b);
@@ -325,18 +321,44 @@ public class ImageLoader {
 
             @Override
             public void onError(final Throwable t) {
-                post(new Runnable() {
+                final T tag = getTag();
+                
+                post(tag, new Runnable() {
                     @Override
                     public void run() {
                         listener.onError(tag, t);
                     }
                 });
             }
+            
+            protected T getTag() {
+                return null;
+            }
 
-            private void post(Runnable r) {
+            private void post(T tag, Runnable r) {
                 Message m = Message.obtain(handler, r);
                 m.obj = tag;
                 handler.sendMessage(m);
+            }
+        }
+
+        private class TagListener<T> extends SimpleTagListener<T> {
+            private WeakReference<T> reference;
+
+            public TagListener(T tag, Listener<T> listener) {
+                super(listener);
+                
+                this.reference = new WeakReference<T>(tag);
+            }
+
+            @Override
+            protected T getTag() {
+                T tag = reference.get();
+                if (tag == null) {
+                    throw new RuntimeException("Listener called but tag was GC'ed");
+                }
+                
+                return tag;
             }
         }
     }
@@ -347,16 +369,14 @@ public class ImageLoader {
      * @author Alexander Blom <alexanderblom.se>
      */
     public static class Builder {
+        public static final long MAX_AGE_INFINITY = Constants.MAX_AGE_INFINITY;
+        
         private Context context;
 
-        private HashMap<String, URLStreamHandler> streamHandlers;
+        private NetworkLoader.Builder networkBuilder;
 
         private DiskLoader diskLoader;
         private MemoryCache memoryCache;
-
-        private int connectionTimeout = Constants.DEFAULT_CONNECTION_TIMEOUT;
-        private int readTimeout = Constants.DEFAULT_READ_TIMEOUT;
-        private long maxAge;
 
         /**
          * Create a new builder
@@ -365,14 +385,14 @@ public class ImageLoader {
         public Builder(Context context) {
             this.context = context.getApplicationContext();
 
-            streamHandlers = new HashMap<String, URLStreamHandler>();
+            networkBuilder = new NetworkLoader.Builder();
         }
 
         /**
          * Enable the disk cache
          * @param cacheDir cache location
          * @param maxSize max size of the cache
-         * @return
+         * @return this builder
          */
         public Builder enableDiskCache(File cacheDir, int maxSize) {
             try {
@@ -404,7 +424,7 @@ public class ImageLoader {
          * @see URLStreamHandler
          */
         public Builder addURLSchemeHandler(String scheme, URLStreamHandler handler) {
-            streamHandlers.put(scheme, handler);
+            networkBuilder.addURLSchemeHandler(scheme, handler);
 
             return this;
         }
@@ -417,7 +437,7 @@ public class ImageLoader {
          * @see URLConnection#setConnectTimeout(int)
          */
         public Builder setConnectionTimeout(int connectionTimeout) {
-            this.connectionTimeout = connectionTimeout;
+            networkBuilder.setConnectionTimeout(connectionTimeout);
 
             return this;
         }
@@ -431,18 +451,29 @@ public class ImageLoader {
          * @see URLConnection#setReadTimeout(int)
          */
         public Builder setReadTimeout(int readTimeout) {
-            this.readTimeout = readTimeout;
+            networkBuilder.setReadTimeout(readTimeout);
 
             return this;
         }
 
         /**
+         * Set what max-age to use when a response doesn't have one set
+         * @param maxAge default max-age, 0 means infinity
+         * @return this builder
+         */
+        public Builder setDefaultCacheMaxAge(long maxAge) {
+            networkBuilder.setDefaultCacheMaxAge(maxAge);
+            
+            return this;
+        }
+        
+        /**
          * Override max-age and expires headers
-         * @param maxAge max-age to use for all requests
+         * @param maxAge max-age to use for all requests, 0 means infinity
          * @return this builder
          */
         public Builder setCacheMaxAge(long maxAge) {
-            this.maxAge = maxAge;
+            networkBuilder.setCacheMaxAge(maxAge);
 
             return this;
         }
@@ -453,11 +484,11 @@ public class ImageLoader {
          */
         public ImageLoader build() {
             URLStreamHandler handler = new ContentURLStreamHandler(context.getContentResolver());
-            streamHandlers.put(ContentResolver.SCHEME_CONTENT, handler);
-            streamHandlers.put(ContentResolver.SCHEME_FILE, handler);
-            streamHandlers.put(ContentResolver.SCHEME_ANDROID_RESOURCE, handler);
+            networkBuilder.addURLSchemeHandler(ContentResolver.SCHEME_CONTENT, handler);
+            networkBuilder.addURLSchemeHandler(ContentResolver.SCHEME_FILE, handler);
+            networkBuilder.addURLSchemeHandler(ContentResolver.SCHEME_ANDROID_RESOURCE, handler);
 
-            NetworkLoader networkLoader = new NetworkLoader(streamHandlers, connectionTimeout, readTimeout, maxAge);
+            NetworkLoader networkLoader = new NetworkLoader(networkBuilder);
             LoaderManager loaderManager = new LoaderManager(memoryCache, diskLoader, networkLoader);
 
             return new ImageLoader(loaderManager);

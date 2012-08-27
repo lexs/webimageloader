@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.webimageloader.util.BitmapUtils;
+import com.webimageloader.util.InputSupplier;
 
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
 
 /**
  * Adapter class to use if you don't need the {@link InputStream} provided by
@@ -16,13 +18,27 @@ import android.graphics.Bitmap;
 public abstract class SimpleTransformation implements Transformation {
     /**
      * {@inheritDoc}
+     *
+     * @return null, meaning use default format
      */
     @Override
-    public Bitmap transform(InputStream is) throws IOException {
-        Bitmap b = BitmapUtils.decodeStream(is);
-        if (b == null) {
-            throw new IOException("Failed to decode stream");
+    public CompressFormat getCompressFormat() {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Bitmap transform(InputSupplier input) throws IOException {
+        InputStream is = input.getInput();
+
+        try {
+            Bitmap b = BitmapUtils.decodeStream(is);
+
+            return transform(b);
+        } finally {
+            is.close();
         }
-        return transform(b);
     }
 }
