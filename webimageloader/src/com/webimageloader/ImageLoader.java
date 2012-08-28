@@ -299,7 +299,7 @@ public class ImageLoader {
         public void cancel(Object tag) {
             handler.removeCallbacksAndMessages(tag);
         }
-        
+
         private class SimpleTagListener<T> implements LoaderManager.Listener {
             private Listener<T> listener;
 
@@ -310,7 +310,7 @@ public class ImageLoader {
             @Override
             public void onLoaded(final Bitmap b) {
                 final T tag = getTag();
-                
+
                 post(tag, new Runnable() {
                     @Override
                     public void run() {
@@ -322,7 +322,7 @@ public class ImageLoader {
             @Override
             public void onError(final Throwable t) {
                 final T tag = getTag();
-                
+
                 post(tag, new Runnable() {
                     @Override
                     public void run() {
@@ -330,7 +330,7 @@ public class ImageLoader {
                     }
                 });
             }
-            
+
             protected T getTag() {
                 return null;
             }
@@ -347,7 +347,7 @@ public class ImageLoader {
 
             public TagListener(T tag, Listener<T> listener) {
                 super(listener);
-                
+
                 this.reference = new WeakReference<T>(tag);
             }
 
@@ -357,7 +357,7 @@ public class ImageLoader {
                 if (tag == null) {
                     throw new RuntimeException("Listener called but tag was GC'ed");
                 }
-                
+
                 return tag;
             }
         }
@@ -370,7 +370,7 @@ public class ImageLoader {
      */
     public static class Builder {
         public static final long MAX_AGE_INFINITY = Constants.MAX_AGE_INFINITY;
-        
+
         private Context context;
 
         private NetworkLoader.Builder networkBuilder;
@@ -430,6 +430,17 @@ public class ImageLoader {
         }
 
         /**
+         * Set a connection handler
+         * @param handler handler to handle connections
+         * @return this builder
+         */
+        public Builder setConnectionHandler(ConnectionHandler handler) {
+            networkBuilder.setConnectionHandler(handler);
+
+            return this;
+        }
+
+        /**
          * Set connection timeout, by default 10 seconds
          * @param connectionTimeout the connection timeout
          * @return this builder
@@ -463,10 +474,10 @@ public class ImageLoader {
          */
         public Builder setDefaultCacheMaxAge(long maxAge) {
             networkBuilder.setDefaultCacheMaxAge(maxAge);
-            
+
             return this;
         }
-        
+
         /**
          * Override max-age and expires headers
          * @param maxAge max-age to use for all requests, 0 means infinity

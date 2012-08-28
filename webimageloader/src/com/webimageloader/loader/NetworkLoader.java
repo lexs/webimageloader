@@ -19,6 +19,7 @@ import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.webimageloader.ConnectionHandler;
 import com.webimageloader.Constants;
 import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.util.Android;
@@ -34,6 +35,7 @@ public class NetworkLoader extends BackgroundLoader {
     private static final int TAG_CONDITIONAL = 0x7eb0000c;
 
     private Map<String, URLStreamHandler> streamHandlers;
+    private ConnectionHandler connectionHandler;
     private int connectionTimeout;
     private int readTimeout;
     private long defaultMaxAge;
@@ -41,6 +43,7 @@ public class NetworkLoader extends BackgroundLoader {
 
     public NetworkLoader(Builder builder) {
         this.streamHandlers = Collections.unmodifiableMap(builder.streamHandlers);
+        this.connectionHandler = builder.connectionHandler;
         this.connectionTimeout = builder.connectionTimeout;
         this.readTimeout = builder.readTimeout;
         this.defaultMaxAge = builder.defaultMaxAge;
@@ -142,6 +145,11 @@ public class NetworkLoader extends BackgroundLoader {
             urlConnection.setReadTimeout(readTimeout);
         }
 
+        if (connectionHandler != null && urlConnection instanceof HttpURLConnection) {
+            // Only let the connection handler handle http requests
+            connectionHandler.handleConnection((HttpURLConnection) urlConnection);
+        }
+
         return urlConnection;
     }
 
@@ -205,6 +213,8 @@ public class NetworkLoader extends BackgroundLoader {
     public static class Builder {
         private HashMap<String, URLStreamHandler> streamHandlers;
 
+        private ConnectionHandler connectionHandler;
+
         private int connectionTimeout = Constants.DEFAULT_CONNECTION_TIMEOUT;
         private int readTimeout = Constants.DEFAULT_READ_TIMEOUT;
 
@@ -217,6 +227,12 @@ public class NetworkLoader extends BackgroundLoader {
 
         public Builder addURLSchemeHandler(String scheme, URLStreamHandler handler) {
             streamHandlers.put(scheme, handler);
+
+            return this;
+        }
+
+        public Builder setConnectionHandler(ConnectionHandler handler) {
+            connectionHandler = handler;
 
             return this;
         }
