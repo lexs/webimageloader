@@ -46,14 +46,14 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         return new DiskLoader(DiskLruCache.open(directory, APP_VERSION, VALUE_COUNT, maxSize));
     }
 
-    @Override
-    protected ExecutorService createExecutor() {
+    private static ExecutorService createExecutor() {
         return Executors.newSingleThreadExecutor(new PriorityThreadFactory("Disk", Process.THREAD_PRIORITY_BACKGROUND));
     }
 
     private DiskLoader(DiskLruCache cache) {
-        this.cache = cache;
+        super(createExecutor());
 
+        this.cache = cache;
         hasher = new Hasher();
     }
 

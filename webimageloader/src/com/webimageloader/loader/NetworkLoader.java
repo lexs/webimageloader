@@ -41,18 +41,19 @@ public class NetworkLoader extends BackgroundLoader {
     private long defaultMaxAge;
     private long forcedMaxAge;
 
+    private static ExecutorService createExecutor() {
+        return Executors.newFixedThreadPool(2, new PriorityThreadFactory("Network", Process.THREAD_PRIORITY_BACKGROUND));
+    }
+
     public NetworkLoader(Builder builder) {
+        super(createExecutor());
+
         this.streamHandlers = Collections.unmodifiableMap(builder.streamHandlers);
         this.connectionHandler = builder.connectionHandler;
         this.connectionTimeout = builder.connectionTimeout;
         this.readTimeout = builder.readTimeout;
         this.defaultMaxAge = builder.defaultMaxAge;
         this.forcedMaxAge = builder.forcedMaxAge;
-    }
-
-    @Override
-    protected ExecutorService createExecutor() {
-        return Executors.newFixedThreadPool(2, new PriorityThreadFactory("Network", Process.THREAD_PRIORITY_BACKGROUND));
     }
 
     @Override
