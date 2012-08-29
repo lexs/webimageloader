@@ -34,6 +34,7 @@ public class NetworkLoader extends BackgroundLoader {
     private static final int TAG_REGULAR = 0x7eb00000;
     private static final int TAG_CONDITIONAL = 0x7eb0000c;
 
+
     private Map<String, URLStreamHandler> streamHandlers;
     private ConnectionHandler connectionHandler;
     private int connectionTimeout;
@@ -41,7 +42,10 @@ public class NetworkLoader extends BackgroundLoader {
     private long defaultMaxAge;
     private long forcedMaxAge;
 
+
     public NetworkLoader(Builder builder) {
+    	super(builder.threadCount);
+    	
         this.streamHandlers = Collections.unmodifiableMap(builder.streamHandlers);
         this.connectionHandler = builder.connectionHandler;
         this.connectionTimeout = builder.connectionTimeout;
@@ -51,8 +55,8 @@ public class NetworkLoader extends BackgroundLoader {
     }
 
     @Override
-    protected ExecutorService createExecutor() {
-        return Executors.newFixedThreadPool(2, new PriorityThreadFactory("Network", Process.THREAD_PRIORITY_BACKGROUND));
+    protected ExecutorService createExecutor(int workerThreadCount) {
+        return Executors.newFixedThreadPool(workerThreadCount, new PriorityThreadFactory("Network", Process.THREAD_PRIORITY_BACKGROUND));
     }
 
     @Override
@@ -217,9 +221,11 @@ public class NetworkLoader extends BackgroundLoader {
 
         private int connectionTimeout = Constants.DEFAULT_CONNECTION_TIMEOUT;
         private int readTimeout = Constants.DEFAULT_READ_TIMEOUT;
+        private int threadCount = Constants.DEFAULT_NETWORK_LOADER_THREAD_COUNT;
 
         private long defaultMaxAge = Constants.DEFAULT_MAX_AGE;
         private long forcedMaxAge = Constants.MAX_AGE_NOT_FORCED;
+
 
         public Builder() {
             streamHandlers = new HashMap<String, URLStreamHandler>();
@@ -260,5 +266,11 @@ public class NetworkLoader extends BackgroundLoader {
 
             return this;
         }
+
+		public Builder setThreadCount(int threadCount) {
+			this.threadCount = threadCount;
+			
+			return this;
+		}
     }
 }

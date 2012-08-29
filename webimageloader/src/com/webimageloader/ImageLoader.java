@@ -395,8 +395,19 @@ public class ImageLoader {
          * @return this builder
          */
         public Builder enableDiskCache(File cacheDir, int maxSize) {
+        	return enableDiskCache(cacheDir, maxSize, Constants.DEFAULT_DISK_LOADER_THREAD_COUNT);
+        }
+        
+        /**
+         * Enable the disk cache
+         * @param cacheDir cache location
+         * @param maxSize max size of the cache
+         * @param threadCount the number of worker threads that should be used.
+         * @return this builder
+         */
+        public Builder enableDiskCache(File cacheDir, int maxSize, int threadCount) {
             try {
-                diskLoader = DiskLoader.open(cacheDir, maxSize);
+                diskLoader = DiskLoader.open(cacheDir, maxSize, threadCount);
             } catch (IOException e) {
                 Log.e(TAG, "Disk cache not available", e);
             }
@@ -414,6 +425,11 @@ public class ImageLoader {
 
             return this;
         }
+        
+        public Builder setNetworkLoaderThreadCount(int threadCount) {
+        	networkBuilder.setThreadCount(threadCount);
+			return this;
+		}
 
         /**
          * Add a URL scheme handler

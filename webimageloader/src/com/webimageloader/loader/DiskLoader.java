@@ -18,6 +18,7 @@ import android.util.Log;
 
 import com.webimageloader.Constants;
 import com.webimageloader.ImageLoader.Logger;
+import com.webimageloader.concurrent.ExecutorHelper;
 import com.webimageloader.concurrent.ListenerFuture;
 import com.webimageloader.util.BitmapUtils;
 import com.webimageloader.util.DiskLruCache;
@@ -39,25 +40,30 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
     private static final int INPUT_METADATA = 1;
     private static final int VALUE_COUNT = 2;
 
+	private static final int DEFAULT_THREAD_COUNT = 1;
+
     private DiskLruCache cache;
     private Hasher hasher;
 
-    public static DiskLoader open(File directory, long maxSize) throws IOException {
-        return new DiskLoader(DiskLruCache.open(directory, APP_VERSION, VALUE_COUNT, maxSize));
+	
+	public static DiskLoader open(File directory, long maxSize, int tc) throws IOException {
+        return new DiskLoader(DiskLruCache.open(directory, APP_VERSION, VALUE_COUNT, maxSize), tc);
     }
 
     @Override
-    protected ExecutorService createExecutor() {
-        return Executors.newSingleThreadExecutor(new PriorityThreadFactory("Disk", Process.THREAD_PRIORITY_BACKGROUND));
+    protected ExecutorService createExecutor(int workerThreadCount) {
+        return Executors.newFixedThreadPool(workerThreadCount , new PriorityThreadFactory("Disk", Process.THREAD_PRIORITY_BACKGROUND));
     }
+    
 
-    private DiskLoader(DiskLruCache cache) {
-        this.cache = cache;
+	private DiskLoader(DiskLruCache cache, int workerThreadCount) {
+		super(workerThreadCount);
+		
+    	this.cache = cache;
+    	hasher = new Hasher();
+	}
 
-        hasher = new Hasher();
-    }
-
-    @Override
+	@Override
     public void close() {
         super.close();
 
