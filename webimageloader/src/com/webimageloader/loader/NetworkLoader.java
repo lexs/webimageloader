@@ -10,8 +10,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import android.annotation.TargetApi;
 import android.net.TrafficStats;
@@ -26,9 +24,8 @@ import com.webimageloader.util.Android;
 import com.webimageloader.util.FlushedInputStream;
 import com.webimageloader.util.HeaderParser;
 import com.webimageloader.util.InputSupplier;
-import com.webimageloader.util.PriorityThreadFactory;
 
-public class NetworkLoader extends BackgroundLoader {
+public class NetworkLoader extends SimpleBackgroundLoader {
     private static final String TAG = "NetworkLoader";
 
     private static final int TAG_REGULAR = 0x7eb00000;
@@ -41,12 +38,8 @@ public class NetworkLoader extends BackgroundLoader {
     private long defaultMaxAge;
     private long forcedMaxAge;
 
-    private static ExecutorService createExecutor() {
-        return Executors.newFixedThreadPool(2, new PriorityThreadFactory("Network", Process.THREAD_PRIORITY_BACKGROUND));
-    }
-
     public NetworkLoader(Builder builder) {
-        super(createExecutor());
+        super("Network", Process.THREAD_PRIORITY_BACKGROUND, builder.threadCount);
 
         this.streamHandlers = Collections.unmodifiableMap(builder.streamHandlers);
         this.connectionHandler = builder.connectionHandler;
@@ -216,6 +209,8 @@ public class NetworkLoader extends BackgroundLoader {
 
         private ConnectionHandler connectionHandler;
 
+        private int threadCount = Constants.DEFAULT_NETWORK_THREADS;
+
         private int connectionTimeout = Constants.DEFAULT_CONNECTION_TIMEOUT;
         private int readTimeout = Constants.DEFAULT_READ_TIMEOUT;
 
@@ -234,6 +229,12 @@ public class NetworkLoader extends BackgroundLoader {
 
         public Builder setConnectionHandler(ConnectionHandler handler) {
             connectionHandler = handler;
+
+            return this;
+        }
+
+        public Builder setThreadCount(int count) {
+            this.threadCount = count;
 
             return this;
         }

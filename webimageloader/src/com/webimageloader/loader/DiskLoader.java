@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import android.graphics.Bitmap;
 import android.os.Process;
@@ -26,9 +24,8 @@ import com.webimageloader.util.DiskLruCache.Snapshot;
 import com.webimageloader.util.Hasher;
 import com.webimageloader.util.IOUtil;
 import com.webimageloader.util.InputSupplier;
-import com.webimageloader.util.PriorityThreadFactory;
 
-public class DiskLoader extends BackgroundLoader implements Closeable {
+public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
     private static final String TAG = "DiskLoader";
 
     private static final int APP_VERSION = 2;
@@ -42,16 +39,12 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
     private DiskLruCache cache;
     private Hasher hasher;
 
-    public static DiskLoader open(File directory, long maxSize) throws IOException {
-        return new DiskLoader(DiskLruCache.open(directory, APP_VERSION, VALUE_COUNT, maxSize));
+    public static DiskLoader open(File directory, long maxSize, int threadCount) throws IOException {
+        return new DiskLoader(DiskLruCache.open(directory, APP_VERSION, VALUE_COUNT, maxSize), threadCount);
     }
 
-    private static ExecutorService createExecutor() {
-        return Executors.newSingleThreadExecutor(new PriorityThreadFactory("Disk", Process.THREAD_PRIORITY_BACKGROUND));
-    }
-
-    private DiskLoader(DiskLruCache cache) {
-        super(createExecutor());
+    private DiskLoader(DiskLruCache cache, int threadCount) {
+        super("Disk", Process.THREAD_PRIORITY_BACKGROUND, threadCount);
 
         this.cache = cache;
         hasher = new Hasher();

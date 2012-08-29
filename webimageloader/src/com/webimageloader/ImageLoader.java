@@ -395,8 +395,19 @@ public class ImageLoader {
          * @return this builder
          */
         public Builder enableDiskCache(File cacheDir, int maxSize) {
+            return enableDiskCache(cacheDir, maxSize, Constants.DEFAULT_DISK_THREADS);
+        }
+
+        /**
+         * Enable the disk cache
+         * @param cacheDir cache location
+         * @param maxSize max size of the cache
+         * @param threadCount number of threads
+         * @return this builder
+         */
+        public Builder enableDiskCache(File cacheDir, int maxSize, int threadCount) {
             try {
-                diskLoader = DiskLoader.open(cacheDir, maxSize);
+                diskLoader = DiskLoader.open(cacheDir, maxSize, threadCount);
             } catch (IOException e) {
                 Log.e(TAG, "Disk cache not available", e);
             }
@@ -411,6 +422,17 @@ public class ImageLoader {
          */
         public Builder enableMemoryCache(int maxSize) {
             memoryCache = new MemoryCache(maxSize);
+
+            return this;
+        }
+
+        /**
+         * Set the number of threads to be used for downloading images
+         * @param count thread count
+         * @return this builder
+         */
+        public Builder setNetworkThreadCount(int count) {
+            networkBuilder.setThreadCount(count);
 
             return this;
         }
