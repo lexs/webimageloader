@@ -1,27 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.webimageloader</groupId>
-    <artifactId>webimageloader</artifactId>
-    <version>1.1.2-SNAPSHOT</version>
+    <artifactId>library</artifactId>
     <packaging>jar</packaging>
     <name>WebImageLoader</name>
+
+    <parent>
+        <groupId>com.webimageloader</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.1.2-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
     
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        
-		<java.version>1.6</java.version>
-		<android.version>4.1_r2</android.version>
-		<android.platform>16</android.platform>
-		<android-support.version>r7</android-support.version>
-
-		<android-maven.version>3.1.1</android-maven.version>
-
-		<github.downloads.repositoryOwner>lexs</github.downloads.repositoryOwner>
-		<github.downloads.repositoryName>webimageloader </github.downloads.repositoryName>
-	</properties>
-
     <dependencies>
         <dependency>
             <groupId>android</groupId>
@@ -31,29 +21,9 @@
         </dependency>
     </dependencies>
     <build>
-        <finalName>${project.artifactId}</finalName>
+        <finalName>webimageloader</finalName>
         <sourceDirectory>src</sourceDirectory>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>com.jayway.maven.plugins.android.generation2</groupId>
-                    <artifactId>android-maven-plugin</artifactId>
-                    <version>${android-maven.version}</version>
-                    <extensions>true</extensions>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
-            <plugin>
-                <groupId>com.jayway.maven.plugins.android.generation2</groupId>
-                <artifactId>android-maven-plugin</artifactId>
-                <configuration>
-                    <sdk>
-                        <platform>${android.platform}</platform>
-                    </sdk>
-                </configuration>
-            </plugin>
-            
             <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
