@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
-import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 import android.content.ContentResolver;
@@ -224,7 +223,7 @@ public class ImageLoader {
      * @param listener called when the request has finished or failed
      * @return the bitmap if it was already loaded
      *
-     * @see #loadInternal(Object, Request, Listener)
+     * @see #load(Object, Request, Listener)
      */
     public <T> Bitmap load(T tag, String url, Listener<T> listener) {
         return load(tag, new Request(url), listener);
@@ -241,7 +240,7 @@ public class ImageLoader {
      * @param listener called when the request has finished or failed
      * @return the bitmap if it was already loaded
      *
-     * @see #loadInternal(Object, Request, Listener)
+     * @see #load(Object, Request, Listener)
      */
     public <T> Bitmap load(T tag, String url, Transformation transformation, Listener<T> listener) {
         return load(tag, new Request(url).withTransformation(transformation), listener);
@@ -300,7 +299,7 @@ public class ImageLoader {
         public void cancel(Object tag) {
             handler.removeCallbacksAndMessages(tag);
         }
-        
+
         private class SimpleTagListener<T> implements LoaderManager.Listener {
             private Listener<T> listener;
 
@@ -311,7 +310,7 @@ public class ImageLoader {
             @Override
             public void onLoaded(final Bitmap b) {
                 final T tag = getTag();
-                
+
                 post(tag, new Runnable() {
                     @Override
                     public void run() {
@@ -323,7 +322,7 @@ public class ImageLoader {
             @Override
             public void onError(final Throwable t) {
                 final T tag = getTag();
-                
+
                 post(tag, new Runnable() {
                     @Override
                     public void run() {
@@ -331,7 +330,7 @@ public class ImageLoader {
                     }
                 });
             }
-            
+
             protected T getTag() {
                 return null;
             }
@@ -348,7 +347,7 @@ public class ImageLoader {
 
             public TagListener(T tag, Listener<T> listener) {
                 super(listener);
-                
+
                 this.reference = new WeakReference<T>(tag);
             }
 
@@ -358,7 +357,7 @@ public class ImageLoader {
                 if (tag == null) {
                     throw new RuntimeException("Listener called but tag was GC'ed");
                 }
-                
+
                 return tag;
             }
         }
@@ -371,19 +370,13 @@ public class ImageLoader {
      */
     public static class Builder {
         public static final long MAX_AGE_INFINITY = Constants.MAX_AGE_INFINITY;
-        
+
         private Context context;
 
-        private HashMap<String, URLStreamHandler> streamHandlers;
+        private NetworkLoader.Builder networkBuilder;
 
         private DiskLoader diskLoader;
         private MemoryCache memoryCache;
-
-        private int connectionTimeout = Constants.DEFAULT_CONNECTION_TIMEOUT;
-        private int readTimeout = Constants.DEFAULT_READ_TIMEOUT;
-        
-        private long defaultMaxAge = Constants.DEFAULT_MAX_AGE;
-        private long forcedMaxAge = Constants.MAX_AGE_NOT_FORCED;
 
         /**
          * Create a new builder
@@ -392,18 +385,29 @@ public class ImageLoader {
         public Builder(Context context) {
             this.context = context.getApplicationContext();
 
-            streamHandlers = new HashMap<String, URLStreamHandler>();
+            networkBuilder = new NetworkLoader.Builder();
         }
 
         /**
          * Enable the disk cache
          * @param cacheDir cache location
          * @param maxSize max size of the cache
-         * @return
+         * @return this builder
          */
         public Builder enableDiskCache(File cacheDir, int maxSize) {
+            return enableDiskCache(cacheDir, maxSize, Constants.DEFAULT_DISK_THREADS);
+        }
+
+        /**
+         * Enable the disk cache
+         * @param cacheDir cache location
+         * @param maxSize max size of the cache
+         * @param threadCount number of threads
+         * @return this builder
+         */
+        public Builder enableDiskCache(File cacheDir, int maxSize, int threadCount) {
             try {
-                diskLoader = DiskLoader.open(cacheDir, maxSize);
+                diskLoader = DiskLoader.open(cacheDir, maxSize, threadCount);
             } catch (IOException e) {
                 Log.e(TAG, "Disk cache not available", e);
             }
@@ -423,6 +427,17 @@ public class ImageLoader {
         }
 
         /**
+         * Set the number of threads to be used for downloading images
+         * @param count thread count
+         * @return this builder
+         */
+        public Builder setNetworkThreadCount(int count) {
+            networkBuilder.setThreadCount(count);
+
+            return this;
+        }
+
+        /**
          * Add a URL scheme handler
          * @param scheme the scheme to handle
          * @param handler the handler
@@ -431,7 +446,18 @@ public class ImageLoader {
          * @see URLStreamHandler
          */
         public Builder addURLSchemeHandler(String scheme, URLStreamHandler handler) {
-            streamHandlers.put(scheme, handler);
+            networkBuilder.addURLSchemeHandler(scheme, handler);
+
+            return this;
+        }
+
+        /**
+         * Set a connection handler
+         * @param handler handler to handle connections
+         * @return this builder
+         */
+        public Builder setConnectionHandler(ConnectionHandler handler) {
+            networkBuilder.setConnectionHandler(handler);
 
             return this;
         }
@@ -444,7 +470,7 @@ public class ImageLoader {
          * @see URLConnection#setConnectTimeout(int)
          */
         public Builder setConnectionTimeout(int connectionTimeout) {
-            this.connectionTimeout = connectionTimeout;
+            networkBuilder.setConnectionTimeout(connectionTimeout);
 
             return this;
         }
@@ -458,7 +484,7 @@ public class ImageLoader {
          * @see URLConnection#setReadTimeout(int)
          */
         public Builder setReadTimeout(int readTimeout) {
-            this.readTimeout = readTimeout;
+            networkBuilder.setReadTimeout(readTimeout);
 
             return this;
         }
@@ -469,18 +495,18 @@ public class ImageLoader {
          * @return this builder
          */
         public Builder setDefaultCacheMaxAge(long maxAge) {
-            this.defaultMaxAge = maxAge;
-            
+            networkBuilder.setDefaultCacheMaxAge(maxAge);
+
             return this;
         }
-        
+
         /**
          * Override max-age and expires headers
          * @param maxAge max-age to use for all requests, 0 means infinity
          * @return this builder
          */
         public Builder setCacheMaxAge(long maxAge) {
-            this.forcedMaxAge = maxAge;
+            networkBuilder.setCacheMaxAge(maxAge);
 
             return this;
         }
@@ -491,11 +517,11 @@ public class ImageLoader {
          */
         public ImageLoader build() {
             URLStreamHandler handler = new ContentURLStreamHandler(context.getContentResolver());
-            streamHandlers.put(ContentResolver.SCHEME_CONTENT, handler);
-            streamHandlers.put(ContentResolver.SCHEME_FILE, handler);
-            streamHandlers.put(ContentResolver.SCHEME_ANDROID_RESOURCE, handler);
+            networkBuilder.addURLSchemeHandler(ContentResolver.SCHEME_CONTENT, handler);
+            networkBuilder.addURLSchemeHandler(ContentResolver.SCHEME_FILE, handler);
+            networkBuilder.addURLSchemeHandler(ContentResolver.SCHEME_ANDROID_RESOURCE, handler);
 
-            NetworkLoader networkLoader = new NetworkLoader(streamHandlers, connectionTimeout, readTimeout, defaultMaxAge, forcedMaxAge);
+            NetworkLoader networkLoader = new NetworkLoader(networkBuilder);
             LoaderManager loaderManager = new LoaderManager(memoryCache, diskLoader, networkLoader);
 
             return new ImageLoader(loaderManager);
