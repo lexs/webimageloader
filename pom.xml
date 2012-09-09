@@ -7,7 +7,7 @@
             <artifactId>oss-parent</artifactId>
             <version>7</version>
       </parent>
-    
+
     <groupId>com.webimageloader</groupId>
     <artifactId>parent</artifactId>
     <version>1.1.2-SNAPSHOT</version>
@@ -63,7 +63,7 @@
     <modules>
         <module>webimageloader</module>
         <module>tests</module>
-        <module>examples</module>
+        <module>samples</module>
     </modules>
 
     <dependencyManagement>
