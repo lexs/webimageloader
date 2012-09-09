@@ -20,7 +20,6 @@
     </dependencies>
     <build>
         <finalName>webimageloader-${project.version}</finalName>
-        <sourceDirectory>src</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
