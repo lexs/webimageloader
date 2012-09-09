@@ -19,7 +19,7 @@
         </dependency>
     </dependencies>
     <build>
-        <finalName>webimageloader</finalName>
+        <finalName>webimageloader-${project.version}</finalName>
         <sourceDirectory>src</sourceDirectory>
         <plugins>
             <plugin>
