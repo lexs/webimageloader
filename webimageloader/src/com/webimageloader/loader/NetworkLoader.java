@@ -7,10 +7,9 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import android.annotation.TargetApi;
 import android.net.TrafficStats;
@@ -18,54 +17,46 @@ import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.webimageloader.ConnectionHandler;
+import com.webimageloader.Constants;
 import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.util.Android;
+import com.webimageloader.util.FlushedInputStream;
 import com.webimageloader.util.HeaderParser;
-import com.webimageloader.util.PriorityThreadFactory;
+import com.webimageloader.util.InputSupplier;
 
-public class NetworkLoader extends BackgroundLoader {
+public class NetworkLoader extends SimpleBackgroundLoader {
     private static final String TAG = "NetworkLoader";
-
-    private static final long DEFAULT_MAX_AGE = 3 * 24 * 60 * 60 * 1000; // Three days
 
     private static final int TAG_REGULAR = 0x7eb00000;
     private static final int TAG_CONDITIONAL = 0x7eb0000c;
 
     private Map<String, URLStreamHandler> streamHandlers;
-    private int connectTimeout;
+    private ConnectionHandler connectionHandler;
+    private int connectionTimeout;
     private int readTimeout;
-    private long forceMaxAge;
+    private long defaultMaxAge;
+    private long forcedMaxAge;
 
-    public NetworkLoader(Map<String, URLStreamHandler> streamHandlers, int connectionTimeout, int readTimeout, long maxAge) {
-        this.streamHandlers = Collections.unmodifiableMap(streamHandlers);
-        this.connectTimeout = connectionTimeout;
-        this.readTimeout = readTimeout;
-        this.forceMaxAge = maxAge;
-    }
+    public NetworkLoader(Builder builder) {
+        super("Network", Process.THREAD_PRIORITY_BACKGROUND, builder.threadCount);
 
-    @Override
-    protected ExecutorService createExecutor() {
-        return Executors.newFixedThreadPool(2, new PriorityThreadFactory("Network", Process.THREAD_PRIORITY_BACKGROUND));
+        this.streamHandlers = Collections.unmodifiableMap(builder.streamHandlers);
+        this.connectionHandler = builder.connectionHandler;
+        this.connectionTimeout = builder.connectionTimeout;
+        this.readTimeout = builder.readTimeout;
+        this.defaultMaxAge = builder.defaultMaxAge;
+        this.forcedMaxAge = builder.forcedMaxAge;
     }
 
     @Override
     protected void loadInBackground(LoaderRequest request, Iterator<Loader> chain, Listener listener) throws Exception {
         String url = request.getUrl();
 
-        disableConnectionReuseIfNecessary();
-
         String protocol = getProtocol(url);
         URLStreamHandler streamHandler = getURLStreamHandler(protocol);
 
-        URLConnection urlConnection = new URL(null, url, streamHandler).openConnection();
-
-        if (connectTimeout > 0) {
-            urlConnection.setConnectTimeout(connectTimeout);
-        }
-
-        if (readTimeout > 0) {
-            urlConnection.setReadTimeout(readTimeout);
-        }
+        URLConnection urlConnection = openConnection(new URL(null, url, streamHandler));
 
         Metadata metadata = request.getMetadata();
         if (metadata != null) {
@@ -98,14 +89,9 @@ public class NetworkLoader extends BackgroundLoader {
 
             listener.onNotModified(metadata);
         } else {
-            InputStream is = urlConnection.getInputStream();
             if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from network");
 
-            try {
-                listener.onStreamLoaded(is, metadata);
-            } finally {
-                is.close();
-            }
+            listener.onStreamLoaded(new NetworkInputSupplier(urlConnection), metadata);
         }
     }
 
@@ -119,8 +105,10 @@ public class NetworkLoader extends BackgroundLoader {
     }
 
     private long getExpires(URLConnection urlConnection) {
-        if (forceMaxAge > 0) {
-            return System.currentTimeMillis() + forceMaxAge;
+        if (forcedMaxAge > 0) {
+            return System.currentTimeMillis() + forcedMaxAge;
+        } else if (forcedMaxAge == Constants.MAX_AGE_INFINITY) {
+            return Metadata.NEVER_EXPIRES;
         }
 
         // Prefer "max-age" before "expires"
@@ -135,7 +123,28 @@ public class NetworkLoader extends BackgroundLoader {
         }
 
         // Use default
-        return System.currentTimeMillis() + DEFAULT_MAX_AGE;
+        return System.currentTimeMillis() + defaultMaxAge;
+    }
+
+    private URLConnection openConnection(URL url) throws IOException {
+        disableConnectionReuseIfNecessary();
+
+        URLConnection urlConnection = url.openConnection();
+
+        if (connectionTimeout > 0) {
+            urlConnection.setConnectTimeout(connectionTimeout);
+        }
+
+        if (readTimeout > 0) {
+            urlConnection.setReadTimeout(readTimeout);
+        }
+
+        if (connectionHandler != null && urlConnection instanceof HttpURLConnection) {
+            // Only let the connection handler handle http requests
+            connectionHandler.handleConnection((HttpURLConnection) urlConnection);
+        }
+
+        return urlConnection;
     }
 
     @TargetApi(14)
@@ -163,5 +172,95 @@ public class NetworkLoader extends BackgroundLoader {
 
     private URLStreamHandler getURLStreamHandler(String protocol) {
         return streamHandlers.get(protocol);
+    }
+
+    private class NetworkInputSupplier implements InputSupplier {
+        private URLConnection connection;
+        private URL url;
+
+        public NetworkInputSupplier(URLConnection connection) {
+            this.connection = connection;
+
+            url = connection.getURL();
+        }
+
+        @Override
+        public InputStream getInput() throws IOException {
+            if (connection != null) {
+                InputStream is = connection.getInputStream();
+                connection = null;
+
+                // Handle a bug in older versions of Android, see
+                // http://android-developers.blogspot.se/2010/07/multithreading-for-performance.html
+                if (!Android.isAPI(9)) {
+                    is = new FlushedInputStream(is);
+                }
+
+                return is;
+            } else {
+                return openConnection(url).getInputStream();
+            }
+        }
+
+    }
+
+    public static class Builder {
+        private HashMap<String, URLStreamHandler> streamHandlers;
+
+        private ConnectionHandler connectionHandler;
+
+        private int threadCount = Constants.DEFAULT_NETWORK_THREADS;
+
+        private int connectionTimeout = Constants.DEFAULT_CONNECTION_TIMEOUT;
+        private int readTimeout = Constants.DEFAULT_READ_TIMEOUT;
+
+        private long defaultMaxAge = Constants.DEFAULT_MAX_AGE;
+        private long forcedMaxAge = Constants.MAX_AGE_NOT_FORCED;
+
+        public Builder() {
+            streamHandlers = new HashMap<String, URLStreamHandler>();
+        }
+
+        public Builder addURLSchemeHandler(String scheme, URLStreamHandler handler) {
+            streamHandlers.put(scheme, handler);
+
+            return this;
+        }
+
+        public Builder setConnectionHandler(ConnectionHandler handler) {
+            connectionHandler = handler;
+
+            return this;
+        }
+
+        public Builder setThreadCount(int count) {
+            this.threadCount = count;
+
+            return this;
+        }
+
+        public Builder setConnectionTimeout(int connectionTimeout) {
+            this.connectionTimeout = connectionTimeout;
+
+            return this;
+        }
+
+        public Builder setReadTimeout(int readTimeout) {
+            this.readTimeout = readTimeout;
+
+            return this;
+        }
+
+        public Builder setDefaultCacheMaxAge(long maxAge) {
+            this.defaultMaxAge = maxAge;
+
+            return this;
+        }
+
+        public Builder setCacheMaxAge(long maxAge) {
+            this.forcedMaxAge = maxAge;
+
+            return this;
+        }
     }
 }

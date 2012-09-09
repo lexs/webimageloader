@@ -10,8 +10,8 @@ import com.webimageloader.concurrent.ListenerFuture;
 public abstract class BackgroundLoader implements Loader, Closeable {
     private ExecutorHelper executorHelper;
 
-    public BackgroundLoader() {
-        executorHelper = new ExecutorHelper(createExecutor());
+    public BackgroundLoader(ExecutorService executor) {
+        executorHelper = new ExecutorHelper(executor);
     }
 
     @Override
@@ -38,6 +38,5 @@ public abstract class BackgroundLoader implements Loader, Closeable {
         executorHelper.run(request, listener, task);
     }
 
-    protected abstract ExecutorService createExecutor();
     protected abstract void loadInBackground(LoaderRequest request, Iterator<Loader> chain, Listener listener) throws Exception;
 }

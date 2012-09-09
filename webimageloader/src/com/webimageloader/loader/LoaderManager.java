@@ -10,6 +10,14 @@ import com.webimageloader.transformation.Transformation;
 import android.graphics.Bitmap;
 
 public class LoaderManager {
+    private static final LoaderManager.Listener EMPTY_LISTENER = new LoaderManager.Listener() {
+        @Override
+        public void onLoaded(Bitmap b) {}
+
+        @Override
+        public void onError(Throwable t) {}
+    };
+    
     private MemoryCache memoryCache;
 
     private DiskLoader diskLoader;
@@ -38,7 +46,7 @@ public class LoaderManager {
         // Create standard chain
         standardChain = new ArrayList<Loader>();
         add(standardChain, diskLoader);
-        standardChain.add(networkLoader);
+        add(standardChain, networkLoader);
 
         // Create transformation chain
         transformationChain = new ArrayList<Loader>();
@@ -64,10 +72,15 @@ public class LoaderManager {
         return pendingRequests.getBitmap(tag, request);
     }
 
-    public Bitmap load(Object tag, LoaderRequest request, final Listener listener) {
+    public Bitmap load(Object tag, LoaderRequest request, Listener listener) {
         Bitmap b = pendingRequests.getBitmap(tag, request);
         if (b != null) {
             return b;
+        }
+        
+        // Send an empty listener instead of null
+        if (listener == null) {
+            listener = EMPTY_LISTENER;
         }
 
         Loader.Listener l = pendingRequests.addRequest(tag, request, listener);

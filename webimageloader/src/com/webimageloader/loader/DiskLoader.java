@@ -4,35 +4,33 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.File;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import com.webimageloader.ImageLoader.Logger;
-import com.webimageloader.concurrent.ListenerFuture;
-import com.webimageloader.util.DiskLruCache;
-import com.webimageloader.util.Hasher;
-import com.webimageloader.util.IOUtil;
-import com.webimageloader.util.PriorityThreadFactory;
-import com.webimageloader.util.DiskLruCache.Editor;
-import com.webimageloader.util.DiskLruCache.Snapshot;
 
 import android.graphics.Bitmap;
 import android.os.Process;
 import android.util.Log;
 
-public class DiskLoader extends BackgroundLoader implements Closeable {
+import com.webimageloader.Constants;
+import com.webimageloader.ImageLoader.Logger;
+import com.webimageloader.concurrent.ListenerFuture;
+import com.webimageloader.util.BitmapUtils;
+import com.webimageloader.util.DiskLruCache;
+import com.webimageloader.util.DiskLruCache.Editor;
+import com.webimageloader.util.DiskLruCache.Snapshot;
+import com.webimageloader.util.Hasher;
+import com.webimageloader.util.IOUtil;
+import com.webimageloader.util.InputSupplier;
+
+public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
     private static final String TAG = "DiskLoader";
 
     private static final int APP_VERSION = 2;
 
     private static final int BUFFER_SIZE = 8192;
-
-    private static final Bitmap.CompressFormat COMPRESS_FORMAT = Bitmap.CompressFormat.JPEG;
-    private static final int COMPRESS_QUALITY = 75;
 
     private static final int INPUT_IMAGE = 0;
     private static final int INPUT_METADATA = 1;
@@ -41,18 +39,14 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
     private DiskLruCache cache;
     private Hasher hasher;
 
-    public static DiskLoader open(File directory, long maxSize) throws IOException {
-        return new DiskLoader(DiskLruCache.open(directory, APP_VERSION, VALUE_COUNT, maxSize));
+    public static DiskLoader open(File directory, long maxSize, int threadCount) throws IOException {
+        return new DiskLoader(DiskLruCache.open(directory, APP_VERSION, VALUE_COUNT, maxSize), threadCount);
     }
 
-    @Override
-    protected ExecutorService createExecutor() {
-        return Executors.newSingleThreadExecutor(new PriorityThreadFactory("Disk", Process.THREAD_PRIORITY_BACKGROUND));
-    }
+    private DiskLoader(DiskLruCache cache, int threadCount) {
+        super("Disk", Process.THREAD_PRIORITY_BACKGROUND, threadCount);
 
-    private DiskLoader(DiskLruCache cache) {
         this.cache = cache;
-
         hasher = new Hasher();
     }
 
@@ -65,20 +59,18 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
 
     @Override
     protected void loadInBackground(LoaderRequest request, Iterator<Loader> chain, Listener listener) throws IOException {
-        String key = hashKeyForDisk(request);
-        Snapshot snapshot = cache.get(key);
+        Snapshot snapshot = getSnapshot(request);
         if (snapshot != null) {
             try {
                 if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from disk");
 
-                InputStream is = snapshot.getInputStream(INPUT_IMAGE);
-
                 Metadata metadata = readMetadata(snapshot);
+                DiskInputSupplier input = new DiskInputSupplier(request, snapshot);
 
-                listener.onStreamLoaded(is, metadata);
-                is.close();
+                listener.onStreamLoaded(input, metadata);
 
-                if (System.currentTimeMillis() > metadata.getExpires()) {
+                long expires = metadata.getExpires();
+                if (expires != Metadata.NEVER_EXPIRES && System.currentTimeMillis() > expires) {
                     // Cache has expired
                     if (Logger.VERBOSE) Log.v(TAG, request + " has expired, updating");
                     chain.next().load(request.withMetadata(metadata), chain, new NextListener(request, listener));
@@ -103,6 +95,36 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         }
     }
 
+    private Snapshot getSnapshot(LoaderRequest request) throws IOException {
+        String key = hashKeyForDisk(request);
+        return cache.get(key);
+    }
+
+    private Editor getEditor(LoaderRequest request) throws IOException {
+        String key = hashKeyForDisk(request);
+
+        Editor editor = cache.edit(key);
+        if (editor == null) {
+            throw new IOException("File is already being edited");
+        }
+
+        return editor;
+    }
+
+    /**
+     * A hashing method that changes a string (like a URL) into a hash suitable
+     * for using as a disk filename.
+     */
+    private String hashKeyForDisk(LoaderRequest request) {
+        String key = request.getCacheKey();
+
+        // We don't except to have a lot of threads
+        // so it's okay to synchronize access
+        synchronized (hasher) {
+            return hasher.hash(key);
+        }
+    }
+
     private class NextListener implements Listener {
         private LoaderRequest request;
         private Listener listener;
@@ -113,24 +135,26 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         }
 
         @Override
-        public void onStreamLoaded(InputStream is, Metadata metadata) {
+        public void onStreamLoaded(InputSupplier input, final Metadata metadata) {
             try {
-                String key = hashKeyForDisk(request);
-                Editor editor = cache.edit(key);
-                if (editor == null) {
-                    throw new IOException("File is already being edited");
-                }
+                Editor editor = getEditor(request);
 
                 OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE), BUFFER_SIZE);
                 try {
-                    copy(new BufferedInputStream(is, BUFFER_SIZE), os);
+                    IOUtil.copy(input, os);
                     os.close();
                     writeMetadata(editor, metadata);
 
                     editor.commit();
 
                     // Read back the file we just saved
-                    run(request, listener, new ReadTask(request, metadata));
+                    run(request, listener, new ListenerFuture.Task() {
+                        @Override
+                        public void run(Listener listener) throws Exception {
+                            DiskInputSupplier input = new DiskInputSupplier(request);
+                            listener.onStreamLoaded(input, metadata);
+                        }
+                    });
                 } catch (IOException e) {
                     // We failed writing to the cache, we can't really do
                     // anything to clean this up
@@ -142,21 +166,17 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
                 // means that the InputStream is still untouched.
                 // Pass it trough to the listener without caching.
                 Log.e(TAG, "Failed opening cache", e);
-                listener.onStreamLoaded(is, metadata);
+                listener.onStreamLoaded(input, metadata);
             }
         }
 
         @Override
         public void onBitmapLoaded(Bitmap b, Metadata metadata) {
             try {
-                String key = hashKeyForDisk(request);
-                Editor editor = cache.edit(key);
-                if (editor == null) {
-                    throw new IOException("File is already being edited");
-                }
+                Editor editor = getEditor(request);
 
                 try {
-                    Bitmap.CompressFormat format = getCompressFormat(metadata.getContentType());
+                    Bitmap.CompressFormat format = BitmapUtils.getCompressFormat(metadata.getContentType());
                     writeBitmap(editor, b, format);
                     writeMetadata(editor, metadata);
 
@@ -180,11 +200,7 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         @Override
         public void onNotModified(Metadata metadata) {
             try {
-                String key = hashKeyForDisk(request);
-                Editor editor = cache.edit(key);
-                if (editor == null) {
-                    throw new IOException("File is already being edited");
-                }
+                Editor editor = getEditor(request);
 
                 try {
                     writeMetadata(editor, metadata);
@@ -221,73 +237,46 @@ public class DiskLoader extends BackgroundLoader implements Closeable {
         private void writeBitmap(Editor editor, Bitmap b, Bitmap.CompressFormat format) throws IOException {
             OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE), BUFFER_SIZE);
             try {
-                b.compress(format, COMPRESS_QUALITY, os);
+                b.compress(format, Constants.DEFAULT_COMPRESS_QUALITY, os);
             } finally {
                 IOUtil.closeQuietly(os);
             }
         }
-
-        private Bitmap.CompressFormat getCompressFormat(String contentType) {
-            if ("image/png".equals(contentType)) {
-                return Bitmap.CompressFormat.PNG;
-            } else if ("image/jpeg".equals(contentType)) {
-                return Bitmap.CompressFormat.JPEG;
-            } else {
-                // Unknown format, use default
-                return COMPRESS_FORMAT;
-            }
-        }
     }
 
-    private class ReadTask implements ListenerFuture.Task {
-        private LoaderRequest request;
-        private Metadata metadata;
+    private class DiskInputSupplier implements InputSupplier {
+        private String key;
+        private Snapshot snapshot;
 
-        public ReadTask(LoaderRequest request, Metadata metadata) {
-            this.request = request;
-            this.metadata = metadata;
+        public DiskInputSupplier(LoaderRequest request) {
+            this(request, null);
+        }
+
+        public DiskInputSupplier(LoaderRequest request, Snapshot snapshot) {
+            this.key = hashKeyForDisk(request);
+            this.snapshot = snapshot;
         }
 
         @Override
-        public void run(Listener listener) throws Exception {
-            String key = hashKeyForDisk(request);
-
-            Snapshot snapshot = cache.get(key);
+        public InputStream getInput() throws IOException {
             if (snapshot == null) {
-                throw new IllegalStateException("File not available");
+                snapshot = cache.get(key);
+
+                if (snapshot == null) {
+                    throw new IOException("Snapshot not available");
+                }
             }
 
-            try {
-                InputStream is = snapshot.getInputStream(INPUT_IMAGE);
-                listener.onStreamLoaded(is, metadata);
-                is.close();
-            } finally {
-                snapshot.close();
-            }
-        }
-    }
+            // Wrap input stream so we can close the snapshot
+            return new FilterInputStream(snapshot.getInputStream(INPUT_IMAGE)) {
+                @Override
+                public void close() throws IOException {
+                    super.close();
 
-    private static void copy(InputStream input, OutputStream output) throws IOException {
-        byte[] buffer = new byte[BUFFER_SIZE];
-
-        int i = 0;
-        while ((i = input.read(buffer)) != -1) {
-            output.write(buffer, 0, i);
-        }
-    }
-
-    /**
-     * A hashing method that changes a string (like a URL) into a hash suitable
-     * for using as a disk filename.
-     */
-    private String hashKeyForDisk(LoaderRequest request) {
-        String key = request.getCacheKey();
-
-        // We don't except to have a lot of threads
-        // so it's okay to synchronize access
-
-        synchronized (hasher) {
-            return hasher.hash(key);
+                    snapshot.close();
+                    snapshot = null;
+                }
+            };
         }
     }
 }

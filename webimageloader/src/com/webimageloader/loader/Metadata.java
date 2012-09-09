@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class Metadata {
+    public static final long NEVER_EXPIRES = -1;
+    
     private String contentType;
     private long lastModified;
     private long expires;

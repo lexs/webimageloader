@@ -1,7 +1,8 @@
 package com.webimageloader.transformation;
 
 import java.io.IOException;
-import java.io.InputStream;
+
+import com.webimageloader.util.InputSupplier;
 
 import android.graphics.Bitmap;
 
@@ -19,13 +20,21 @@ public interface Transformation {
     String getIdentifier();
 
     /**
-     * Transform this {@link InputStream} to a {@link Bitmap}.
+     * Get the format used when saving the result of this transformation. This
+     * can be useful for example when relying on alpha.
      *
-     * @param is original {@link InputStream}
+     * @return the bitmap compress format, null for default
+     */
+    Bitmap.CompressFormat getCompressFormat();
+
+    /**
+     * Transform this {@link InputSupplier} to a {@link Bitmap}.
+     *
+     * @param input original {@link InputSupplier}
      * @return transformed {@link Bitmap}
      * @throws IOException if the conversion failed
      */
-    Bitmap transform(InputStream is) throws IOException;
+    Bitmap transform(InputSupplier input) throws IOException;
 
     /**
      * Transform this {@link Bitmap} to a new {@link Bitmap}.
