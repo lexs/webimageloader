@@ -10,7 +10,7 @@
 
     <groupId>com.webimageloader</groupId>
     <artifactId>parent</artifactId>
-    <version>1.1.2-SNAPSHOT</version>
+    <version>1.1.2</version>
     <packaging>pom</packaging>
 
     <name>WebImageLoader (Parent)</name>
@@ -43,7 +43,8 @@
         <url>https://github.com/lexs/webimageloader</url>
         <connection>scm:git:git://github.com/lexs/webimageloader.git</connection>
         <developerConnection>scm:git:git@github.com:lexs/webimageloader.git</developerConnection>
-    </scm>
+      <tag>1.1.2</tag>
+  </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
