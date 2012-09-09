@@ -23,9 +23,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.webimageloader</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>library</artifactId>
-            <version>1.1.2-SNAPSHOT</version>
+            <version>${project.version}</version>
             <type>jar</type>
         </dependency>
     </dependencies>
