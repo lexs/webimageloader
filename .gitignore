@@ -24,5 +24,9 @@ local.properties
 .project
 .settings
 
+# IntelliJ
+.idea/workspace.xml
+.idea/tasks.xml
+
 # Maven
 target/
