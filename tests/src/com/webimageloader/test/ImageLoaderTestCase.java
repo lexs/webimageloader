@@ -11,6 +11,7 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import android.annotation.TargetApi;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -19,6 +20,7 @@ import android.test.AndroidTestCase;
 import com.webimageloader.ImageLoader;
 import com.webimageloader.ImageLoader.Listener;
 
+@TargetApi(16)
 public class ImageLoaderTestCase extends AndroidTestCase {
     private static final int TIMEOUT = 1;
 
