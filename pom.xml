@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
+      <parent>
+            <groupId>org.sonatype.oss</groupId>
+            <artifactId>oss-parent</artifactId>
+            <version>7</version>
+      </parent>
+    
     <groupId>com.webimageloader</groupId>
     <artifactId>parent</artifactId>
     <version>1.1.2-SNAPSHOT</version>
@@ -10,6 +17,19 @@
     <description>Library to handle asynchronous image loading on Android.</description>
     <url>https://github.com/lexs/webimageloader</url>
     <inceptionYear>2012</inceptionYear>
+
+    <developers>
+        <developer>
+            <name>Alexander Blom</name>
+            <email>me@alexanderblom.se</email>
+            <id>alexanderblom</id>
+            <url>http://alexanderblom.se/</url>
+            <timezone>1</timezone>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </developer>
+    </developers>
 
      <licenses>
         <license>
@@ -61,7 +81,6 @@
                 <scope>provided</scope>
             </dependency>
         </dependencies>
-        
     </dependencyManagement>
 
     <build>
