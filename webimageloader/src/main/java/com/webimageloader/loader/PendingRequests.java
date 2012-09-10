@@ -22,16 +22,16 @@ public class PendingRequests {
     private MemoryCache memoryCache;
     private List<Loader> loaders;
 
-    private Map<Object, LoaderRequest> pendingsTags;
-    private Map<LoaderRequest, PendingListeners> pendingsRequests;
+    private Map<Object, LoaderRequest> pendingTags;
+    private Map<LoaderRequest, PendingListeners> pendingRequests;
 
     public PendingRequests(MemoryCache memoryCache, List<Loader> loaders) {
         this.memoryCache = memoryCache;
         this.loaders = loaders;
 
         // Use WeakHashMap to ensure tags can be GC'd
-        pendingsTags = new WeakHashMap<Object, LoaderRequest>();
-        pendingsRequests = new HashMap<LoaderRequest, PendingListeners>();
+        pendingTags = new WeakHashMap<Object, LoaderRequest>();
+        pendingRequests = new HashMap<LoaderRequest, PendingListeners>();
     }
 
     public synchronized Bitmap getBitmap(Object tag, LoaderRequest request) {
@@ -54,13 +54,13 @@ public class PendingRequests {
 
         if (tag != null) {
             cancelPotentialWork(tag);
-            pendingsTags.put(tag, request);
+            pendingTags.put(tag, request);
         }
 
-        PendingListeners listeners = pendingsRequests.get(request);
+        PendingListeners listeners = pendingRequests.get(request);
         if (listeners == null) {
             listeners = new PendingListeners(tag, listener);
-            pendingsRequests.put(request, listeners);
+            pendingRequests.put(request, listeners);
 
             return new RequestListener(request);
         } else {
@@ -92,25 +92,25 @@ public class PendingRequests {
     }
 
     private PendingListeners removeRequest(LoaderRequest request) {
-        PendingListeners listeners = pendingsRequests.remove(request);
+        PendingListeners listeners = pendingRequests.remove(request);
         if (listeners == null) {
             if (Logger.VERBOSE) Log.v(TAG, "Request no longer pending: " + request);
         } else {
-            pendingsTags.keySet().removeAll(listeners.getTags());
+            pendingTags.keySet().removeAll(listeners.getTags());
         }
 
         return listeners;
     }
 
     private void cancelPotentialWork(Object tag) {
-        LoaderRequest request = pendingsTags.remove(tag);
+        LoaderRequest request = pendingTags.remove(tag);
         if (request == null) {
             return;
         }
 
-        PendingListeners listeners = pendingsRequests.get(request);
+        PendingListeners listeners = pendingRequests.get(request);
         if (!listeners.remove(tag)) {
-            pendingsRequests.remove(request);
+            pendingRequests.remove(request);
 
             for (Loader loader : loaders) {
                 loader.cancel(request);
@@ -125,7 +125,7 @@ public class PendingRequests {
     }
 
     private boolean stillPending(Object tag, LoaderRequest request) {
-        return request.equals(pendingsTags.get(tag));
+        return request.equals(pendingTags.get(tag));
      }
 
     private class RequestListener implements Loader.Listener {
