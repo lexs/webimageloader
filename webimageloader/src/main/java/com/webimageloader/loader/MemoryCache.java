@@ -26,12 +26,14 @@ public class MemoryCache {
         public final int missCount;
         public final int putCount;
         public final int evictionCount;
+        public final int numImages;
 
-        private DebugInfo(int hitCount, int missCount, int putCount, int evictionCount) {
+        private DebugInfo(int hitCount, int missCount, int putCount, int evictionCount, int numImages) {
             this.hitCount = hitCount;
             this.missCount = missCount;
             this.putCount = putCount;
             this.evictionCount = evictionCount;
+            this.numImages = numImages;
         }
     }
 
@@ -75,7 +77,7 @@ public class MemoryCache {
     }
 
     public DebugInfo getDebugInfo() {
-        return new DebugInfo(cache.hitCount(), cache.missCount(), cache.putCount(), cache.evictionCount());
+        return new DebugInfo(cache.hitCount(), cache.missCount(), cache.putCount(), cache.evictionCount(), cache.snapshot().size());
     }
 
     @TargetApi(12)

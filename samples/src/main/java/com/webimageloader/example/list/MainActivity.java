@@ -124,6 +124,7 @@ public class MainActivity extends ListActivity {
                     MemoryCache.DebugInfo info = memoryCache.getDebugInfo();
 
                     String text = "Memory cache stats\n"
+                            + "Image count: " + info.numImages + "\n"
                             + "Hit count: " + info.hitCount + "\n"
                             + "Miss count: " + info.missCount + "\n"
                             + "Put count: " + info.putCount + "\n"
