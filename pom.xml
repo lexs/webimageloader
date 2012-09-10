@@ -22,7 +22,7 @@
         <developer>
             <name>Alexander Blom</name>
             <email>me@alexanderblom.se</email>
-            <id>alexanderblom</id>
+            <id>lexs</id>
             <url>http://alexanderblom.se/</url>
             <timezone>1</timezone>
             <roles>
@@ -43,8 +43,7 @@
         <url>https://github.com/lexs/webimageloader</url>
         <connection>scm:git:git://github.com/lexs/webimageloader.git</connection>
         <developerConnection>scm:git:git@github.com:lexs/webimageloader.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
