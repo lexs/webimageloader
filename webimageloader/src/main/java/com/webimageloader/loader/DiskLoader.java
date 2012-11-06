@@ -141,8 +141,12 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
 
                 OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE), BUFFER_SIZE);
                 try {
-                    IOUtil.copy(input, os);
-                    os.close();
+                    try {
+                        IOUtil.copy(input, os);
+                    } finally {
+                        os.close();
+                    }
+
                     writeMetadata(editor, metadata);
 
                     editor.commit();
