@@ -17,6 +17,10 @@
             <groupId>com.google.android</groupId>
             <artifactId>android</artifactId>
         </dependency>
+        <dependency>
+                <groupId>com.jakewharton</groupId>
+                <artifactId>disklrucache</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <finalName>webimageloader-${project.version}</finalName>

@@ -14,13 +14,13 @@ import android.graphics.Bitmap;
 import android.os.Process;
 import android.util.Log;
 
+import com.jakewharton.DiskLruCache;
+import com.jakewharton.DiskLruCache.Editor;
+import com.jakewharton.DiskLruCache.Snapshot;
 import com.webimageloader.Constants;
 import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.concurrent.ListenerFuture;
 import com.webimageloader.util.BitmapUtils;
-import com.webimageloader.util.DiskLruCache;
-import com.webimageloader.util.DiskLruCache.Editor;
-import com.webimageloader.util.DiskLruCache.Snapshot;
 import com.webimageloader.util.Hasher;
 import com.webimageloader.util.IOUtil;
 import com.webimageloader.util.InputSupplier;
