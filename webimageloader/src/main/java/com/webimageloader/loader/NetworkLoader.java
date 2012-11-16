@@ -1,5 +1,6 @@
 package com.webimageloader.loader;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -25,7 +26,7 @@ import com.webimageloader.util.FlushedInputStream;
 import com.webimageloader.util.HeaderParser;
 import com.webimageloader.util.InputSupplier;
 
-public class NetworkLoader extends SimpleBackgroundLoader {
+public class NetworkLoader implements Loader, Closeable {
     private static final String TAG = "NetworkLoader";
 
     private static final int TAG_REGULAR = 0x7eb00000;
@@ -38,62 +39,97 @@ public class NetworkLoader extends SimpleBackgroundLoader {
     private long defaultMaxAge;
     private long forcedMaxAge;
 
-    public NetworkLoader(Builder builder) {
-        super("Network", Process.THREAD_PRIORITY_BACKGROUND, builder.threadCount);
+    private BackgroundLoader regularLoader;
+    private BackgroundLoader conditionalLoader;
 
+    public NetworkLoader(Builder builder) {
         this.streamHandlers = Collections.unmodifiableMap(builder.streamHandlers);
         this.connectionHandler = builder.connectionHandler;
         this.connectionTimeout = builder.connectionTimeout;
         this.readTimeout = builder.readTimeout;
         this.defaultMaxAge = builder.defaultMaxAge;
         this.forcedMaxAge = builder.forcedMaxAge;
+
+        regularLoader = new NetworkLoaderImpl("Network", Process.THREAD_PRIORITY_BACKGROUND, builder.threadCount);
+        conditionalLoader = new NetworkLoaderImpl("Network, cache check", Process.THREAD_PRIORITY_LOWEST, 1);
     }
 
     @Override
-    protected void loadInBackground(LoaderRequest request, Iterator<Loader> chain, Listener listener) throws Exception {
-        String url = request.getUrl();
-
-        String protocol = getProtocol(url);
-        URLStreamHandler streamHandler = getURLStreamHandler(protocol);
-
-        URLConnection urlConnection = openConnection(new URL(null, url, streamHandler));
-
-        Metadata metadata = request.getMetadata();
-        if (metadata != null) {
-            tag(TAG_CONDITIONAL);
-
-            // We have some information available
-            long modifiedSince = metadata.getLastModified();
-            if (modifiedSince != 0) {
-                urlConnection.setIfModifiedSince(modifiedSince);
-            }
-
-            String etag = metadata.getEtag();
-            if (!TextUtils.isEmpty(etag)) {
-                urlConnection.addRequestProperty("If-None-Match", etag);
-            }
+    public void load(LoaderRequest request, Iterator<Loader> chain,  Listener listener) {
+        if (request.getMetadata() != null) {
+            conditionalLoader.load(request, chain, listener);
         } else {
-            tag(TAG_REGULAR);
-        }
-
-        String contentType = urlConnection.getContentType();
-        long lastModified = urlConnection.getLastModified();
-        long expires = getExpires(urlConnection);
-        String etag = urlConnection.getHeaderField("ETag");
-
-        // Update metadata
-        metadata = new Metadata(contentType, lastModified, expires, etag);
-
-        if (getResponseCode(urlConnection) == HttpURLConnection.HTTP_NOT_MODIFIED) {
-            if (Logger.VERBOSE) Log.v(TAG, request + " was not modified since last fetch");
-
-            listener.onNotModified(metadata);
-        } else {
-            if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from network");
-
-            listener.onStreamLoaded(new NetworkInputSupplier(urlConnection), metadata);
+            regularLoader.load(request, chain, listener);
         }
     }
+
+    @Override
+    public void cancel(LoaderRequest request) {
+        if (request.getMetadata() != null) {
+            conditionalLoader.cancel(request);
+        } else {
+            regularLoader.cancel(request);
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        regularLoader.close();
+        conditionalLoader.close();
+    }
+
+    private class NetworkLoaderImpl extends SimpleBackgroundLoader {
+        public NetworkLoaderImpl(String name, int priority, int threadCount) {
+            super(name, priority, threadCount);
+        }
+
+        @Override
+        protected void loadInBackground(LoaderRequest request, Iterator<Loader> chain, Listener listener) throws Exception {
+            String url = request.getUrl();
+
+            String protocol = getProtocol(url);
+            URLStreamHandler streamHandler = getURLStreamHandler(protocol);
+
+            URLConnection urlConnection = openConnection(new URL(null, url, streamHandler));
+
+            Metadata metadata = request.getMetadata();
+            if (metadata != null) {
+                tag(TAG_CONDITIONAL);
+
+                // We have some information available
+                long modifiedSince = metadata.getLastModified();
+                if (modifiedSince != 0) {
+                    urlConnection.setIfModifiedSince(modifiedSince);
+                }
+
+                String etag = metadata.getEtag();
+                if (!TextUtils.isEmpty(etag)) {
+                    urlConnection.addRequestProperty("If-None-Match", etag);
+                }
+            } else {
+                tag(TAG_REGULAR);
+            }
+
+            String contentType = urlConnection.getContentType();
+            long lastModified = urlConnection.getLastModified();
+            long expires = getExpires(urlConnection);
+            String etag = urlConnection.getHeaderField("ETag");
+
+            // Update metadata
+            metadata = new Metadata(contentType, lastModified, expires, etag);
+
+            if (getResponseCode(urlConnection) == HttpURLConnection.HTTP_NOT_MODIFIED) {
+                if (Logger.VERBOSE) Log.v(TAG, request + " was not modified since last fetch");
+
+                listener.onNotModified(metadata);
+            } else {
+                if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from network");
+
+                listener.onStreamLoaded(new NetworkInputSupplier(urlConnection), metadata);
+            }
+        }
+    }
+
 
     private int getResponseCode(URLConnection urlConnection) throws IOException {
         // We can't assume we have a HttpUrlConnection as resources uses a custom subclass
