@@ -89,7 +89,7 @@ public class IOUtil {
     public static void copy(InputStream input, OutputStream output) throws IOException {
         byte[] buffer = new byte[BUFFER_SIZE];
     
-        int i = 0;
+        int i;
         while ((i = input.read(buffer)) != -1) {
             output.write(buffer, 0, i);
         }
