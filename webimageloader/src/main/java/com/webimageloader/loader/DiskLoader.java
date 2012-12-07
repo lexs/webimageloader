@@ -37,7 +37,7 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
     private static final int VALUE_COUNT = 2;
 
     private DiskLruCache cache;
-    private Hasher hasher;
+    private final Hasher hasher;
 
     public static DiskLoader open(File directory, long maxSize, int threadCount) throws IOException {
         return new DiskLoader(DiskLruCache.open(directory, APP_VERSION, VALUE_COUNT, maxSize), threadCount);
