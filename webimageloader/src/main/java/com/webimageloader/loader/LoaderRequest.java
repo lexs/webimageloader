@@ -7,7 +7,7 @@ public class LoaderRequest {
     private Transformation transformation;
     private Metadata metadata;
 
-    private String cacheKey = null;
+    private String cacheKey;
 
     public LoaderRequest(String url) {
         this(url, null);
@@ -20,6 +20,12 @@ public class LoaderRequest {
 
         this.url = url;
         this.transformation = transformation;
+
+        if (transformation != null) {
+            cacheKey = url + transformation.getIdentifier();
+        } else {
+            cacheKey = url;
+        }
     }
 
     public LoaderRequest withoutTransformation() {
@@ -45,21 +51,13 @@ public class LoaderRequest {
         return metadata;
     }
 
-    public synchronized String getCacheKey() {
-        if (cacheKey == null) {
-            if (transformation != null) {
-                cacheKey = url + transformation.getIdentifier();
-            } else {
-                cacheKey = url;
-            }
-        }
-
+    public String getCacheKey() {
         return cacheKey;
     }
 
     @Override
     public int hashCode() {
-        return getCacheKey().hashCode();
+        return cacheKey.hashCode();
     }
 
     @Override
@@ -70,7 +68,7 @@ public class LoaderRequest {
 
         if (obj instanceof LoaderRequest) {
             LoaderRequest request = (LoaderRequest) obj;
-            return getCacheKey().equals(request.getCacheKey());
+            return cacheKey.equals(request.getCacheKey());
         } else {
             return false;
         }
