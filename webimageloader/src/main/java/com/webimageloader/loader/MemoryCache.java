@@ -8,6 +8,8 @@ import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.util.Log;
 
+import java.util.WeakHashMap;
+
 public class MemoryCache {
     private static final String TAG = "MemoryLoader";
 
@@ -38,9 +40,11 @@ public class MemoryCache {
     }
 
     private LruCache<String, Entry> cache;
+    private WeakHashMap<String, Entry> expired;
 
     public MemoryCache(int maxSize) {
         cache = new BitmapCache(maxSize);
+        expired = new WeakHashMap<String, Entry>();
     }
 
     public int size() {
@@ -60,9 +64,16 @@ public class MemoryCache {
     }
 
     public Entry get(LoaderRequest request) {
-        Entry entry = cache.get(request.getCacheKey());
+        String cacheKey = request.getCacheKey();
+        Entry entry = cache.get(cacheKey);
         if (entry != null) {
             if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from memory");
+        } else {
+            entry = expired.remove(cacheKey);
+            if (entry != null) {
+                cache.put(cacheKey, entry);
+                if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from expired memory");
+            }
         }
 
         return entry;
@@ -89,7 +100,7 @@ public class MemoryCache {
         }
     }
 
-    private static class BitmapCache extends LruCache<String, Entry> {
+    private class BitmapCache extends LruCache<String, Entry> {
         public BitmapCache(int maxSize) {
             super(maxSize);
         }
@@ -99,6 +110,13 @@ public class MemoryCache {
             Bitmap b = value.bitmap;
 
             return MemoryCache.sizeOf(b);
+        }
+
+        @Override
+        protected void entryRemoved(boolean evicted, String key, Entry oldValue, Entry newValue) {
+            if (evicted) {
+                expired.put(key, oldValue);
+            }
         }
     }
 }
