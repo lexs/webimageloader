@@ -160,7 +160,7 @@ public class PendingRequests {
         @Override
         public void onNotModified(Metadata metadata) {
             // Nothing changed, we don't need to notify any listeners
-            // TODO: We should probably update the memory cache
+            memoryCache.updateMetadata(request, metadata);
         }
 
         @Override

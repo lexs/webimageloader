@@ -87,6 +87,14 @@ public class MemoryCache {
         }
     }
 
+    public void updateMetadata(LoaderRequest request, Metadata metadata) {
+        String cacheKey = request.getCacheKey();
+        Entry entry = cache.get(cacheKey);
+        if (entry != null) {
+            cache.put(cacheKey, new Entry(entry.bitmap, metadata));
+        }
+    }
+
     public DebugInfo getDebugInfo() {
         return new DebugInfo(cache.hitCount(), cache.missCount(), cache.putCount(), cache.evictionCount(), cache.snapshot().size());
     }
