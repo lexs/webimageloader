@@ -20,16 +20,14 @@ public class PendingRequests {
     private static final String TAG = "PendingRequests";
 
     private MemoryCache memoryCache;
-    private List<Loader> loaders;
 
     // Don't remove tags at all, this means both of these should be weakhashmaps
     //
     private Map<Object, LoaderRequest> pendingTags;
     private Map<LoaderRequest, PendingListeners> pendingRequests;
 
-    public PendingRequests(MemoryCache memoryCache, List<Loader> loaders) {
+    public PendingRequests(MemoryCache memoryCache) {
         this.memoryCache = memoryCache;
-        this.loaders = loaders;
 
         // Use WeakHashMap to ensure tags can be GC'd
         pendingTags = new WeakHashMap<Object, LoaderRequest>();

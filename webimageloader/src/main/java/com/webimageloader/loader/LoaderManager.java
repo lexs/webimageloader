@@ -61,7 +61,7 @@ public class LoaderManager {
         standardChain = Collections.unmodifiableList(standardChain);
         transformationChain = Collections.unmodifiableList(transformationChain);
 
-        pendingRequests = new PendingRequests(memoryCache, standardChain);
+        pendingRequests = new PendingRequests(memoryCache);
     }
 
     public MemoryCache getMemoryCache() {
