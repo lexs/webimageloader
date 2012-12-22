@@ -290,7 +290,7 @@ public class ImageLoader {
             handler.removeCallbacksAndMessages(tag);
 
             if (tag == null) {
-                return new SimpleTagListener<T>(listener);
+                return new TagListener<T>(listener);
             } else {
                 return new TagListener<T>(tag, listener);
             }
@@ -300,11 +300,17 @@ public class ImageLoader {
             handler.removeCallbacksAndMessages(tag);
         }
 
-        private class SimpleTagListener<T> implements LoaderManager.Listener {
+        private class TagListener<T> implements LoaderManager.Listener {
             private Listener<T> listener;
+            private WeakReference<T> reference;
 
-            public SimpleTagListener(Listener<T> listener) {
+            public TagListener(Listener<T> listener) {
                 this.listener = listener;
+            }
+
+            public TagListener(T tag, Listener<T> listener) {
+                this.listener = listener;
+                this.reference = new WeakReference<T>(tag);
             }
 
             @Override
@@ -331,34 +337,23 @@ public class ImageLoader {
                 });
             }
 
-            protected T getTag() {
-                return null;
+            private T getTag() {
+                T tag = null;
+
+                if (reference != null) {
+                    tag = reference.get();
+                    if (tag == null) {
+                        throw new RuntimeException("Listener called but tag was GC'ed");
+                    }
+                }
+
+                return tag;
             }
 
             private void post(T tag, Runnable r) {
                 Message m = Message.obtain(handler, r);
                 m.obj = tag;
                 handler.sendMessage(m);
-            }
-        }
-
-        private class TagListener<T> extends SimpleTagListener<T> {
-            private WeakReference<T> reference;
-
-            public TagListener(T tag, Listener<T> listener) {
-                super(listener);
-
-                this.reference = new WeakReference<T>(tag);
-            }
-
-            @Override
-            protected T getTag() {
-                T tag = reference.get();
-                if (tag == null) {
-                    throw new RuntimeException("Listener called but tag was GC'ed");
-                }
-
-                return tag;
             }
         }
     }
