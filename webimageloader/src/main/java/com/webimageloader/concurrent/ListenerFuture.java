@@ -4,7 +4,7 @@ import com.webimageloader.loader.LoaderWork;
 
 public class ListenerFuture implements Runnable {
     public interface Task {
-        void run(LoaderWork.Manager manager) throws Exception;
+        void run() throws Exception;
     }
 
     private Task task;
@@ -18,7 +18,7 @@ public class ListenerFuture implements Runnable {
     @Override
     public void run() {
         try {
-            task.run(manager);
+            task.run();
         } catch (Throwable t) {
             manager.deliverError(t);
         }

@@ -14,10 +14,10 @@ public abstract class BackgroundLoader implements Loader, Closeable {
     }
 
     @Override
-    public final void load(LoaderWork.Manager manager, final LoaderRequest request) {
+    public final void load(final LoaderWork.Manager manager, final LoaderRequest request) {
         run(manager, new ListenerFuture.Task() {
             @Override
-            public void run(LoaderWork.Manager manager) throws Exception {
+            public void run() throws Exception {
                 loadInBackground(manager, request);
             }
         });
