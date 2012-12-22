@@ -15,5 +15,4 @@ public interface Loader {
     }
 
     void load(LoaderWork.Manager manager, LoaderRequest request);
-    void cancel(LoaderRequest request);
 }

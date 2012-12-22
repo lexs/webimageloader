@@ -24,10 +24,6 @@ public abstract class BackgroundLoader implements Loader, Closeable {
     }
 
     @Override
-    public final void cancel(LoaderRequest request) {
-    }
-
-    @Override
     public void close() {
         executor.shutdownNow();
     }

@@ -63,15 +63,6 @@ public class NetworkLoader implements Loader, Closeable {
     }
 
     @Override
-    public void cancel(LoaderRequest request) {
-        if (request.getMetadata() != null) {
-            conditionalLoader.cancel(request);
-        } else {
-            regularLoader.cancel(request);
-        }
-    }
-
-    @Override
     public void close() throws IOException {
         regularLoader.close();
         conditionalLoader.close();

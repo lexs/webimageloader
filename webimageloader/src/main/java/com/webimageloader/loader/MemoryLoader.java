@@ -18,9 +18,4 @@ public class MemoryLoader implements Loader {
             manager.next(request);
         }
     }
-
-    @Override
-    public void cancel(LoaderRequest request) {
-        // We can't cancel anything
-    }
 }

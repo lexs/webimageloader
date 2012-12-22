@@ -70,10 +70,4 @@ public class TransformingLoader implements Loader {
         String contentType = BitmapUtils.getContentType(format);
         return new Metadata(contentType, metadata.getLastModified(), metadata.getExpires(), metadata.getEtag());
     }
-
-    @Override
-    public void cancel(LoaderRequest request) {
-        // We can't cancel anything as we don't run the
-        // transformation on our own thread
-    }
 }
