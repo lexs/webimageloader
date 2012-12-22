@@ -285,14 +285,14 @@ public class ImageLoader {
         }
 
         public <T> LoaderManager.Listener getListener(T tag, Listener<T> listener) {
-            // It's possible there is already a callback in progress for this tag
-            // so we'll remove it
-            handler.removeCallbacksAndMessages(tag);
+            if (tag != null) {
+                // It's possible there is already a callback in progress for this tag
+                // so we'll remove it
+                handler.removeCallbacksAndMessages(tag);
 
-            if (tag == null) {
-                return new TagListener<T>(listener);
-            } else {
                 return new TagListener<T>(tag, listener);
+            } else {
+                return new TagListener<T>(listener);
             }
         }
 
