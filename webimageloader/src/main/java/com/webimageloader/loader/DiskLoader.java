@@ -8,7 +8,6 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Iterator;
 
 import android.graphics.Bitmap;
 import android.os.Process;
@@ -58,7 +57,7 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
     }
 
     @Override
-    protected void loadInBackground(LoaderRequest request, Iterator<Loader> chain, Listener listener) throws IOException {
+    protected void loadInBackground(LoaderWork.Manager manager, LoaderRequest request) throws IOException {
         Snapshot snapshot = getSnapshot(request);
         if (snapshot != null) {
             try {
@@ -67,21 +66,20 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
                 Metadata metadata = readMetadata(snapshot);
                 DiskInputSupplier input = new DiskInputSupplier(request, snapshot);
 
-                listener.onStreamLoaded(input, metadata);
+                manager.deliverStream(input, metadata);
 
                 long expires = metadata.getExpires();
                 if (expires != Metadata.NEVER_EXPIRES && System.currentTimeMillis() > expires) {
                     // Cache has expired
                     if (Logger.VERBOSE) Log.v(TAG, request + " has expired, updating");
-                    chain.next().load(request.withMetadata(metadata), chain, new NextListener(request, listener));
+                    manager.next(request.withMetadata(metadata), new NextListener(request, manager));
                 }
             } finally {
                 snapshot.close();
             }
         } else {
-            // We need to get the next loader
-            Loader next = chain.next();
-            next.load(request, chain, new NextListener(request, listener));
+            // We need to add the next loader
+            manager.next(request, new NextListener(request, manager));
         }
     }
 
@@ -127,11 +125,11 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
 
     private class NextListener implements Listener {
         private LoaderRequest request;
-        private Listener listener;
+        private LoaderWork.Manager manager;
 
-        public NextListener(LoaderRequest request, Listener listener) {
+        public NextListener(LoaderRequest request, LoaderWork.Manager manager) {
             this.request = request;
-            this.listener = listener;
+            this.manager = manager;
         }
 
         @Override
@@ -152,25 +150,25 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
                     editor.commit();
 
                     // Read back the file we just saved
-                    run(request, listener, new ListenerFuture.Task() {
+                    run(request, manager, new ListenerFuture.Task() {
                         @Override
-                        public void run(Listener listener) throws Exception {
+                        public void run(LoaderWork.Manager manager) throws Exception {
                             DiskInputSupplier input = new DiskInputSupplier(request);
-                            listener.onStreamLoaded(input, metadata);
+                            manager.deliverStream(input, metadata);
                         }
                     });
                 } catch (IOException e) {
                     // We failed writing to the cache, we can't really do
                     // anything to clean this up
                     editor.abort();
-                    listener.onError(e);
+                    manager.deliverError(e);
                 }
             } catch (IOException e) {
                 // We failed opening the cache, this
                 // means that the InputStream is still untouched.
                 // Pass it trough to the listener without caching.
                 Log.e(TAG, "Failed opening cache", e);
-                listener.onStreamLoaded(input, metadata);
+                manager.deliverStream(input, metadata);
             }
         }
 
@@ -198,7 +196,7 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
 
             // We can always pass on the bitmap we got, even if
             // we didn't manage to write it to cache
-            listener.onBitmapLoaded(b, metadata);
+            manager.deliverBitmap(b, metadata);
         }
 
         @Override
@@ -221,12 +219,12 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
                 Log.e(TAG, "Failed to update metadata", e);
             }
 
-            listener.onNotModified(metadata);
+            manager.deliverNotMotified(metadata);
         }
 
         @Override
         public void onError(Throwable t) {
-            listener.onError(t);
+            manager.deliverError(t);
         }
 
         private void writeMetadata(Editor editor, Metadata metadata) throws IOException {

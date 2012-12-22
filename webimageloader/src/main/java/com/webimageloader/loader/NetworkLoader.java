@@ -9,7 +9,6 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import android.annotation.TargetApi;
@@ -55,11 +54,11 @@ public class NetworkLoader implements Loader, Closeable {
     }
 
     @Override
-    public void load(LoaderRequest request, Iterator<Loader> chain,  Listener listener) {
+    public void load(LoaderWork.Manager manager, LoaderRequest request) {
         if (request.getMetadata() != null) {
-            conditionalLoader.load(request, chain, listener);
+            conditionalLoader.load(manager, request);
         } else {
-            regularLoader.load(request, chain, listener);
+            regularLoader.load(manager, request);
         }
     }
 
@@ -84,7 +83,7 @@ public class NetworkLoader implements Loader, Closeable {
         }
 
         @Override
-        protected void loadInBackground(LoaderRequest request, Iterator<Loader> chain, Listener listener) throws Exception {
+        protected void loadInBackground(LoaderWork.Manager manager, LoaderRequest request) throws Exception {
             String url = request.getUrl();
 
             String protocol = getProtocol(url);
@@ -121,11 +120,11 @@ public class NetworkLoader implements Loader, Closeable {
             if (getResponseCode(urlConnection) == HttpURLConnection.HTTP_NOT_MODIFIED) {
                 if (Logger.VERBOSE) Log.v(TAG, request + " was not modified since last fetch");
 
-                listener.onNotModified(metadata);
+                manager.deliverNotMotified(metadata);
             } else {
                 if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from network");
 
-                listener.onStreamLoaded(new NetworkInputSupplier(urlConnection), metadata);
+                manager.deliverStream(new NetworkInputSupplier(urlConnection), metadata);
             }
         }
     }

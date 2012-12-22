@@ -83,10 +83,10 @@ public class LoaderManager {
             listener = EMPTY_LISTENER;
         }
 
-        Loader.Listener l = pendingRequests.addRequest(tag, request, listener);
+        LoaderWork work = pendingRequests.addRequest(tag, request, listener);
 
         // A request is already pending, don't load anything
-        if (l == null) {
+        if (work == null) {
             return null;
         }
 
@@ -94,8 +94,7 @@ public class LoaderManager {
         Transformation t = request.getTransformation();
         List<Loader> chain = t == null ? standardChain : transformationChain;
 
-        Iterator<Loader> it = chain.iterator();
-        it.next().load(request, it, l);
+        work.start(chain, request);
 
         return null;
     }

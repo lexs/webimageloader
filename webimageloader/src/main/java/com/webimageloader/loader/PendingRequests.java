@@ -22,6 +22,8 @@ public class PendingRequests {
     private MemoryCache memoryCache;
     private List<Loader> loaders;
 
+    // Don't remove tags at all, this means both of these should be weakhashmaps
+    //
     private Map<Object, LoaderRequest> pendingTags;
     private Map<LoaderRequest, PendingListeners> pendingRequests;
 
@@ -47,7 +49,7 @@ public class PendingRequests {
         return null;
     }
 
-    public synchronized Loader.Listener addRequest(Object tag, LoaderRequest request, LoaderManager.Listener listener) {
+    public synchronized LoaderWork addRequest(Object tag, LoaderRequest request, LoaderManager.Listener listener) {
         if (tag != null && stillPending(tag, request)) {
             return null;
         }
@@ -59,10 +61,12 @@ public class PendingRequests {
 
         PendingListeners listeners = pendingRequests.get(request);
         if (listeners == null) {
-            listeners = new PendingListeners(tag, listener);
+            LoaderWork work = new LoaderWork(new RequestListener(request));
+
+            listeners = new PendingListeners(tag, listener, work);
             pendingRequests.put(request, listeners);
 
-            return new RequestListener(request);
+            return work;
         } else {
             if (Logger.VERBOSE) Log.v(TAG, "Reusing request: " + request);
             listeners.add(tag, listener);
@@ -111,10 +115,6 @@ public class PendingRequests {
         PendingListeners listeners = pendingRequests.get(request);
         if (!listeners.remove(tag)) {
             pendingRequests.remove(request);
-
-            for (Loader loader : loaders) {
-                loader.cancel(request);
-            }
         }
     }
 
@@ -172,8 +172,11 @@ public class PendingRequests {
     private static class PendingListeners {
         private Map<Object, LoaderManager.Listener> listeners;
         private List<LoaderManager.Listener> extraListeners;
+        private LoaderWork work;
 
-        public PendingListeners(Object tag, LoaderManager.Listener listener) {
+        public PendingListeners(Object tag, LoaderManager.Listener listener, LoaderWork work) {
+            this.work = work;
+
             // Use a WeakHashMap to ensure tags can be GC'd, also use 1 a initial
             // capacity as we expect a low number of listeners per request
             listeners = new WeakHashMap<Object, LoaderManager.Listener>(1);
@@ -191,13 +194,16 @@ public class PendingRequests {
         }
 
         /**
-         * Remove a listener
+         * Remove a listener, if there are no more listeners this request will
+         * also be cancelled.
+         *
          * @return true if this task is still pending
          */
         public boolean remove(Object tag) {
             listeners.remove(tag);
 
             if (listeners.isEmpty() && extraListeners.isEmpty()) {
+                work.cancel();
                 return false;
             } else {
                 return true;

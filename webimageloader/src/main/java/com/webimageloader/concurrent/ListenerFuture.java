@@ -1,26 +1,26 @@
 package com.webimageloader.concurrent;
 
-import com.webimageloader.loader.Loader.Listener;
+import com.webimageloader.loader.LoaderWork;
 
 public class ListenerFuture implements Runnable {
     public interface Task {
-        void run(Listener listener) throws Exception;
+        void run(LoaderWork.Manager manager) throws Exception;
     }
 
     private Task task;
-    private Listener listener;
+    private LoaderWork.Manager manager;
 
-    public ListenerFuture(Task task, Listener listener) {
+    public ListenerFuture(Task task, LoaderWork.Manager manager) {
         this.task = task;
-        this.listener = listener;
+        this.manager = manager;
     }
 
     @Override
     public void run() {
         try {
-            task.run(listener);
+            task.run(manager);
         } catch (Throwable t) {
-            listener.onError(t);
+            manager.deliverError(t);
         }
     }
 }

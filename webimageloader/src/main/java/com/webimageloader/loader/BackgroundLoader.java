@@ -1,7 +1,6 @@
 package com.webimageloader.loader;
 
 import java.io.Closeable;
-import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 
 import com.webimageloader.concurrent.ExecutorHelper;
@@ -15,18 +14,17 @@ public abstract class BackgroundLoader implements Loader, Closeable {
     }
 
     @Override
-    public final void load(final LoaderRequest request, final Iterator<Loader> chain, Listener listener) {
-        executorHelper.run(request, listener, new ListenerFuture.Task() {
+    public final void load(LoaderWork.Manager manager, final LoaderRequest request) {
+        executorHelper.run(request, manager, new ListenerFuture.Task() {
             @Override
-            public void run(Listener listener) throws Exception {
-                loadInBackground(request, chain, listener);
+            public void run(LoaderWork.Manager manager) throws Exception {
+                loadInBackground(manager, request);
             }
         });
     }
 
     @Override
     public final void cancel(LoaderRequest request) {
-        executorHelper.cancel(request);
     }
 
     @Override
@@ -34,9 +32,9 @@ public abstract class BackgroundLoader implements Loader, Closeable {
         executorHelper.shutdown();
     }
 
-    protected void run(LoaderRequest request, Listener listener, ListenerFuture.Task task) {
-        executorHelper.run(request, listener, task);
+    protected void run(LoaderRequest request, LoaderWork.Manager manager, ListenerFuture.Task task) {
+        executorHelper.run(request, manager, task);
     }
 
-    protected abstract void loadInBackground(LoaderRequest request, Iterator<Loader> chain, Listener listener) throws Exception;
+    protected abstract void loadInBackground(LoaderWork.Manager manager, LoaderRequest request) throws Exception;
 }

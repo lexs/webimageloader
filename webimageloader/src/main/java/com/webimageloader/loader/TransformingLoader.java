@@ -1,8 +1,5 @@
 package com.webimageloader.loader;
 
-import java.io.IOException;
-import java.util.Iterator;
-
 import android.graphics.Bitmap;
 import android.util.Log;
 
@@ -11,18 +8,20 @@ import com.webimageloader.transformation.Transformation;
 import com.webimageloader.util.BitmapUtils;
 import com.webimageloader.util.InputSupplier;
 
+import java.io.IOException;
+
 public class TransformingLoader implements Loader {
     private static final String TAG = "TransformingLoader";
 
     @Override
-    public void load(LoaderRequest request, Iterator<Loader> chain, final Listener listener) {
+    public void load(final LoaderWork.Manager manager, LoaderRequest request) {
         if (Logger.VERBOSE) Log.v(TAG, "Transforming " + request);
 
         final Transformation transformation = request.getTransformation();
 
         // Modify request
         LoaderRequest modified = request.withoutTransformation();
-        chain.next().load(modified, chain, new Listener() {
+        manager.next(modified, new Listener() {
             @Override
             public void onStreamLoaded(InputSupplier input, Metadata metadata) {
                 try {
@@ -31,7 +30,7 @@ public class TransformingLoader implements Loader {
 
                     deliverResult(transformedBitmap, transformedMetadata);
                 } catch (IOException e) {
-                    listener.onError(e);
+                    manager.deliverError(e);
                 }
             }
 
@@ -45,18 +44,18 @@ public class TransformingLoader implements Loader {
                 if (b == null) {
                     onError(new IllegalStateException("Transformer returned null"));
                 } else {
-                    listener.onBitmapLoaded(b, metadata);
+                    manager.deliverBitmap(b, metadata);
                 }
             }
 
             @Override
             public void onNotModified(Metadata metadata) {
-                listener.onNotModified(metadata);
+                manager.deliverNotMotified(metadata);
             }
 
             @Override
             public void onError(Throwable t) {
-                listener.onError(t);
+                manager.deliverError(t);
             }
         });
     }

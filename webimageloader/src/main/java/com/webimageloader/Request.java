@@ -62,15 +62,32 @@ public class Request {
     }
 
     /**
-     * Add a transformation to this request
+     * Constructor for a specific url and transformation
+     *
+     * @param url the url
+     * @param transformation the transformation
+     */
+    public Request(String url, Transformation transformation) {
+        this.url = url;
+        this.transformation = transformation;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public Transformation getTransformation() {
+        return transformation;
+    }
+
+    /**
+     * Create a new request with an added transformation
      *
      * @param transformation the transformation to apply
-     * @return the same request
+     * @return the new request
      */
     public Request withTransformation(Transformation transformation) {
-        this.transformation = transformation;
-
-        return this;
+        return new Request(url, transformation);
     }
 
     LoaderRequest toLoaderRequest() {

@@ -14,6 +14,6 @@ public interface Loader {
         void onError(Throwable t);
     }
 
-    void load(LoaderRequest request, Iterator<Loader> chain, Listener listener);
+    void load(LoaderWork.Manager manager, LoaderRequest request);
     void cancel(LoaderRequest request);
 }
