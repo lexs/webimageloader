@@ -150,7 +150,7 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
                     editor.commit();
 
                     // Read back the file we just saved
-                    run(request, manager, new ListenerFuture.Task() {
+                    run(manager, new ListenerFuture.Task() {
                         @Override
                         public void run(LoaderWork.Manager manager) throws Exception {
                             DiskInputSupplier input = new DiskInputSupplier(request);

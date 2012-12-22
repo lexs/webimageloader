@@ -2,20 +2,20 @@ package com.webimageloader.loader;
 
 import java.io.Closeable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
-import com.webimageloader.concurrent.ExecutorHelper;
 import com.webimageloader.concurrent.ListenerFuture;
 
 public abstract class BackgroundLoader implements Loader, Closeable {
-    private ExecutorHelper executorHelper;
+    private ExecutorService executor;
 
     public BackgroundLoader(ExecutorService executor) {
-        executorHelper = new ExecutorHelper(executor);
+        this.executor = executor;
     }
 
     @Override
     public final void load(LoaderWork.Manager manager, final LoaderRequest request) {
-        executorHelper.run(request, manager, new ListenerFuture.Task() {
+        run(manager, new ListenerFuture.Task() {
             @Override
             public void run(LoaderWork.Manager manager) throws Exception {
                 loadInBackground(manager, request);
@@ -29,11 +29,12 @@ public abstract class BackgroundLoader implements Loader, Closeable {
 
     @Override
     public void close() {
-        executorHelper.shutdown();
+        executor.shutdownNow();
     }
 
-    protected void run(LoaderRequest request, LoaderWork.Manager manager, ListenerFuture.Task task) {
-        executorHelper.run(request, manager, task);
+    protected void run(LoaderWork.Manager manager, ListenerFuture.Task task) {
+        Future<?> future = executor.submit(new ListenerFuture(task, manager));
+        manager.addFuture(future);
     }
 
     protected abstract void loadInBackground(LoaderWork.Manager manager, LoaderRequest request) throws Exception;
