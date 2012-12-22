@@ -8,6 +8,10 @@ import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.util.Log;
 
+import java.lang.ref.WeakReference;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.WeakHashMap;
 
 public class MemoryCache {
@@ -20,6 +24,25 @@ public class MemoryCache {
         private Entry(Bitmap bitmap, Metadata metadata) {
             this.bitmap = bitmap;
             this.metadata = metadata;
+        }
+    }
+
+    private static class WeakEntry {
+        public final WeakReference<Bitmap> reference;
+        public final Metadata metadata;
+
+        private WeakEntry(Entry entry) {
+            this.reference = new WeakReference<Bitmap>(entry.bitmap);
+            this.metadata = entry.metadata;
+        }
+
+        public Entry toEntry() {
+            Bitmap b = reference.get();
+            if (b == null) {
+                return null;
+            } else {
+                return new Entry(b, metadata);
+            }
         }
     }
 
@@ -40,11 +63,11 @@ public class MemoryCache {
     }
 
     private LruCache<String, Entry> cache;
-    private WeakHashMap<String, Entry> expired;
+    private Map<String, WeakEntry> expired;
 
     public MemoryCache(int maxSize) {
         cache = new BitmapCache(maxSize);
-        expired = new WeakHashMap<String, Entry>();
+        expired = Collections.synchronizedMap(new HashMap<String, WeakEntry>());
     }
 
     public int size() {
@@ -69,8 +92,8 @@ public class MemoryCache {
         if (entry != null) {
             if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from memory");
         } else {
-            entry = expired.remove(cacheKey);
-            if (entry != null) {
+            WeakEntry weakEntry = expired.remove(cacheKey);
+            if (weakEntry != null && (entry = weakEntry.toEntry()) != null) {
                 cache.put(cacheKey, entry);
                 if (Logger.VERBOSE) Log.v(TAG, "Loaded " + request + " from expired memory");
             }
@@ -123,7 +146,7 @@ public class MemoryCache {
         @Override
         protected void entryRemoved(boolean evicted, String key, Entry oldValue, Entry newValue) {
             if (evicted) {
-                expired.put(key, oldValue);
+                expired.put(key, new WeakEntry(oldValue));
             }
         }
     }
