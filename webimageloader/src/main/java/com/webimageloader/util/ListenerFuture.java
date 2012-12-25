@@ -1,4 +1,4 @@
-package com.webimageloader.concurrent;
+package com.webimageloader.util;
 
 import com.webimageloader.loader.LoaderWork;
 

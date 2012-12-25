@@ -4,7 +4,7 @@ import java.io.Closeable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-import com.webimageloader.concurrent.ListenerFuture;
+import com.webimageloader.util.ListenerFuture;
 
 public abstract class BackgroundLoader implements Loader, Closeable {
     private ExecutorService executor;
