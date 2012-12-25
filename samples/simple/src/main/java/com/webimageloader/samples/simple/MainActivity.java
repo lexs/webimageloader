@@ -1,4 +1,4 @@
-package com.webimageloader.example.list;
+package com.webimageloader.samples.simple;
 
 import android.app.ListActivity;
 import android.content.Context;

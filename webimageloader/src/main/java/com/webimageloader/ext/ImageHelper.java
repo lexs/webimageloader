@@ -19,9 +19,15 @@ import android.widget.ImageView;
  * @author Alexander Blom <alexanderblom.se>
  */
 public class ImageHelper {
+    public interface DrawableCreator {
+        Drawable createDrawable(Context context, Bitmap b);
+    }
+
     private static final String TAG = "ImageHelper";
 
     private static final int DEFAULT_FADE_DURATION = 300;
+
+    private static final DefaultDrawableCreator DEFAULT_CREATOR = new DefaultDrawableCreator();
 
     private Context context;
     private ImageLoader loader;
@@ -32,6 +38,7 @@ public class ImageHelper {
     private int fadeDuration = DEFAULT_FADE_DURATION;
 
     private LoadingListener listener;
+    private DrawableCreator extension = DEFAULT_CREATOR;
 
 
     /**
@@ -122,12 +129,18 @@ public class ImageHelper {
         Bitmap b = loader.load(v, url, transformation, listener);
 
         if (b != null) {
-            v.setImageBitmap(b);
+            v.setImageDrawable(extension.createDrawable(context, b));
         } else if (loadingResource != 0) {
             v.setImageResource(loadingResource);
         } else {
-            v.setImageBitmap(null);
+            v.setImageDrawable(null);
         }
+
+        return this;
+    }
+
+    public ImageHelper setDrawableCreator(DrawableCreator extension) {
+        this.extension = extension;
 
         return this;
     }
@@ -145,7 +158,7 @@ public class ImageHelper {
 
                 TransitionDrawable d = new TransitionDrawable(new Drawable[] {
                         old,
-                        new BitmapDrawable(context.getResources(), b)
+                        extension.createDrawable(context, b)
                 });
 
                 v.setImageDrawable(d);
@@ -159,6 +172,13 @@ public class ImageHelper {
             if (errorResource > 0) {
                 v.setImageResource(errorResource);
             }
+        }
+    }
+
+    private static class DefaultDrawableCreator implements DrawableCreator {
+        @Override
+        public Drawable createDrawable(Context context, Bitmap b) {
+            return new BitmapDrawable(context.getResources(), b);
         }
     }
 }

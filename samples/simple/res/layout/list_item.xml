@@ -3,7 +3,7 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal">
     
-    <com.webimageloader.example.list.FastImageView android:id="@+id/image"
+    <com.webimageloader.example.simple.FastImageView android:id="@+id/image"
       android:layout_width="60dp"
       android:layout_height="60dp" />
     
