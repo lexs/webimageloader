@@ -94,7 +94,13 @@ public class ImageLoaderApplication extends Application {
      * @return an {@link ImageLoader}
      */
     public static ImageLoader getLoader(Context context) {
-        return (ImageLoader) context.getApplicationContext().getSystemService(IMAGE_LOADER_SERVICE);
+        ImageLoader loader = (ImageLoader) context.getApplicationContext().getSystemService(IMAGE_LOADER_SERVICE);
+        if (loader == null) {
+            throw new IllegalStateException("ImageLoaderApplication not set as application class in" +
+                    "AndroidManifest.xml");
+        } else {
+            return loader;
+        }
     }
 
     /**
