@@ -53,12 +53,12 @@ public class LoaderWork {
             }
         }
 
-        public void next(LoaderRequest request, Loader.Listener listener) {
-            Manager nextManager = new Manager(chain, listener);
-            nextLoader.load(nextManager, request);
+        public void next(LoaderRequest request) {
+            // Load using old listener
+            next(request, listener);
         }
 
-        public void next(LoaderRequest request) {
+        public void next(LoaderRequest request, Loader.Listener listener) {
             Manager nextManager = new Manager(chain, listener);
             nextLoader.load(nextManager, request);
         }
