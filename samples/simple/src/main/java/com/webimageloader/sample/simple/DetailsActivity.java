@@ -1,4 +1,4 @@
-package com.webimageloader.samples.simple;
+package com.webimageloader.sample.simple;
 
 import com.webimageloader.ImageLoader;
 import com.webimageloader.ext.ImageHelper;

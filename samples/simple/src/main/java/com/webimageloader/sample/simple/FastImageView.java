@@ -1,4 +1,4 @@
-package com.webimageloader.samples.simple;
+package com.webimageloader.sample.simple;
 
 import android.content.Context;
 import android.graphics.Bitmap;
