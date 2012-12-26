@@ -19,7 +19,13 @@ import android.widget.ImageView;
  * @author Alexander Blom <alexanderblom.se>
  */
 public class ImageHelper {
+    /**
+     * Interface for drawable creators
+     */
     public interface DrawableCreator {
+        /**
+         * Create a drawable from this bitmap
+         */
         Drawable createDrawable(Context context, Bitmap b);
     }
 
@@ -38,7 +44,7 @@ public class ImageHelper {
     private int fadeDuration = DEFAULT_FADE_DURATION;
 
     private LoadingListener listener;
-    private DrawableCreator extension = DEFAULT_CREATOR;
+    private DrawableCreator drawableCreator = DEFAULT_CREATOR;
 
 
     /**
@@ -129,7 +135,7 @@ public class ImageHelper {
         Bitmap b = loader.load(v, url, transformation, listener);
 
         if (b != null) {
-            v.setImageDrawable(extension.createDrawable(context, b));
+            v.setImageDrawable(drawableCreator.createDrawable(context, b));
         } else if (loadingResource != 0) {
             v.setImageResource(loadingResource);
         } else {
@@ -139,8 +145,13 @@ public class ImageHelper {
         return this;
     }
 
-    public ImageHelper setDrawableCreator(DrawableCreator extension) {
-        this.extension = extension;
+    /**
+     * Set a drawable creator
+     * @param drawableCreator the drawable creator
+     * @return this helper
+     */
+    public ImageHelper setDrawableCreator(DrawableCreator drawableCreator) {
+        this.drawableCreator = drawableCreator;
 
         return this;
     }
@@ -158,7 +169,7 @@ public class ImageHelper {
 
                 TransitionDrawable d = new TransitionDrawable(new Drawable[] {
                         old,
-                        extension.createDrawable(context, b)
+                        drawableCreator.createDrawable(context, b)
                 });
 
                 v.setImageDrawable(d);
