@@ -42,6 +42,13 @@ public class FastImageView extends ImageView {
     }
 
     @Override
+    public void setImageResource(int resId) {
+        blockLayout = true;
+        super.setImageResource(resId);
+        blockLayout = false;
+    }
+
+    @Override
     public void requestLayout() {
         if (!blockLayout) {
             super.requestLayout();
