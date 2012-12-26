@@ -25,7 +25,7 @@ public class Hasher {
             byte[] bytes = digester.digest(key.getBytes());
             return bytesToHexString(bytes);
         } else {
-            return String.valueOf(key.hashCode());
+            return Integer.toHexString(key.hashCode());
         }
     }
 
