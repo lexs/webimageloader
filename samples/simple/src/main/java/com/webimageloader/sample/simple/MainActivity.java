@@ -30,8 +30,6 @@ public class MainActivity extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_main);
-
         ImageLoader.Logger.logAll();
 
         imageLoader = ImageLoaderApplication.getLoader(this);
@@ -39,9 +37,6 @@ public class MainActivity extends ListActivity {
         imageHelper = new ImageHelper(this, imageLoader);
         imageHelper.setFadeIn(true);
         imageHelper.setLoadingResource(android.R.drawable.sym_def_app_icon);
-
-        StatsView statsView = (StatsView) findViewById(R.id.stats);
-        statsView.setMemoryCache(imageLoader.getMemoryCache());
 
         adapter = new Adapter(this);
         setListAdapter(adapter);
@@ -91,51 +86,6 @@ public class MainActivity extends ListActivity {
             textView.setText("Image #" + position);
 
             return v;
-        }
-    }
-
-    private static class StatsView extends TextView {
-        private MemoryCache memoryCache;
-
-        public StatsView(Context context) {
-            super(context);
-        }
-
-        public StatsView(Context context, AttributeSet attrs) {
-            super(context, attrs);
-        }
-
-        public StatsView(Context context, AttributeSet attrs, int defStyle) {
-            super(context, attrs, defStyle);
-        }
-
-        public void setMemoryCache(MemoryCache memoryCache) {
-            this.memoryCache = memoryCache;
-
-            if (memoryCache != null) {
-                scheduleUpdates();
-            }
-        }
-
-        private void scheduleUpdates() {
-            post(new Runnable() {
-                @Override
-                public void run() {
-                    MemoryCache.DebugInfo info = memoryCache.getDebugInfo();
-
-                    String text = "Memory cache stats\n"
-                            + "Image count: " + info.numImages + "\n"
-                            + "Hit count: " + info.hitCount + "\n"
-                            + "Miss count: " + info.missCount + "\n"
-                            + "Put count: " + info.putCount + "\n"
-                            + "Eviction count: " + info.evictionCount;
-
-
-                    setText(text);
-
-                    postDelayed(this, 1000);
-                }
-            });
         }
     }
 }
