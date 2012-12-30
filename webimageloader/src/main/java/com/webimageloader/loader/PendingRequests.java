@@ -111,8 +111,11 @@ public class PendingRequests {
         }
 
         PendingListeners listeners = pendingRequests.get(request);
-        if (!listeners.remove(tag)) {
+        listeners.remove(tag);
+
+        if (listeners.isEmpty()) {
             pendingRequests.remove(request);
+            listeners.cancel();
         }
     }
 
@@ -191,21 +194,16 @@ public class PendingRequests {
             }
         }
 
-        /**
-         * Remove a listener, if there are no more listeners this request will
-         * also be cancelled.
-         *
-         * @return true if this task is still pending
-         */
-        public boolean remove(Object tag) {
+        public void remove(Object tag) {
             listeners.remove(tag);
+        }
 
-            if (listeners.isEmpty() && extraListeners.isEmpty()) {
-                work.cancel();
-                return false;
-            } else {
-                return true;
-            }
+        public boolean isEmpty() {
+            return listeners.isEmpty() && extraListeners.isEmpty();
+        }
+
+        public void cancel() {
+            work.cancel();
         }
 
         public Set<Object> getTags() {
