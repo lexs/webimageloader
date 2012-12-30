@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 1.2.0 *(2012-12-30)*
+----------------------------
+
+* Allow clients to override how the *Drawable* is created in *ImageHelper*
+* Add a second level memory cache (using *WeakReference*)
+* Add another sample app
+
 Version 1.1.2 *(2012-09-09)*
 ----------------------------
 

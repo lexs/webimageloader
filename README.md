@@ -121,7 +121,7 @@ new ImageHelper(this, imageLoader)
 Obtaining
 =========
 
-You can include the library by [downloading the .jar][jar] and also adding [DiskLruCache][DiskLruCache]. to your project.
+You can include the library by [downloading the .jar][jar] and also adding [DiskLruCache][DiskLruCache] to your project.
 
 If you are a Maven user, simply add the following to your `pom.xml`:
 
