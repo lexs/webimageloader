@@ -12,7 +12,7 @@ WebImageLoader is a library designed to take to hassle out of handling images on
 * Support to do synchronous fetches while still taking advantage of the cache. 
 * Easy setup without singletons.
 * Compatible with API level 7 and up.
-* No additional dependencies.
+* Only depends on [DiskLruCache][DiskLruCache].
 
 Usage
 =====
@@ -118,6 +118,21 @@ new ImageHelper(this, imageLoader)
         .load(imageView, "http://example.com/image.png", t);
 ```
 
+Obtaining
+=========
+
+You can include the library by [downloading the .jar][jar] and also adding [DiskLruCache][DiskLruCache]. to your project.
+
+If you are a Maven user, simply add the following to your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>com.webimageloader</groupId>
+    <artifactId>webimageloader</artifactId>
+    <version>1.1.2</version>
+</dependency>
+``` 
+
 Developed By
 ============
 
@@ -140,3 +155,6 @@ WebImageLoader is licensed under Apache 2.0. If you find this library useful fee
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
+
+[jar]: http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22webimageloader%22
+[DiskLruCache]: https://github.com/JakeWharton/DiskLruCache
