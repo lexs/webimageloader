@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-Version 1.2.0 *(2012-12-30)*
+Version 1.1.3 *(2012-12-30)*
 ----------------------------
 
 * Allow clients to override how the *Drawable* is created in *ImageHelper*
