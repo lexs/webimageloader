@@ -12,12 +12,16 @@ public class LoaderWork {
     private final Loader.Listener listener;
     private final List<Future<?>> futures;
 
+    private volatile boolean cancelled = false;
+
     public LoaderWork(Loader.Listener listener) {
         this.listener = listener;
         this.futures = new ArrayList<Future<?>>();
     }
 
     public void cancel() {
+        cancelled = true;
+
         synchronized (futures) {
             for (Future<?> future : futures) {
                 future.cancel(false);
@@ -47,6 +51,10 @@ public class LoaderWork {
             }
         }
 
+        public boolean isCancelled() {
+            return cancelled;
+        }
+
         public void addFuture(Future<?> future) {
             synchronized (futures) {
                 futures.add(future);
@@ -59,24 +67,34 @@ public class LoaderWork {
         }
 
         public void next(LoaderRequest request, Loader.Listener listener) {
-            Manager nextManager = new Manager(chain, listener);
-            nextLoader.load(nextManager, request);
+            if (!cancelled) {
+                Manager nextManager = new Manager(chain, listener);
+                nextLoader.load(nextManager, request);
+            }
         }
 
         public void deliverStream(InputSupplier is, Metadata metadata) {
-            listener.onStreamLoaded(is, metadata);
+            if (!cancelled) {
+                listener.onStreamLoaded(is, metadata);
+            }
         }
 
         public void deliverBitmap(Bitmap b, Metadata metadata) {
-            listener.onBitmapLoaded(b, metadata);
+            if (!cancelled) {
+                listener.onBitmapLoaded(b, metadata);
+            }
         }
 
         public void deliverError(Throwable t) {
-            listener.onError(t);
+            if (!cancelled) {
+                listener.onError(t);
+            }
         }
 
         public void deliverNotMotified(Metadata metadata) {
-            listener.onNotModified(metadata);
+            if (!cancelled) {
+                listener.onNotModified(metadata);
+            }
         }
     }
 }
