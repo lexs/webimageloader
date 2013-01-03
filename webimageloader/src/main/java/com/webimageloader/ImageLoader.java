@@ -1,41 +1,32 @@
 package com.webimageloader;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.net.URLConnection;
-import java.net.URLStreamHandler;
-import java.util.concurrent.ExecutionException;
-
 import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.util.Log;
-
 import com.webimageloader.content.ContentURLStreamHandler;
-import com.webimageloader.ext.ImageHelper;
 import com.webimageloader.loader.DiskLoader;
 import com.webimageloader.loader.LoaderManager;
 import com.webimageloader.loader.MemoryCache;
 import com.webimageloader.loader.NetworkLoader;
 import com.webimageloader.transformation.Transformation;
-import com.webimageloader.util.WaitFuture;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URLStreamHandler;
 
 /**
  * This is the main class of WebImageLoader which can be constructed using a
  * {@link Builder}. It's often more convenient to use the provided
- * {@link ImageHelper} to load images.
+ * {@link com.webimageloader.ext.ImageHelper} to load images.
  * <p>
  * It's safe to call the methods on this class from any thread. However, callbacks
  * will always be done on the UI thread.
  *
  * @author Alexander Blom <alexanderblom.se>
  */
-public class ImageLoader {
-    private static final String TAG = "ImageLoader";
+public interface ImageLoader {
+    static final String TAG = "ImageLoader";
 
     /**
      * Listener for a request which will always be called on the main thread of
@@ -66,38 +57,19 @@ public class ImageLoader {
         void onError(T tag, Throwable t);
     }
 
-    private LoaderManager loaderManager;
-    private HandlerManager handlerManager;
-
-    private ImageLoader(LoaderManager loaderManager) {
-        this.loaderManager = loaderManager;
-
-        handlerManager = new HandlerManager();
-    }
-
     /**
      * Get memory cache debug info
      *
      * @return debug info or null if not available
      */
-    public MemoryCache.DebugInfo getMemoryCacheInfo() {
-        MemoryCache memoryCache = loaderManager.getMemoryCache();
-
-        if (memoryCache != null) {
-            return memoryCache.getDebugInfo();
-        } else {
-            return null;
-        }
-    }
+    MemoryCache.DebugInfo getMemoryCacheInfo();
 
     /**
      * Get the memory cache
      *
      * @return memory cache or null if not available
      */
-    public MemoryCache getMemoryCache() {
-        return loaderManager.getMemoryCache();
-    }
+    MemoryCache getMemoryCache();
 
     /**
      * Load the specified request blocking the calling thread.
@@ -108,9 +80,7 @@ public class ImageLoader {
      *
      * @see #loadBlocking(Request)
      */
-    public Bitmap loadBlocking(String url) throws IOException {
-        return loadBlocking(new Request(url));
-    }
+    Bitmap loadBlocking(String url) throws IOException;
 
     /**
      * Load the specified request blocking the calling thread.
@@ -122,9 +92,7 @@ public class ImageLoader {
      *
      * @see #loadBlocking(Request)
      */
-    public Bitmap loadBlocking(String url, Transformation transformation) throws IOException {
-        return loadBlocking(new Request(url, transformation));
-    }
+    Bitmap loadBlocking(String url, Transformation transformation) throws IOException;
 
     /**
      * Load the specified request blocking the calling thread.
@@ -133,51 +101,7 @@ public class ImageLoader {
      * @return the bitmap
      * @throws IOException if the load failed
      */
-    public Bitmap loadBlocking(Request request) throws IOException {
-        final WaitFuture future = new WaitFuture();
-
-        Bitmap b = loadInternal(null, request, new LoaderManager.Listener() {
-            @Override
-            public void onLoaded(Bitmap b) {
-                future.set(b);
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                future.setException(t);
-            }
-        });
-
-        if (b != null) {
-            return b;
-        }
-
-        boolean interrupted = false;
-
-        try {
-            while (true) {
-                try {
-                    return future.get();
-                } catch (ExecutionException e) {
-                    Throwable cause = e.getCause();
-
-                    // Rethrow as original exception if possible
-                    if (cause instanceof IOException) {
-                        throw (IOException) cause;
-                    } else {
-                        throw new IOException("Failed to fetch image", e.getCause());
-                    }
-                } catch (InterruptedException e) {
-                    // Fall through and retry
-                    interrupted = true;
-                }
-            }
-        } finally {
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
+    Bitmap loadBlocking(Request request) throws IOException;
 
     /**
      * Used to prime the file and memory cache. It's safe to later call load
@@ -187,9 +111,7 @@ public class ImageLoader {
      *
      * @see #preload(Request)
      */
-    public void preload(String url) {
-        preload(new Request(url));
-    }
+    void preload(String url);
 
     /**
      * Used to prime the file and memory cache. It's safe to later call load
@@ -200,9 +122,7 @@ public class ImageLoader {
      *
      * @see #preload(Request)
      */
-    public void preload(String url, Transformation transformation) {
-        preload(new Request(url, transformation));
-    }
+    void preload(String url, Transformation transformation);
 
     /**
      * Used to prime the file and memory cache. It's safe to later call load
@@ -210,9 +130,7 @@ public class ImageLoader {
      *
      * @param request the request to preload
      */
-    public void preload(Request request) {
-        loadInternal(null, request, null);
-    }
+    void preload(Request request);
 
     /**
      * Load an image from an url with the given listener. Previously pending
@@ -225,10 +143,7 @@ public class ImageLoader {
      *
      * @see #load(Object, Request, Listener)
      */
-    public <T> Bitmap load(T tag, String url, Listener<T> listener) {
-        return load(tag, new Request(url), listener);
-    }
-
+    <T> Bitmap load(T tag, String url, Listener<T> listener);
 
     /**
      * Load an image from an url with the given listener. Previously pending
@@ -242,9 +157,7 @@ public class ImageLoader {
      *
      * @see #load(Object, Request, Listener)
      */
-    public <T> Bitmap load(T tag, String url, Transformation transformation, Listener<T> listener) {
-        return load(tag, new Request(url, transformation), listener);
-    }
+    <T> Bitmap load(T tag, String url, Transformation transformation, Listener<T> listener);
 
     /**
      * Load an image from an url with the given listener. Previously pending
@@ -255,111 +168,19 @@ public class ImageLoader {
      * @param listener called when the request has finished or failed
      * @return the bitmap if it was already loaded
      */
-    public <T> Bitmap load(T tag, Request request,  Listener<T> listener) {
-        return loadInternal(tag, request, handlerManager.getListener(tag, listener));
-    }
+    <T> Bitmap load(T tag, Request request, Listener<T> listener);
 
     /**
      * Cancel any pending requests for this tag.
      *
      * @param tag the tag
      */
-    public <T> void cancel(T tag) {
-        handlerManager.cancel(tag);
-        loaderManager.cancel(tag);
-    }
+    <T> void cancel(T tag);
 
-    private Bitmap loadInternal(Object tag, Request request, LoaderManager.Listener listener) {
-        return loaderManager.load(tag, request.toLoaderRequest(), listener);
-    }
-
-    public void destroy() {
-        loaderManager.close();
-    }
-
-    private static class HandlerManager {
-        private Handler handler;
-
-        public HandlerManager() {
-            handler = new Handler(Looper.getMainLooper());
-        }
-
-        public <T> LoaderManager.Listener getListener(T tag, Listener<T> listener) {
-            if (tag != null) {
-                // It's possible there is already a callback in progress for this tag
-                // so we'll remove it
-                handler.removeCallbacksAndMessages(tag);
-
-                return new TagListener<T>(tag, listener);
-            } else {
-                return new TagListener<T>(listener);
-            }
-        }
-
-        public void cancel(Object tag) {
-            handler.removeCallbacksAndMessages(tag);
-        }
-
-        private class TagListener<T> implements LoaderManager.Listener {
-            private Listener<T> listener;
-            private WeakReference<T> reference;
-
-            public TagListener(Listener<T> listener) {
-                this.listener = listener;
-            }
-
-            public TagListener(T tag, Listener<T> listener) {
-                this.listener = listener;
-                this.reference = new WeakReference<T>(tag);
-            }
-
-            @Override
-            public void onLoaded(final Bitmap b) {
-                final T tag = getTag();
-
-                post(tag, new Runnable() {
-                    @Override
-                    public void run() {
-                        listener.onSuccess(tag, b);
-                    }
-                });
-            }
-
-            @Override
-            public void onError(final Throwable t) {
-                final T tag = getTag();
-
-                post(tag, new Runnable() {
-                    @Override
-                    public void run() {
-                        listener.onError(tag, t);
-                    }
-                });
-            }
-
-            private T getTag() {
-                T tag = null;
-
-                if (reference != null) {
-                    tag = reference.get();
-                    if (tag == null) {
-                        throw new RuntimeException("Listener called but tag was GC'ed");
-                    }
-                }
-
-                return tag;
-            }
-
-            private void post(T tag, Runnable r) {
-                Message m = Message.obtain(handler, r);
-                m.obj = tag;
-                handler.sendMessage(m);
-            }
-        }
-    }
+    void destroy();
 
     /**
-     * Builder class used to construct a {@link ImageLoader}.
+     * Builder class used to construct a {@link com.webimageloader.ImageLoader}.
      *
      * @author Alexander Blom <alexanderblom.se>
      */
@@ -438,7 +259,7 @@ public class ImageLoader {
          * @param handler the handler
          * @return this builder
          *
-         * @see URLStreamHandler
+         * @see java.net.URLStreamHandler
          */
         public Builder addURLSchemeHandler(String scheme, URLStreamHandler handler) {
             networkBuilder.addURLSchemeHandler(scheme, handler);
@@ -462,7 +283,7 @@ public class ImageLoader {
          * @param connectionTimeout the connection timeout
          * @return this builder
          *
-         * @see URLConnection#setConnectTimeout(int)
+         * @see java.net.URLConnection#setConnectTimeout(int)
          */
         public Builder setConnectionTimeout(int connectionTimeout) {
             networkBuilder.setConnectionTimeout(connectionTimeout);
@@ -476,7 +297,7 @@ public class ImageLoader {
          * @param readTimeout the read timeout
          * @return this builder
          *
-         * @see URLConnection#setReadTimeout(int)
+         * @see java.net.URLConnection#setReadTimeout(int)
          */
         public Builder setReadTimeout(int readTimeout) {
             networkBuilder.setReadTimeout(readTimeout);
@@ -507,8 +328,8 @@ public class ImageLoader {
         }
 
         /**
-         * Build the {@link ImageLoader} from the settings in this builder
-         * @return a {@link ImageLoader}
+         * Build the {@link com.webimageloader.ImageLoader} from the settings in this builder
+         * @return a {@link com.webimageloader.ImageLoader}
          */
         public ImageLoader build() {
             URLStreamHandler handler = new ContentURLStreamHandler(context.getContentResolver());
@@ -519,12 +340,12 @@ public class ImageLoader {
             NetworkLoader networkLoader = new NetworkLoader(networkBuilder);
             LoaderManager loaderManager = new LoaderManager(memoryCache, diskLoader, networkLoader);
 
-            return new ImageLoader(loaderManager);
+            return new ImageLoaderImpl(loaderManager);
         }
     }
 
     /**
-     * Handles logging for all {@link ImageLoader} instances
+     * Handles logging for all {@link com.webimageloader.ImageLoader} instances
      *
      * @author Alexander Blom <alexanderblom.se>
      */
