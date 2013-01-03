@@ -57,11 +57,7 @@ public interface ImageLoader {
         void onError(T tag, Throwable t);
     }
 
-    /**
-     * Get memory cache debug info
-     *
-     * @return debug info or null if not available
-     */
+    @Deprecated
     MemoryCache.DebugInfo getMemoryCacheInfo();
 
     /**
@@ -72,26 +68,15 @@ public interface ImageLoader {
     MemoryCache getMemoryCache();
 
     /**
-     * Load the specified request blocking the calling thread.
-     *
-     * @param url the url to load
-     * @return the bitmap
-     * @throws IOException if the load failed
-     *
-     * @see #loadBlocking(Request)
+     * @deprecated use #loadBlocking(Request) instead
      */
+    @Deprecated
     Bitmap loadBlocking(String url) throws IOException;
 
     /**
-     * Load the specified request blocking the calling thread.
-     *
-     * @param url the url to load
-     * @param transformation can be null
-     * @return the bitmap
-     * @throws IOException if the load failed
-     *
-     * @see #loadBlocking(Request)
+     * @deprecated use #loadBlocking(Request) instead
      */
+    @Deprecated
     Bitmap loadBlocking(String url, Transformation transformation) throws IOException;
 
     /**
@@ -104,24 +89,15 @@ public interface ImageLoader {
     Bitmap loadBlocking(Request request) throws IOException;
 
     /**
-     * Used to prime the file and memory cache. It's safe to later call load
-     * with the same request, it will automatically be reused.
-     *
-     * @param url which resource to get
-     *
-     * @see #preload(Request)
+     * @deprecated use #preload(Request) instead
      */
+    @Deprecated
     void preload(String url);
 
     /**
-     * Used to prime the file and memory cache. It's safe to later call load
-     * with the same request, it will automatically be reused.
-     *
-     * @param url which resource to get
-     * @param transformation can be null
-     *
-     * @see #preload(Request)
+     * @deprecated use #preload(Request) instead
      */
+    @Deprecated
     void preload(String url, Transformation transformation);
 
     /**
@@ -133,30 +109,15 @@ public interface ImageLoader {
     void preload(Request request);
 
     /**
-     * Load an image from an url with the given listener. Previously pending
-     * request for this tag will be automatically cancelled.
-     *
-     * @param tag used to determine when we this request should be cancelled
-     * @param url which resource to get
-     * @param listener called when the request has finished or failed
-     * @return the bitmap if it was already loaded
-     *
-     * @see #load(Object, Request, Listener)
+     * @deprecated use #load(Object, Request, Listener) instead
      */
+    @Deprecated
     <T> Bitmap load(T tag, String url, Listener<T> listener);
 
     /**
-     * Load an image from an url with the given listener. Previously pending
-     * request for this tag will be automatically cancelled.
-     *
-     * @param tag used to determine when we this request should be cancelled
-     * @param url which resource to get
-     * @param transformation can be null
-     * @param listener called when the request has finished or failed
-     * @return the bitmap if it was already loaded
-     *
-     * @see #load(Object, Request, Listener)
+     * @deprecated use #load(Object, Request, Listener) instead
      */
+    @Deprecated
     <T> Bitmap load(T tag, String url, Transformation transformation, Listener<T> listener);
 
     /**
