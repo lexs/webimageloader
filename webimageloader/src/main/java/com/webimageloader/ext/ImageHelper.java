@@ -1,5 +1,7 @@
 package com.webimageloader.ext;
 
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
 import com.webimageloader.ImageLoader;
 import com.webimageloader.ImageLoader.Listener;
 import com.webimageloader.transformation.Transformation;
@@ -7,7 +9,6 @@ import com.webimageloader.transformation.Transformation;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.util.Log;
@@ -164,7 +165,7 @@ public class ImageHelper {
             } else {
                 Drawable old = v.getDrawable();
                 if (old == null) {
-                    old = new ColorDrawable(android.R.color.transparent);
+                    old = new EmptyDrawable();
                 }
 
                 TransitionDrawable d = new TransitionDrawable(new Drawable[] {
@@ -190,6 +191,22 @@ public class ImageHelper {
         @Override
         public Drawable createDrawable(Context context, Bitmap b) {
             return new BitmapDrawable(context.getResources(), b);
+        }
+    }
+
+    private static class EmptyDrawable extends Drawable {
+        @Override
+        public void draw(Canvas canvas) {}
+
+        @Override
+        public void setAlpha(int alpha) {}
+
+        @Override
+        public void setColorFilter(ColorFilter cf) {}
+
+        @Override
+        public int getOpacity() {
+            return 0;
         }
     }
 }
