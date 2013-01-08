@@ -22,6 +22,7 @@ import android.widget.ListView;
 import com.webimageloader.ImageLoader;
 import com.webimageloader.ext.ImageHelper;
 import com.webimageloader.ext.ImageLoaderApplication;
+import com.webimageloader.ext.ListImageLoader;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -73,7 +74,9 @@ public class PatternsListFragment extends ListFragment implements LoaderManager.
 
     @Override
     public void onLoadFinished(Loader<List<String>> loader, List<String> images) {
-        setListAdapter(new Adapter(getActivity(), images));
+        ImageLoader imageLoader = ImageLoaderApplication.getLoader(getActivity());
+
+        setListAdapter(new Adapter(getActivity(), images, new ListImageLoader(imageLoader, getListView())));
     }
 
     @Override
@@ -82,14 +85,12 @@ public class PatternsListFragment extends ListFragment implements LoaderManager.
 
     private class Adapter extends ArrayAdapter<String> {
         private LayoutInflater inflater;
-        private ImageLoader imageLoader;
         private ImageHelper imageHelper;
 
-        public Adapter(Context context, List<String> objects) {
+        public Adapter(Context context, List<String> objects, ImageLoader imageLoader) {
             super(context, 0, objects);
 
             inflater = LayoutInflater.from(context);
-            imageLoader = ImageLoaderApplication.getLoader(getContext());
             imageHelper = new ImageHelper(context, imageLoader)
                     .setFadeIn(true)
                     .setDrawableCreator(new ImageHelper.DrawableCreator() {
