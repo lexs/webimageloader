@@ -162,6 +162,8 @@ public class ImageHelper {
             if (!fadeIn) {
                 v.setImageBitmap(b);
             } else {
+            	v.setImageBitmap(null);
+            	
                 Drawable old = v.getDrawable();
                 if (old == null) {
                     old = new ColorDrawable(android.R.color.transparent);
