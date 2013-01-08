@@ -103,18 +103,29 @@ public class ListImageLoader implements ImageLoader {
     @Override
     public <T> Bitmap load(T tag, Request request, Listener<T> listener) {
         if (lastScrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING) {
-            // TODO: Check memory cache
+            Bitmap b = imageLoader.get(request);
+            if (b != null) {
+                // Bitmap in memory cache, cancel possible other requests for this tag
+                requests.remove(tag);
+                imageLoader.cancel(tag);
+            } else {
+                // Not in cache, cancel previous fetches and queue this request
+                imageLoader.cancel(tag);
+                requests.put(tag, new RequestEntry<T>(tag, request, listener));
+            }
 
-            imageLoader.cancel(tag);
-            requests.put(tag, new RequestEntry<T>(tag, request, listener));
-
-            return null;
+            return b;
         } else {
             // It's possible we have a pending request for this
             requests.remove(tag);
 
             return imageLoader.load(tag, request, listener);
         }
+    }
+
+    @Override
+    public Bitmap get(Request request) {
+        return imageLoader.get(request);
     }
 
     @Override

@@ -170,6 +170,8 @@ public interface ImageLoader {
      */
     <T> Bitmap load(T tag, Request request, Listener<T> listener);
 
+    Bitmap get(Request request);
+
     /**
      * Cancel any pending requests for this tag.
      *

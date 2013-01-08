@@ -128,6 +128,12 @@ class ImageLoaderImpl implements ImageLoader {
     }
 
     @Override
+    public Bitmap get(Request request) {
+        MemoryCache.Entry entry = getMemoryCache().get(request.toLoaderRequest());
+        return entry != null ? entry.bitmap : null;
+    }
+
+    @Override
     public <T> void cancel(T tag) {
         handlerManager.cancel(tag);
         loaderManager.cancel(tag);
