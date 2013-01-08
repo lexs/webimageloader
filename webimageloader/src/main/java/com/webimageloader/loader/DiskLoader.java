@@ -183,12 +183,8 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
                     writeMetadata(editor, metadata);
 
                     editor.commit();
-                } catch (IOException e) {
-                    // We failed writing to the cache
-                    editor.abort();
-
-                    // Let the outer catch handle this
-                    throw e;
+                } finally {
+                    editor.abortUnlessCommitted();
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Failed saving bitmap to cache", e);
@@ -208,12 +204,8 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
                     writeMetadata(editor, metadata);
 
                     editor.commit();
-                } catch (IOException e) {
-                    // We failed writing to the cache
-                    editor.abort();
-
-                    // Let the outer catch handle this
-                    throw e;
+                } finally {
+                    editor.abortUnlessCommitted();
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Failed to update metadata", e);
