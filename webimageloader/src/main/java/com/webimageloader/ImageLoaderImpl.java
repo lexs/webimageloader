@@ -12,9 +12,10 @@ import android.os.Message;
 import com.webimageloader.loader.LoaderManager;
 import com.webimageloader.loader.MemoryCache;
 import com.webimageloader.transformation.Transformation;
+import com.webimageloader.util.AbstractImageLoader;
 import com.webimageloader.util.WaitFuture;
 
-class ImageLoaderImpl implements ImageLoader {
+class ImageLoaderImpl extends AbstractImageLoader {
     private LoaderManager loaderManager;
     private HandlerManager handlerManager;
 
@@ -38,16 +39,6 @@ class ImageLoaderImpl implements ImageLoader {
     @Override
     public MemoryCache getMemoryCache() {
         return loaderManager.getMemoryCache();
-    }
-
-    @Override
-    public Bitmap loadBlocking(String url) throws IOException {
-        return loadBlocking(new Request(url));
-    }
-
-    @Override
-    public Bitmap loadBlocking(String url, Transformation transformation) throws IOException {
-        return loadBlocking(new Request(url).withTransformation(transformation));
     }
 
     @Override
@@ -98,28 +89,8 @@ class ImageLoaderImpl implements ImageLoader {
     }
 
     @Override
-    public void preload(String url) {
-        preload(new Request(url));
-    }
-
-    @Override
-    public void preload(String url, Transformation transformation) {
-        preload(new Request(url).withTransformation(transformation));
-    }
-
-    @Override
     public void preload(Request request) {
         loadInternal(null, request, null);
-    }
-
-    @Override
-    public <T> Bitmap load(T tag, String url, Listener<T> listener) {
-        return load(tag, new Request(url), listener);
-    }
-
-    @Override
-    public <T> Bitmap load(T tag, String url, Transformation transformation, Listener<T> listener) {
-        return load(tag, new Request(url).withTransformation(transformation), listener);
     }
 
     @Override

@@ -11,12 +11,13 @@ import com.webimageloader.ImageLoader;
 import com.webimageloader.Request;
 import com.webimageloader.loader.MemoryCache;
 import com.webimageloader.transformation.Transformation;
+import com.webimageloader.util.AbstractImageLoader;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ListImageLoader implements ImageLoader {
+public class ListImageLoader extends AbstractImageLoader {
     private static final String TAG = "ListImageLoader";
 
     private static final int MESSAGE_DISPATCH_REQUESTS = 1;
@@ -61,43 +62,13 @@ public class ListImageLoader implements ImageLoader {
     }
 
     @Override
-    public Bitmap loadBlocking(String url) throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Bitmap loadBlocking(String url, Transformation transformation) throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public Bitmap loadBlocking(Request request) throws IOException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void preload(String url) {
-        preload(new Request(url));
-    }
-
-    @Override
-    public void preload(String url, Transformation transformation) {
-        preload(new Request(url, transformation));
-    }
-
-    @Override
     public void preload(Request request) {
         imageLoader.preload(request);
-    }
-
-    @Override
-    public <T> Bitmap load(T tag, String url, Listener<T> listener) {
-        return load(tag, new Request(url), listener);
-    }
-
-    @Override
-    public <T> Bitmap load(T tag, String url, Transformation transformation, Listener<T> listener) {
-        return load(tag, new Request(url, transformation), listener);
     }
 
     @Override
