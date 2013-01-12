@@ -5,4 +5,4 @@ before_install:
   - tar -zxf android-sdk_r21.0.1-linux.tgz
   - export ANDROID_HOME=~/builds/lexs/webimageloader/android-sdk-linux
   - export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
-  - android update sdk --filter 1,5 --no-ui --force
+  - android update sdk --filter 1,4 --no-ui --force
