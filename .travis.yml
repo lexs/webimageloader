@@ -1,5 +1,8 @@
 language: java
 
+jdk:
+  - openjdk6
+
 branches:
   except:
     - gh-pages
