@@ -20,3 +20,5 @@ before_install:
   - ls
   - ls /home/travis/builds/lexs/webimageloader/android-sdk-linux
   - ls /home/travis/builds/lexs/webimageloader/android-sdk-linux/platform-tools
+  - /home/travis/builds/lexs/webimageloader/android-sdk-linux/platform-tools/adb
+  - /home/travis/builds/lexs/webimageloader/android-sdk-linux/platform-tools/aapt
