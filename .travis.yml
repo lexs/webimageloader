@@ -16,3 +16,7 @@ before_install:
   - android update sdk --filter "$TOOLS" --no-ui --force
   - SDK=$(android list sdk --no-ui | grep ", API 16," | cut -d"-" -f1)
   - android update sdk --filter "$SDK" --no-ui --force
+  - pwd
+  - ls
+  - ls /home/travis/builds/lexs/webimageloader/android-sdk-linux
+  - ls /home/travis/builds/lexs/webimageloader/android-sdk-linux/platform-tools
