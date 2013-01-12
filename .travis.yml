@@ -10,9 +10,9 @@ before_install:
   - export ANDROID_HOME=`pwd`/android-sdk-linux
   - export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
   - android list sdk
-  - TOOLS=$(android list sdk --no-ui | grep "Android SDK Tools" | cut -d"-" -f1)
-  - android update sdk --filter "$TOOLS" --no-ui --force
   - PLATFORM_TOOLS=$(android list sdk --no-ui | grep "Android SDK Platform-tools" | cut -d"-" -f1)
   - android update sdk --filter "$PLATFORM_TOOLS" --no-ui --force
+  - TOOLS=$(android list sdk --no-ui | grep "Android SDK Tools" | cut -d"-" -f1)
+  - android update sdk --filter "$TOOLS" --no-ui --force
   - SDK=$(android list sdk --no-ui | grep ", API 16," | cut -d"-" -f1)
   - android update sdk --filter "$SDK" --no-ui --force
