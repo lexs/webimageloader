@@ -10,6 +10,7 @@ import android.view.ViewTreeObserver;
 import android.widget.AbsListView;
 import android.widget.Adapter;
 import android.widget.GridView;
+import android.widget.ListView;
 import com.webimageloader.ImageLoader;
 import com.webimageloader.Request;
 import com.webimageloader.loader.MemoryCache;
@@ -19,6 +20,12 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Specialized ImageLoader for use with a {@link ListView} or {@link GridView}.
+ * It will pause updates when the list is flinged and handle preloads.
+ *
+ * This class does not support the {@link #preload(com.webimageloader.Request)} methods.
+ */
 public class ListImageLoader extends AbstractImageLoader {
     private static final String TAG = "ListImageLoader";
 
@@ -27,7 +34,17 @@ public class ListImageLoader extends AbstractImageLoader {
     private static final int DISPATCH_DELAY = 550;
     private static final int PRELOAD_DELAY = 300;
 
+    /**
+     * Used for preloading a list item.
+     *
+     * @see #setPreloader(Preloader)
+     */
     public interface Preloader {
+        /**
+         * Called when a specific position should be preloaded.
+         *
+         * @param position the position
+         */
         void preload(int position);
     }
 
@@ -46,6 +63,12 @@ public class ListImageLoader extends AbstractImageLoader {
     private int lastFirstVisibleItem;
     private PreloaderHandler preloaderHandler;
 
+    /**
+     * Create a new {@link ListImageLoader} using the root {@link ImageLoader}.
+     *
+     * @param imageLoader the root {@link ImageLoader}
+     * @param listView the list view
+     */
     public ListImageLoader(ImageLoader imageLoader, final AbsListView listView) {
         this.listView = listView;
         this.imageLoader = imageLoader;
@@ -158,10 +181,23 @@ public class ListImageLoader extends AbstractImageLoader {
         imageLoader.destroy();
     }
 
+    /**
+     * Set the {@link Adapter} to be used for preloading. This is easier than having
+     * a separate {@link Preloader} but should only be used for simple lists. This
+     * will call {@link Adapter#getView(int, android.view.View, android.view.ViewGroup)}
+     * for every preload.
+     *
+     * @param adapter the adapter to be used for preloading
+     */
     public void setPreloadAdapter(Adapter adapter) {
         preloader = new AdapterPreloader(adapter);
     }
 
+    /**
+     * Set a {@link Preloader} to be used for preloading.
+     *
+     * @param preloader the preloader
+     */
     public void setPreloader(Preloader preloader) {
         this.preloader = preloader;
     }
