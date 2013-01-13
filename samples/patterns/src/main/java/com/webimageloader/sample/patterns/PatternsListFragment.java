@@ -75,7 +75,6 @@ public class PatternsListFragment extends ListFragment implements LoaderManager.
     @Override
     public void onLoadFinished(Loader<List<String>> loader, List<String> images) {
         ImageLoader imageLoader = ImageLoaderApplication.getLoader(getActivity());
-
         setListAdapter(new Adapter(getActivity(), images, new ListImageLoader(imageLoader, getListView())));
     }
 
@@ -87,7 +86,7 @@ public class PatternsListFragment extends ListFragment implements LoaderManager.
         private LayoutInflater inflater;
         private ImageHelper imageHelper;
 
-        public Adapter(Context context, List<String> objects, ImageLoader imageLoader) {
+        public Adapter(Context context, List<String> objects, ListImageLoader imageLoader) {
             super(context, 0, objects);
 
             inflater = LayoutInflater.from(context);
@@ -102,6 +101,9 @@ public class PatternsListFragment extends ListFragment implements LoaderManager.
                             return d;
                         }
                     });
+
+            // This will use getView() for preloading
+            imageLoader.setPreloadAdapter(this);
         }
 
         @Override
