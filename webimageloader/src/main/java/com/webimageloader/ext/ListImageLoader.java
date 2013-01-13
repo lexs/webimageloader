@@ -29,6 +29,8 @@ import java.util.Map;
 public class ListImageLoader extends AbstractImageLoader {
     private static final String TAG = "ListImageLoader";
 
+    public static final int DEFAULT_PRELOAD_COUNT = 4;
+
     private static final int MESSAGE_DISPATCH_REQUESTS = 1;
     private static final int MESSAGE_PRELOAD = 2;
     private static final int DISPATCH_DELAY = 550;
@@ -50,6 +52,7 @@ public class ListImageLoader extends AbstractImageLoader {
 
     private AbsListView listView;
     private int numColumns;
+    private int preloadCount = DEFAULT_PRELOAD_COUNT;
     private Preloader preloader;
     private boolean interceptLoads = false;
 
@@ -109,10 +112,12 @@ public class ListImageLoader extends AbstractImageLoader {
             gridView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
-                    //gridView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
-                    numColumns = gridView.getNumColumns();
-                    if (Logger.VERBOSE) Log.d(TAG, "GridView column count: " + numColumns);
+                    // We don't remove the observer as the column count may change later
+                    int newNumColumns = gridView.getNumColumns();
+                    if (newNumColumns != numColumns) {
+                        numColumns = newNumColumns;
+                        if (Logger.VERBOSE) Log.d(TAG, "GridView column count: " + numColumns);
+                    }
                 }
             });
         }
@@ -278,11 +283,11 @@ public class ListImageLoader extends AbstractImageLoader {
             if (firstVisible > lastFirstVisibleItem) {
                 // Scrolling down
                 start = lastVisible + 1;
-                end = start + 4;
+                end = start + preloadCount * numColumns;
             } else {
                 // Scrolling up
                 start = firstVisible - 1;
-                end = start - 4;
+                end = start - preloadCount * numColumns;
             }
 
             if (start > 0 && end < totalCount) {
