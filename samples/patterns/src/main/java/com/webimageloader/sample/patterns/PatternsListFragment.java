@@ -36,7 +36,7 @@ import java.util.List;
 public class PatternsListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<List<String>> {
     private static final String TAG = "PatternsListFragment";
 
-    private static final String URL = "http://www.colourlovers.com/api/patterns/top?numResults=100&format=json";
+    private static final String URL = "http://www.colourlovers.com/api/patterns/new?numResults=100&format=json";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
