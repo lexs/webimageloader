@@ -207,6 +207,15 @@ public class ListImageLoader extends AbstractImageLoader {
         this.preloader = preloader;
     }
 
+    /**
+     * Set the number of items to be preloaded. Note that this will be multiplied by
+     * the number of columns for a {@link GridView}.
+     * @param preloadCount number of items to preload
+     */
+    public void setPreloadCount(int preloadCount) {
+        this.preloadCount = preloadCount;
+    }
+
     private void dispatchRequests() {
         if (requests.isEmpty()) {
             return;
