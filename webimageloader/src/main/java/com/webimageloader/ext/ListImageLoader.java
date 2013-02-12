@@ -23,8 +23,6 @@ import java.util.Map;
 /**
  * Specialized ImageLoader for use with a {@link ListView} or {@link GridView}.
  * It will pause updates when the list is flinged and handle preloads.
- *
- * This class does not support the {@link #preload(com.webimageloader.Request)} methods.
  */
 public class ListImageLoader extends AbstractImageLoader {
     private static final String TAG = "ListImageLoader";
@@ -43,7 +41,8 @@ public class ListImageLoader extends AbstractImageLoader {
      */
     public interface Preloader {
         /**
-         * Called when a specific position should be preloaded.
+         * Called when a specific position should be preloaded. You should call
+         * {@link #preload(com.webimageloader.Request)} for the current position.
          *
          * @param position the position
          */
@@ -190,7 +189,7 @@ public class ListImageLoader extends AbstractImageLoader {
      * Set the {@link Adapter} to be used for preloading. This is easier than having
      * a separate {@link Preloader} but should only be used for simple lists. This
      * will call {@link Adapter#getView(int, android.view.View, android.view.ViewGroup)}
-     * for every preload.
+     * for every preload and intercept the load calls transforming them to preloads.
      *
      * @param adapter the adapter to be used for preloading
      */
