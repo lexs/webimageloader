@@ -123,7 +123,7 @@ public class ImageLoader {
      * @see #loadBlocking(Request)
      */
     public Bitmap loadBlocking(String url, Transformation transformation) throws IOException {
-        return loadBlocking(new Request(url).withTransformation(transformation));
+        return loadBlocking(new Request(url, transformation));
     }
 
     /**
@@ -201,7 +201,7 @@ public class ImageLoader {
      * @see #preload(Request)
      */
     public void preload(String url, Transformation transformation) {
-        preload(new Request(url).withTransformation(transformation));
+        preload(new Request(url, transformation));
     }
 
     /**
@@ -243,7 +243,7 @@ public class ImageLoader {
      * @see #load(Object, Request, Listener)
      */
     public <T> Bitmap load(T tag, String url, Transformation transformation, Listener<T> listener) {
-        return load(tag, new Request(url).withTransformation(transformation), listener);
+        return load(tag, new Request(url, transformation), listener);
     }
 
     /**

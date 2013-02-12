@@ -18,6 +18,7 @@ import com.jakewharton.DiskLruCache.Editor;
 import com.jakewharton.DiskLruCache.Snapshot;
 import com.webimageloader.Constants;
 import com.webimageloader.ImageLoader.Logger;
+import com.webimageloader.Request;
 import com.webimageloader.util.ListenerFuture;
 import com.webimageloader.util.BitmapUtils;
 import com.webimageloader.util.Hasher;
@@ -54,6 +55,16 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
         super.close();
 
         IOUtil.closeQuietly(cache);
+    }
+
+    @Override
+    public void load(LoaderWork.Manager manager, LoaderRequest request) {
+        if (request.hasFlag(Request.Flag.IGNORE_CACHE)) {
+            manager.next(request, new NextListener(request, manager));
+            return;
+        }
+
+        super.load(manager, request);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.webimageloader.loader;
 
 import com.webimageloader.ImageLoader.Logger;
+import com.webimageloader.Request;
 import com.webimageloader.util.Android;
 import com.webimageloader.util.LruCache;
 
@@ -87,6 +88,10 @@ public class MemoryCache {
     }
 
     public Entry get(LoaderRequest request) {
+        if (request.hasFlag(Request.Flag.IGNORE_CACHE)) {
+            return null;
+        }
+
         String cacheKey = request.getCacheKey();
         Entry entry = cache.get(cacheKey);
         if (entry != null) {

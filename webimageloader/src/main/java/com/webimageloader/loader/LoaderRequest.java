@@ -1,25 +1,26 @@
 package com.webimageloader.loader;
 
+import com.webimageloader.Request;
 import com.webimageloader.transformation.Transformation;
+
+import java.util.EnumSet;
 
 public class LoaderRequest {
     private String url;
     private Transformation transformation;
     private Metadata metadata;
+    private EnumSet<Request.Flag> flags;
 
     private String cacheKey;
 
-    public LoaderRequest(String url) {
-        this(url, null);
-    }
-
-    public LoaderRequest(String url, Transformation transformation) {
+    public LoaderRequest(String url, Transformation transformation, EnumSet<Request.Flag> flags) {
         if (url == null) {
             throw new IllegalArgumentException("url may not be null");
         }
 
         this.url = url;
         this.transformation = transformation;
+        this.flags = flags;
 
         if (transformation != null) {
             cacheKey = url + transformation.getIdentifier();
@@ -29,11 +30,11 @@ public class LoaderRequest {
     }
 
     public LoaderRequest withoutTransformation() {
-        return new LoaderRequest(url);
+        return new LoaderRequest(url, null, flags);
     }
 
     public LoaderRequest withMetadata(Metadata metadata) {
-        LoaderRequest r = new LoaderRequest(url, transformation);
+        LoaderRequest r = new LoaderRequest(url, transformation, flags);
         r.metadata = metadata;
 
         return r;
@@ -53,6 +54,10 @@ public class LoaderRequest {
 
     public String getCacheKey() {
         return cacheKey;
+    }
+
+    public boolean hasFlag(Request.Flag flag) {
+        return flags.contains(flag);
     }
 
     @Override
@@ -76,10 +81,12 @@ public class LoaderRequest {
 
     @Override
     public String toString() {
+        String f = flags.isEmpty() ? "" : ", flags=" + flags;
+
         if (transformation != null) {
-            return url + " with transformation " + '"' + transformation.getIdentifier() + '"';
+            return url + f + " with transformation " + '"' + transformation.getIdentifier() + '"';
         } else {
-            return url;
+            return url + f;
         }
     }
 }

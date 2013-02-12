@@ -2,7 +2,6 @@ package com.webimageloader.loader;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 import com.webimageloader.transformation.Transformation;
@@ -68,16 +67,12 @@ public class LoaderManager {
         return memoryCache;
     }
 
-    public Bitmap getBitmap(Object tag, LoaderRequest request) {
-        return pendingRequests.getBitmap(tag, request);
-    }
-
     public Bitmap load(Object tag, LoaderRequest request, Listener listener) {
         Bitmap b = pendingRequests.getBitmap(tag, request);
         if (b != null) {
             return b;
         }
-        
+
         // Send an empty listener instead of null
         if (listener == null) {
             listener = EMPTY_LISTENER;
