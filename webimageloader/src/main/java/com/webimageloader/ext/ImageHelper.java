@@ -35,6 +35,7 @@ public class ImageHelper {
     private static final int DEFAULT_FADE_DURATION = 300;
 
     private static final DefaultDrawableCreator DEFAULT_CREATOR = new DefaultDrawableCreator();
+    private static final EmptyDrawable EMPTY_DRAWABLE = new EmptyDrawable();
 
     private Context context;
     private ImageLoader loader;
@@ -165,7 +166,7 @@ public class ImageHelper {
             } else {
                 Drawable old = v.getDrawable();
                 if (old == null) {
-                    old = new EmptyDrawable();
+                    old = EMPTY_DRAWABLE;
                 }
 
                 TransitionDrawable d = new TransitionDrawable(new Drawable[] {

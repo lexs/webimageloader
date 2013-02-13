@@ -23,6 +23,8 @@ import java.util.Map;
 /**
  * Specialized ImageLoader for use with a {@link ListView} or {@link GridView}.
  * It will pause updates when the list is flinged and handle preloads.
+ * <p>
+ * This class does not support the {@link #loadBlocking(com.webimageloader.Request)} methods.
  */
 public class ListImageLoader extends AbstractImageLoader {
     private static final String TAG = "ListImageLoader";
@@ -328,7 +330,7 @@ public class ListImageLoader extends AbstractImageLoader {
         public void preload(Direction direction, int start, int end) {
             if (direction == lastDirection) {
                 if (end == lastPreloaded) {
-                    // Repeat request
+                    // Repeat request, ignore
                     return;
                 }
 
