@@ -108,6 +108,10 @@ public class MemoryCache {
     }
 
     public void put(LoaderRequest request, Bitmap b, Metadata metadata) {
+        if (request.hasFlag(Request.Flag.NO_CACHE)) {
+            return;
+        }
+
         // Add the bitmap to the cache if we can fit at least six images of this size,
         // this way we avoid caching large images that will evict all other entries
         if (sizeOf(b) < cache.maxSize() / 6) {

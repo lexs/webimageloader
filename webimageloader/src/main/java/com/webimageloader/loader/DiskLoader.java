@@ -145,6 +145,11 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
 
         @Override
         public void onStreamLoaded(InputSupplier input, final Metadata metadata) {
+            if (request.hasFlag(Request.Flag.NO_CACHE)) {
+                manager.deliverStream(input, metadata);
+                return;
+            }
+
             try {
                 Editor editor = getEditor(request);
 

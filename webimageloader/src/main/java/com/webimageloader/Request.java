@@ -17,7 +17,8 @@ import com.webimageloader.transformation.Transformation;
  */
 public class Request {
     public enum Flag {
-        IGNORE_CACHE
+        IGNORE_CACHE,
+        NO_CACHE
     }
 
     private String url;

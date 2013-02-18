@@ -332,6 +332,53 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         ignoreCache(new Request(CORRECT_MOCK_FILE_PATH, new IdentityTransformation()));
     }
 
+    public void testNoCache() throws InterruptedException {
+        noCache(new Request(CORRECT_MOCK_FILE_PATH), new Request(CORRECT_MOCK_FILE_PATH));
+    }
+
+    public void testNoCacheTransformation() throws InterruptedException {
+        noCache(new Request(CORRECT_MOCK_FILE_PATH), new Request(CORRECT_MOCK_FILE_PATH, new IdentityTransformation()));
+    }
+
+
+    public void noCache(Request firstRequest, Request secondRequest) throws InterruptedException {
+        firstRequest.addFlag(Request.Flag.NO_CACHE);
+
+        final CountDownLatch latch1 = new CountDownLatch(1);
+        loader.load(null, firstRequest, new Listener<Object>() {
+            @Override
+            public void onSuccess(Object tag, Bitmap b) {
+                latch1.countDown();
+            }
+
+            @Override
+            public void onError(Object tag, Throwable t) {
+                latch1.countDown();
+            }
+        });
+
+        assertTrue(latch1.await(TIMEOUT, TimeUnit.SECONDS));
+
+        // Request the image again and and see if the cache is present
+        final CountDownLatch latch2 = new CountDownLatch(1);
+        Bitmap b = loader.load(null, secondRequest, new Listener<Object>() {
+            @Override
+            public void onSuccess(Object tag, Bitmap b) {
+                latch2.countDown();
+            }
+
+            @Override
+            public void onError(Object tag, Throwable t) {
+                latch2.countDown();
+            }
+        });
+
+        assertNull(b);
+
+        assertTrue(latch2.await(TIMEOUT, TimeUnit.SECONDS));
+        assertEquals(2, streamHandler.timesOpened);
+    }
+
     private void ignoreCache(Request request) throws InterruptedException {
         request.addFlag(Request.Flag.IGNORE_CACHE);
 
