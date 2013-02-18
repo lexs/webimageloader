@@ -1,6 +1,7 @@
 package com.webimageloader;
 
 import java.io.File;
+import java.util.EnumSet;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -15,8 +16,20 @@ import com.webimageloader.transformation.Transformation;
  * @author Alexander Blom <alexanderblom.se>
  */
 public class Request {
+    public enum Flag {
+        /**
+         * Flag which makes the request ignore any possibly cached bitmaps
+         */
+        IGNORE_CACHE,
+        /**
+         * Flag which makes the request don't save its result to cache
+         */
+        NO_CACHE
+    }
+
     private String url;
     private Transformation transformation;
+    private EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
 
     /**
      * Create a request for a resource in /res
@@ -83,15 +96,54 @@ public class Request {
     /**
      * Create a new request with an added transformation
      *
+     * @deprecated Use {@link #setTransformation(Transformation)} instead
+     *
      * @param transformation the transformation to apply
      * @return the new request
      */
+    @Deprecated
     public Request withTransformation(Transformation transformation) {
         return new Request(url, transformation);
     }
 
+    /**
+     * Set the transformation of this request
+     *
+     * @param transformation the transformation to apply
+     * @return this request
+     */
+    public Request setTransformation(Transformation transformation) {
+        this.transformation = transformation;
+
+        return this;
+    }
+
+    /**
+     * Add a flag to this request
+     *
+     * @param flag the flag to be added
+     * @return this request
+     */
+    public Request addFlag(Flag flag) {
+        flags.add(flag);
+
+        return this;
+    }
+
+    /**
+     * Add multiple flags to this request
+     *
+     * @param flags the flags to be added
+     * @return this request
+     */
+    public Request addFlags(EnumSet<Flag> flags) {
+        this.flags.addAll(flags);
+
+        return this;
+    }
+
     LoaderRequest toLoaderRequest() {
-        return new LoaderRequest(url, transformation);
+        return new LoaderRequest(url, transformation, flags);
     }
 
     private static String createUrl(String scheme, String authority, String path) {

@@ -23,14 +23,14 @@ public class PendingRequests {
 
     // Don't remove tags at all, this means both of these should be weakhashmaps
     //
-    private Map<Object, LoaderRequest> pendingTags;
+    private Map<Object, PendingListeners> pendingTags;
     private Map<LoaderRequest, PendingListeners> pendingRequests;
 
     public PendingRequests(MemoryCache memoryCache) {
         this.memoryCache = memoryCache;
 
         // Use WeakHashMap to ensure tags can be GC'd
-        pendingTags = new WeakHashMap<Object, LoaderRequest>();
+        pendingTags = new WeakHashMap<Object, PendingListeners>();
         pendingRequests = new HashMap<LoaderRequest, PendingListeners>();
     }
 
@@ -54,23 +54,27 @@ public class PendingRequests {
 
         if (tag != null) {
             cancelPotentialWork(tag);
-            pendingTags.put(tag, request);
+
         }
 
         PendingListeners listeners = pendingRequests.get(request);
+        LoaderWork work = null;
+
         if (listeners == null) {
-            LoaderWork work = new LoaderWork(new RequestListener(request));
+            work = new LoaderWork(new RequestListener(request));
 
-            listeners = new PendingListeners(tag, listener, work);
+            listeners = new PendingListeners(request, tag, listener, work);
             pendingRequests.put(request, listeners);
-
-            return work;
         } else {
             if (Logger.VERBOSE) Log.v(TAG, "Reusing request: " + request);
             listeners.add(tag, listener);
-
-            return null;
         }
+
+        if (tag != null) {
+            pendingTags.put(tag, listeners);
+        }
+
+        return work;
     }
 
     public synchronized void cancel(Object tag) {
@@ -105,14 +109,16 @@ public class PendingRequests {
     }
 
     private void cancelPotentialWork(Object tag) {
-        LoaderRequest request = pendingTags.remove(tag);
-        if (request == null) {
+        PendingListeners listeners = pendingTags.remove(tag);
+        if (listeners == null) {
             return;
         }
 
-        PendingListeners listeners = pendingRequests.get(request);
-        if (!listeners.remove(tag)) {
+        listeners.remove(tag);
+        if (listeners.isEmpty()) {
+            LoaderRequest request = listeners.getRequest();
             pendingRequests.remove(request);
+            listeners.cancel();
         }
     }
 
@@ -123,7 +129,9 @@ public class PendingRequests {
     }
 
     private boolean stillPending(Object tag, LoaderRequest request) {
-        return request.equals(pendingTags.get(tag));
+        PendingListeners listeners = pendingTags.get(tag);
+
+        return listeners != null && request.equals(listeners.getRequest());
      }
 
     private class RequestListener implements Loader.Listener {
@@ -168,11 +176,13 @@ public class PendingRequests {
     }
 
     private static class PendingListeners {
+        private LoaderRequest request;
         private Map<Object, LoaderManager.Listener> listeners;
         private List<LoaderManager.Listener> extraListeners;
         private LoaderWork work;
 
-        public PendingListeners(Object tag, LoaderManager.Listener listener, LoaderWork work) {
+        public PendingListeners(LoaderRequest request, Object tag, LoaderManager.Listener listener, LoaderWork work) {
+            this.request = request;
             this.work = work;
 
             // Use a WeakHashMap to ensure tags can be GC'd, also use 1 a initial
@@ -191,21 +201,20 @@ public class PendingRequests {
             }
         }
 
-        /**
-         * Remove a listener, if there are no more listeners this request will
-         * also be cancelled.
-         *
-         * @return true if this task is still pending
-         */
-        public boolean remove(Object tag) {
+        public void remove(Object tag) {
             listeners.remove(tag);
+        }
 
-            if (listeners.isEmpty() && extraListeners.isEmpty()) {
-                work.cancel();
-                return false;
-            } else {
-                return true;
-            }
+        public boolean isEmpty() {
+            return listeners.isEmpty() && extraListeners.isEmpty();
+        }
+
+        public void cancel() {
+            work.cancel();
+        }
+
+        public LoaderRequest getRequest() {
+            return request;
         }
 
         public Set<Object> getTags() {

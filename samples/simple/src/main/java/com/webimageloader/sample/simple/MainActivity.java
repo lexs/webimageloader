@@ -4,7 +4,6 @@ import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +15,6 @@ import android.widget.TextView;
 import com.webimageloader.ImageLoader;
 import com.webimageloader.ext.ImageHelper;
 import com.webimageloader.ext.ImageLoaderApplication;
-import com.webimageloader.loader.MemoryCache;
 
 public class MainActivity extends ListActivity {
     private static final int NUM_IMAGES = 100;

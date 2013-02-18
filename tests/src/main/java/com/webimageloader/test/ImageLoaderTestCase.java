@@ -19,6 +19,9 @@ import android.test.AndroidTestCase;
 
 import com.webimageloader.ImageLoader;
 import com.webimageloader.ImageLoader.Listener;
+import com.webimageloader.Request;
+import com.webimageloader.transformation.SimpleTransformation;
+import com.webimageloader.transformation.Transformation;
 
 @TargetApi(16)
 public class ImageLoaderTestCase extends AndroidTestCase {
@@ -42,14 +45,17 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     private ImageLoader loader;
     private Bitmap correctFile;
 
+    private MockURLStreamHandler streamHandler;
+
     @Override
     protected void setUp() throws Exception {
         int random = Math.abs(new Random().nextInt());
         File cacheDir = new File(getContext().getCacheDir(), String.valueOf(random));
+        streamHandler = new MockURLStreamHandler(getContext().getAssets());
         loader = new ImageLoader.Builder(getContext())
                 .enableDiskCache(cacheDir, TEN_MEGABYTES)
                 .enableMemoryCache(TEN_MEGABYTES)
-                .addURLSchemeHandler("mock", new MockURLStreamHandler(getContext().getAssets()))
+                .addURLSchemeHandler("mock", streamHandler)
                 .build();
 
         correctFile = BitmapFactory.decodeStream(getContext().getAssets().open(CORRECT_FILE_PATH));
@@ -318,8 +324,115 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         assertFalse(latch.await(TIMEOUT, TimeUnit.SECONDS));
     }
 
+    public void testIgnoreCache() throws InterruptedException {
+        ignoreCache(new Request(CORRECT_MOCK_FILE_PATH));
+    }
+
+    public void testIgnoreCacheTransformation() throws InterruptedException {
+        ignoreCache(new Request(CORRECT_MOCK_FILE_PATH, new IdentityTransformation()));
+    }
+
+    public void testNoCache() throws InterruptedException {
+        noCache(new Request(CORRECT_MOCK_FILE_PATH), new Request(CORRECT_MOCK_FILE_PATH));
+    }
+
+    public void testNoCacheTransformation() throws InterruptedException {
+        noCache(new Request(CORRECT_MOCK_FILE_PATH), new Request(CORRECT_MOCK_FILE_PATH, new IdentityTransformation()));
+    }
+
+
+    public void noCache(Request firstRequest, Request secondRequest) throws InterruptedException {
+        firstRequest.addFlag(Request.Flag.NO_CACHE);
+
+        final CountDownLatch latch1 = new CountDownLatch(1);
+        loader.load(null, firstRequest, new Listener<Object>() {
+            @Override
+            public void onSuccess(Object tag, Bitmap b) {
+                latch1.countDown();
+            }
+
+            @Override
+            public void onError(Object tag, Throwable t) {
+                latch1.countDown();
+            }
+        });
+
+        assertTrue(latch1.await(TIMEOUT, TimeUnit.SECONDS));
+
+        // Request the image again and and see if the cache is present
+        final CountDownLatch latch2 = new CountDownLatch(1);
+        Bitmap b = loader.load(null, secondRequest, new Listener<Object>() {
+            @Override
+            public void onSuccess(Object tag, Bitmap b) {
+                latch2.countDown();
+            }
+
+            @Override
+            public void onError(Object tag, Throwable t) {
+                latch2.countDown();
+            }
+        });
+
+        assertNull(b);
+
+        assertTrue(latch2.await(TIMEOUT, TimeUnit.SECONDS));
+        assertEquals(2, streamHandler.timesOpened);
+    }
+
+    private void ignoreCache(Request request) throws InterruptedException {
+        request.addFlag(Request.Flag.IGNORE_CACHE);
+
+        final CountDownLatch latch1 = new CountDownLatch(1);
+        loader.load(null, CORRECT_MOCK_FILE_PATH, new Listener<Object>() {
+            @Override
+            public void onSuccess(Object tag, Bitmap b) {
+                latch1.countDown();
+            }
+
+            @Override
+            public void onError(Object tag, Throwable t) {
+                latch1.countDown();
+            }
+        });
+
+        assertTrue(latch1.await(TIMEOUT, TimeUnit.SECONDS));
+
+        // Request the image again and ignore cache
+        final CountDownLatch latch2 = new CountDownLatch(1);
+        Bitmap b = loader.load(null, request, new Listener<Object>() {
+            @Override
+            public void onSuccess(Object tag, Bitmap b) {
+                latch2.countDown();
+            }
+
+            @Override
+            public void onError(Object tag, Throwable t) {
+                latch2.countDown();
+            }
+        });
+
+        assertNull(b);
+
+        assertTrue(latch2.await(TIMEOUT, TimeUnit.SECONDS));
+        assertEquals(2, streamHandler.timesOpened);
+    }
+
+    private static class IdentityTransformation extends SimpleTransformation {
+        @Override
+        public String getIdentifier() {
+            return "identity";
+        }
+
+        @Override
+        public Bitmap transform(Bitmap b) {
+            return b;
+        }
+    }
+
     private static class MockURLStreamHandler extends URLStreamHandler {
         private AssetManager assets;
+
+        public int timesOpened = 0;
 
         public MockURLStreamHandler(AssetManager assets) {
             this.assets = assets;
@@ -327,6 +440,8 @@ public class ImageLoaderTestCase extends AndroidTestCase {
 
         @Override
         protected URLConnection openConnection(URL url) throws IOException {
+            timesOpened++;
+
             return new MockURLConnection(assets, url);
         }
     }

@@ -18,6 +18,7 @@ import com.jakewharton.DiskLruCache.Editor;
 import com.jakewharton.DiskLruCache.Snapshot;
 import com.webimageloader.Constants;
 import com.webimageloader.ImageLoader.Logger;
+import com.webimageloader.Request;
 import com.webimageloader.util.ListenerFuture;
 import com.webimageloader.util.BitmapUtils;
 import com.webimageloader.util.Hasher;
@@ -54,6 +55,16 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
         super.close();
 
         IOUtil.closeQuietly(cache);
+    }
+
+    @Override
+    public void load(LoaderWork.Manager manager, LoaderRequest request) {
+        if (request.hasFlag(Request.Flag.IGNORE_CACHE)) {
+            manager.next(request, new NextListener(request, manager));
+            return;
+        }
+
+        super.load(manager, request);
     }
 
     @Override
@@ -134,6 +145,11 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
 
         @Override
         public void onStreamLoaded(InputSupplier input, final Metadata metadata) {
+            if (request.hasFlag(Request.Flag.NO_CACHE)) {
+                manager.deliverStream(input, metadata);
+                return;
+            }
+
             try {
                 Editor editor = getEditor(request);
 
@@ -183,12 +199,8 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
                     writeMetadata(editor, metadata);
 
                     editor.commit();
-                } catch (IOException e) {
-                    // We failed writing to the cache
-                    editor.abort();
-
-                    // Let the outer catch handle this
-                    throw e;
+                } finally {
+                    editor.abortUnlessCommitted();
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Failed saving bitmap to cache", e);
@@ -208,12 +220,8 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
                     writeMetadata(editor, metadata);
 
                     editor.commit();
-                } catch (IOException e) {
-                    // We failed writing to the cache
-                    editor.abort();
-
-                    // Let the outer catch handle this
-                    throw e;
+                } finally {
+                    editor.abortUnlessCommitted();
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Failed to update metadata", e);

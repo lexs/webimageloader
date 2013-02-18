@@ -2,6 +2,7 @@ package com.webimageloader.ext;
 
 import com.webimageloader.ImageLoader;
 import com.webimageloader.ImageLoader.Listener;
+import com.webimageloader.Request;
 import com.webimageloader.transformation.Transformation;
 
 import android.content.Context;
@@ -132,7 +133,18 @@ public class ImageHelper {
      * @return this helper
      */
     public ImageHelper load(ImageView v, String url, Transformation transformation) {
-        Bitmap b = loader.load(v, url, transformation, listener);
+        return load(v, new Request(url, transformation));
+    }
+
+    /**
+     * Load the specified url into this {@link ImageView}.
+     *
+     * @param v the target view
+     * @param request the request to load
+     * @return this helper
+     */
+    public ImageHelper load(ImageView v, Request request) {
+        Bitmap b = loader.load(v, request, listener);
 
         if (b != null) {
             v.setImageDrawable(drawableCreator.createDrawable(context, b));

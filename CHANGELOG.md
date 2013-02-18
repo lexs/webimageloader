@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 1.1.4 *(2013-02-18)*
+----------------------------
+
+* Better handling of cancellation
+* Support request flags for skipping cache
+
 Version 1.1.3 *(2012-12-30)*
 ----------------------------
 
