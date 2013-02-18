@@ -17,7 +17,13 @@ import com.webimageloader.transformation.Transformation;
  */
 public class Request {
     public enum Flag {
+        /**
+         * Flag which makes the request ignore any possibly cached bitmaps
+         */
         IGNORE_CACHE,
+        /**
+         * Flag which makes the request don't save its result to cache
+         */
         NO_CACHE
     }
 
