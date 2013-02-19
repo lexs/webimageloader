@@ -189,7 +189,7 @@ public class ListImageLoader extends AbstractImageLoader {
 
     /**
      * Set the {@link Adapter} to be used for preloading. This is easier than having
-     * a separate {@link Preloader} but should only be used for simple lists. This
+     * a separate {@link Preloader} but should only be used for very simple adapters. This
      * will call {@link Adapter#getView(int, android.view.View, android.view.ViewGroup)}
      * for every preload and intercept the load calls transforming them to preloads.
      *
@@ -365,16 +365,25 @@ public class ListImageLoader extends AbstractImageLoader {
 
     private class AdapterPreloader implements Preloader {
         private Adapter adapter;
-        private View view;
+        private View[] views;
 
         private AdapterPreloader(Adapter adapter) {
             this.adapter = adapter;
+
+            views = new View[adapter.getViewTypeCount()];
         }
 
         @Override
         public void preload(int position) {
             interceptLoads = true;
-            view = adapter.getView(position, view, listView);
+
+            int id = adapter.getItemViewType(position);
+            if (id != Adapter.IGNORE_ITEM_VIEW_TYPE) {
+                views[id] = adapter.getView(position, views[id], listView);
+            } else {
+                adapter.getView(position, null, listView);
+            }
+
             interceptLoads = false;
         }
     }
