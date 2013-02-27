@@ -155,7 +155,14 @@ public class NetworkLoader implements Loader, Closeable {
     private URLConnection openConnection(URL url) throws IOException {
         disableConnectionReuseIfNecessary();
 
-        URLConnection urlConnection = url.openConnection();
+        URLConnection urlConnection = null;
+        if (connectionHandler != null && url.getProtocol().startsWith("http")) {
+            // For HTTP(s) URLs, give the user a chance to set their own connection implementation
+            urlConnection = connectionHandler.handleConnection(url);
+        }
+        if (urlConnection == null) {
+            urlConnection = url.openConnection();
+        }
 
         if (connectionTimeout > 0) {
             urlConnection.setConnectTimeout(connectionTimeout);
@@ -163,11 +170,6 @@ public class NetworkLoader implements Loader, Closeable {
 
         if (readTimeout > 0) {
             urlConnection.setReadTimeout(readTimeout);
-        }
-
-        if (connectionHandler != null && urlConnection instanceof HttpURLConnection) {
-            // Only let the connection handler handle http requests
-            connectionHandler.handleConnection((HttpURLConnection) urlConnection);
         }
 
         return urlConnection;
