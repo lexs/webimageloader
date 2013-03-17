@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 1.1.5 *(2013-03-17)*
+----------------------------
+
+* Allow setting your own connection factory
+* The simple sample now uses OkHttp
+
 Version 1.1.4 *(2013-02-18)*
 ----------------------------
 

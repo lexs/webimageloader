@@ -268,6 +268,17 @@ public interface ImageLoader {
         }
 
         /**
+         * Set a connection factory, for example to provide your own connection implementation
+         * @param factory the factory which creates connections
+         * @return this builder
+         */
+        public Builder setConnectionFactory(ConnectionFactory factory) {
+            networkBuilder.setConnectionFactory(factory);
+
+            return this;
+        }
+
+        /**
          * Set a connection handler
          * @param handler handler to handle connections
          * @return this builder

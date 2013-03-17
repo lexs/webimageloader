@@ -17,6 +17,7 @@ import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.webimageloader.ConnectionFactory;
 import com.webimageloader.ConnectionHandler;
 import com.webimageloader.Constants;
 import com.webimageloader.ImageLoader.Logger;
@@ -32,6 +33,7 @@ public class NetworkLoader implements Loader, Closeable {
     private static final int TAG_CONDITIONAL = 0x7eb0000c;
 
     private Map<String, URLStreamHandler> streamHandlers;
+    private ConnectionFactory connectionFactory;
     private ConnectionHandler connectionHandler;
     private int connectionTimeout;
     private int readTimeout;
@@ -155,7 +157,13 @@ public class NetworkLoader implements Loader, Closeable {
     private URLConnection openConnection(URL url) throws IOException {
         disableConnectionReuseIfNecessary();
 
-        URLConnection urlConnection = url.openConnection();
+        final URLConnection urlConnection;
+        if (connectionFactory != null && isHttp(url.getProtocol())) {
+            // For http(s) URLs, give the user a chance to set their own connection implementation
+            urlConnection = connectionFactory.openConnection(url);
+        } else {
+            urlConnection = url.openConnection();
+        }
 
         if (connectionTimeout > 0) {
             urlConnection.setConnectTimeout(connectionTimeout);
@@ -171,6 +179,10 @@ public class NetworkLoader implements Loader, Closeable {
         }
 
         return urlConnection;
+    }
+
+    private boolean isHttp(String protocol) {
+        return protocol.equals("http") || protocol.equals("https");
     }
 
     @TargetApi(14)
@@ -233,6 +245,7 @@ public class NetworkLoader implements Loader, Closeable {
     public static class Builder {
         private HashMap<String, URLStreamHandler> streamHandlers;
 
+        private ConnectionFactory connectionFactory;
         private ConnectionHandler connectionHandler;
 
         private int threadCount = Constants.DEFAULT_NETWORK_THREADS;
@@ -249,6 +262,12 @@ public class NetworkLoader implements Loader, Closeable {
 
         public Builder addURLSchemeHandler(String scheme, URLStreamHandler handler) {
             streamHandlers.put(scheme, handler);
+
+            return this;
+        }
+
+        public Builder setConnectionFactory(ConnectionFactory factory) {
+            connectionFactory = factory;
 
             return this;
         }
