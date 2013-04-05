@@ -57,6 +57,11 @@ public class TransformingLoader implements Loader {
             public void onError(Throwable t) {
                 manager.deliverError(t);
             }
+            
+			@Override
+			public void onProgress(int progress) {
+				manager.deliverProgress(progress);
+			}
         });
     }
 

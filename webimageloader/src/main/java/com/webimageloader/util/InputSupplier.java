@@ -17,4 +17,11 @@ public interface InputSupplier {
      * @throws IOException if opening the stream failed
      */
     InputStream getInput() throws IOException;
+    
+    /**
+     * 
+     * @return the length of bytes into the inputstream
+     * @throws IOException if opening the stream failed
+     */
+    long getLength() throws IOException;
 }

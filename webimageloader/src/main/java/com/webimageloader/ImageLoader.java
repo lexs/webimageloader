@@ -55,6 +55,13 @@ public interface ImageLoader {
          * @param t the reason the request failed
          */
         void onError(T tag, Throwable t);
+        
+        /**
+         * Called during loading
+         *
+         * @param tag the tag which was passed in
+         */
+        void onProgress(T tag, int progress);        
     }
 
     /**

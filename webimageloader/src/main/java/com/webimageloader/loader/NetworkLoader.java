@@ -239,6 +239,15 @@ public class NetworkLoader implements Loader, Closeable {
                 return openConnection(url).getInputStream();
             }
         }
+        
+		@Override
+		public long getLength() throws IOException {
+			if (connection != null) {
+				return (long)connection.getContentLength();
+			} else {
+				return openConnection(url).getContentLength();
+			}
+		}
 
     }
 

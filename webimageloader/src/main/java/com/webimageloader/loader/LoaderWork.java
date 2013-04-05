@@ -96,5 +96,11 @@ public class LoaderWork {
                 listener.onNotModified(metadata);
             }
         }
+        
+        public void deliverProgress(int progress) {
+            if (!cancelled) {
+                listener.onProgress(progress);
+            }
+        }
     }
 }
