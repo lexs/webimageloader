@@ -1,15 +1,24 @@
 language: java
 
 branches:
-  except:
-    - gh-pages
+    except:
+        - gh-pages
 
 notifications:
-  email: false
+    email: false
 
 before_install:
-  - wget http://dl.google.com/android/android-sdk_r21.0.1-linux.tgz
-  - tar -zxf android-sdk_r21.0.1-linux.tgz
-  - export ANDROID_HOME=`pwd`/android-sdk-linux
-  - export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
-  - android update sdk --filter platform-tools,android-16 --no-ui --force
+    # Fix 32bit
+    - sudo apt-get update -qq
+    - if [ `uname -m` = x86_64 ]; then sudo apt-get install -qq --force-yes libgd2-xpm ia32-libs ia32-libs-multiarch > /dev/null; fi
+    # Install Android SDK
+    - wget -nv http://dl.google.com/android/android-sdk_r21.1-linux.tgz
+    - tar -zxf android-sdk_r21.1-linux.tgz
+    - export ANDROID_HOME=`pwd`/android-sdk-linux
+    - export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
+    - android --silent update sdk --filter platform-tools,android-16,sysimg-16 --no-ui --force
+    # Create and start emulator
+    - echo no | android create avd --force -n test -t android-16 --abi armeabi-v7a --sdcard 15M
+    - emulator -avd test -no-skin -no-audio -no-window &
+
+script: mvn install -Dandroid.device=test
