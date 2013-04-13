@@ -45,6 +45,7 @@ public class NetworkLoader implements Loader, Closeable {
 
     public NetworkLoader(Builder builder) {
         this.streamHandlers = Collections.unmodifiableMap(builder.streamHandlers);
+        this.connectionFactory = builder.connectionFactory;
         this.connectionHandler = builder.connectionHandler;
         this.connectionTimeout = builder.connectionTimeout;
         this.readTimeout = builder.readTimeout;
