@@ -1,13 +1,12 @@
 package com.webimageloader.loader;
 
-import java.util.Iterator;
-
 import com.webimageloader.util.InputSupplier;
 
 import android.graphics.Bitmap;
 
 public interface Loader {
     interface Listener {
+    	void onProgress(int progress);    	
         void onStreamLoaded(InputSupplier input, Metadata metadata);
         void onBitmapLoaded(Bitmap b, Metadata metadata);
         void onNotModified(Metadata metadata);

@@ -55,6 +55,11 @@ class ImageLoaderImpl extends AbstractImageLoader {
             public void onError(Throwable t) {
                 future.setException(t);
             }
+            
+			@Override
+			public void onProgress(int progress) {
+				
+			}
         });
 
         if (b != null) {
@@ -170,6 +175,17 @@ class ImageLoaderImpl extends AbstractImageLoader {
                     }
                 });
             }
+            
+			@Override
+			public void onProgress(final int progress) {
+				final T tag = getTag();
+				post(tag, new Runnable() {
+                    @Override
+                    public void run() {
+                        listener.onProgress(tag, progress);
+                    }
+                });
+			}
 
             private T getTag() {
                 T tag = null;

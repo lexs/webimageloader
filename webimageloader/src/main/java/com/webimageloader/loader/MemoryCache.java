@@ -13,7 +13,6 @@ import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 public class MemoryCache {
     private static final String TAG = "MemoryLoader";

@@ -196,6 +196,10 @@ public class ImageHelper {
                 v.setImageResource(errorResource);
             }
         }
+        
+		@Override
+		public void onProgress(ImageView tag, int progress) {
+		}
     }
 
     private static class DefaultDrawableCreator implements DrawableCreator {

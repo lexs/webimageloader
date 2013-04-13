@@ -234,6 +234,11 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
         public void onError(Throwable t) {
             manager.deliverError(t);
         }
+        
+		@Override
+		public void onProgress(int progress) {
+			manager.deliverProgress(progress);
+		}
 
         private void writeMetadata(Editor editor, Metadata metadata) throws IOException {
             OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_METADATA), BUFFER_SIZE);
@@ -288,5 +293,17 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
                 }
             };
         }
+        
+		@Override
+		public long getLength() throws IOException {
+			if (snapshot == null) {
+                snapshot = cache.get(key);
+
+                if (snapshot == null) {
+                    throw new IOException("Snapshot not available");
+                }
+            }			
+			return snapshot.getLength(INPUT_IMAGE);
+		}
     }
 }

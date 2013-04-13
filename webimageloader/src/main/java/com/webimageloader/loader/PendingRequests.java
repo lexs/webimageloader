@@ -1,5 +1,6 @@
 package com.webimageloader.loader;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -10,10 +11,10 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 import com.webimageloader.ImageLoader.Logger;
-import com.webimageloader.util.BitmapUtils;
 import com.webimageloader.util.InputSupplier;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 
 public class PendingRequests {
@@ -81,6 +82,13 @@ public class PendingRequests {
         cancelPotentialWork(tag);
     }
 
+    protected synchronized void deliverProgress(LoaderRequest request, int progress) {
+        PendingListeners listeners = pendingRequests.get(request);
+        if (listeners != null) {
+            listeners.deliverProgress(progress);
+        }
+    }
+    
     protected synchronized void deliverResult(LoaderRequest request, Bitmap b, Metadata metadata) {
         PendingListeners listeners = removeRequest(request);
         if (listeners != null) {
@@ -145,9 +153,23 @@ public class PendingRequests {
         public void onStreamLoaded(InputSupplier input, Metadata metadata) {
             try {
                 InputStream is = input.getInput();
-                
+                long length = input.getLength();                
                 try {
-                    Bitmap b = BitmapUtils.decodeStream(is);
+                	// XXX: start mod progress
+                    //Bitmap b = BitmapUtils.decodeStream(is);
+                	ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                	byte[] data = new byte[16 * 1024];
+                	int read, total = 0;
+                	while ((read = is.read(data, 0, data.length)) != -1) {
+                		total += read;
+                		buffer.write(data, 0, read);
+                		if (length > 0) {
+                			onProgress((int) Math.floor(total * 100 / length) );
+                		}
+                	}
+                	buffer.flush();
+                	Bitmap b = BitmapFactory.decodeByteArray(buffer.toByteArray(), 0, buffer.size());
+                    // XXX: end mod progress                    
                     
                     onBitmapLoaded(b, metadata);
                 } finally {
@@ -173,6 +195,11 @@ public class PendingRequests {
         public void onError(Throwable t) {
             deliverError(request, t);
         }
+        
+		@Override
+		public void onProgress(int progress) {
+			deliverProgress(request, progress);
+		}
     }
 
     private static class PendingListeners {
@@ -221,6 +248,16 @@ public class PendingRequests {
             return listeners.keySet();
         }
 
+        public void deliverProgress(int progress) {
+        	for (LoaderManager.Listener listener : listeners.values()) {
+                listener.onProgress(progress);
+            }
+
+            for (LoaderManager.Listener listener : extraListeners) {
+                listener.onProgress(progress);
+            }
+		}
+        
         public void deliverResult(Bitmap b) {
             for (LoaderManager.Listener listener : listeners.values()) {
                 listener.onLoaded(b);
