@@ -1,6 +1,7 @@
 package com.webimageloader.loader;
 
 import android.graphics.Bitmap;
+import com.webimageloader.ImageLoader;
 import com.webimageloader.util.InputSupplier;
 
 import java.util.ArrayList;
@@ -10,12 +11,14 @@ import java.util.concurrent.Future;
 
 public class LoaderWork {
     private final Loader.Listener listener;
+    private final ImageLoader.ProgressListener progressListener;
     private final List<Future<?>> futures;
 
     private volatile boolean cancelled = false;
 
-    public LoaderWork(Loader.Listener listener) {
+    public LoaderWork(Loader.Listener listener, ImageLoader.ProgressListener progressListener) {
         this.listener = listener;
+        this.progressListener = progressListener;
         this.futures = new ArrayList<Future<?>>();
     }
 
@@ -71,6 +74,10 @@ public class LoaderWork {
                 Manager nextManager = new Manager(chain, listener);
                 nextLoader.load(nextManager, request);
             }
+        }
+
+        public void publishProgress(float value) {
+            progressListener.onProgress(value);
         }
 
         public void deliverStream(InputSupplier is, Metadata metadata) {

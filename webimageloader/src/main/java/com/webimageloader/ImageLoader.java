@@ -21,7 +21,7 @@ import java.net.URLStreamHandler;
  * {@link com.webimageloader.ext.ImageHelper} to load images.
  * <p>
  * It's safe to call the methods on this class from any thread. However, callbacks
- * will always be done on the UI thread.
+ * will always be done on the UI thread if not otherwise specified.
  *
  * @author Alexander Blom <alexanderblom.se>
  */
@@ -55,6 +55,20 @@ public interface ImageLoader {
          * @param t the reason the request failed
          */
         void onError(T tag, Throwable t);
+    }
+
+    /**
+     * Listener for progress updates
+     *
+     * @author Alexander Blom <alexanderblom.se>
+     */
+    public interface ProgressListener {
+        /**
+         * Called when there is a progress update, float ranges
+         * from 0f to 1f
+         * @param value progress in the range 0f-1f
+         */
+        void onProgress(float value);
     }
 
     /**
@@ -102,6 +116,17 @@ public interface ImageLoader {
      * @throws IOException if the load failed
      */
     Bitmap loadBlocking(Request request) throws IOException;
+
+    /**
+     * Load the specified request blocking the calling thread. The progress
+     * updates happen on a background thread.
+     *
+     * @param request the request to load
+     * @param progressListener called when there is a progress update
+     * @return the bitmap
+     * @throws IOException if the load failed
+     */
+    Bitmap loadBlocking(Request request, ProgressListener progressListener) throws IOException;
 
     /**
      * Used to prime the file and memory cache. It's safe to later call load
@@ -169,6 +194,18 @@ public interface ImageLoader {
      * @return the bitmap if it was already loaded
      */
     <T> Bitmap load(T tag, Request request, Listener<T> listener);
+
+    /**
+     * Load an image from an url with the given listeners. Previously pending
+     * request for this tag will be automatically cancelled.
+     *
+     * @param tag used to determine when we this request should be cancelled
+     * @param request what to to fetch
+     * @param listener called when the request has finished or failed
+     * @param progressListener called when there is a progress update
+     * @return the bitmap if it was already loaded
+     */
+    <T> Bitmap load(T tag, Request request, Listener<T> listener, ProgressListener progressListener);
 
     /**
      * Cancel any pending requests for this tag.

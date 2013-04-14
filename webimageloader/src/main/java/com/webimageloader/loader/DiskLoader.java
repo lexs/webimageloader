@@ -156,7 +156,7 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
                 OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE), BUFFER_SIZE);
                 try {
                     try {
-                        IOUtil.copy(input, os);
+                        copy(input, os);
                     } finally {
                         os.close();
                     }
@@ -185,6 +185,38 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
                 // Pass it trough to the listener without caching.
                 Log.e(TAG, "Failed opening cache", e);
                 manager.deliverStream(input, metadata);
+            }
+        }
+
+        public void copy(InputSupplier input, OutputStream output) throws IOException {
+            long length = input.getLength();
+            InputStream is = new BufferedInputStream(input.getInput(), BUFFER_SIZE);
+
+            try {
+                copy(is, output, length);
+            } finally {
+                is.close();
+            }
+        }
+
+        public void copy(InputStream input, OutputStream output, long length) throws IOException {
+            byte[] buffer = new byte[BUFFER_SIZE];
+
+            if (length != -1) {
+                manager.publishProgress(0f);
+
+                long progress = 0;
+                int i;
+                while ((i = input.read(buffer)) != -1) {
+                    output.write(buffer, 0, i);
+                    progress += i;
+                    manager.publishProgress(Math.min(1f, (float) progress / length));
+                }
+            } else {
+                int i;
+                while ((i = input.read(buffer)) != -1) {
+                    output.write(buffer, 0, i);
+                }
             }
         }
 
@@ -265,6 +297,11 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
         public DiskInputSupplier(LoaderRequest request, Snapshot snapshot) {
             this.key = hashKeyForDisk(request);
             this.snapshot = snapshot;
+        }
+
+        @Override
+        public long getLength() throws IOException {
+            return cache.get(key).getLength(INPUT_IMAGE);
         }
 
         @Override

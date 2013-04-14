@@ -1,19 +1,13 @@
 package com.webimageloader.util;
 
-import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Environment;
 
 public class IOUtil {
-    private static final int BUFFER_SIZE = 8192;
-    
     public static void closeQuietly(Closeable closeable) {
         if (closeable != null) {
             try {
@@ -74,25 +68,6 @@ public class IOUtil {
         // Before Froyo we need to construct the external cache dir ourselves
         final String cacheDir = "/Android/data/" + context.getPackageName() + "/cache/";
         return new File(Environment.getExternalStorageDirectory().getPath() + cacheDir);
-    }
-    
-    public static void copy(InputSupplier input, OutputStream output) throws IOException {
-        InputStream is = new BufferedInputStream(input.getInput(), BUFFER_SIZE);
-        
-        try {
-            copy(is, output);
-        } finally {
-            is.close();
-        }
-    }
-    
-    public static void copy(InputStream input, OutputStream output) throws IOException {
-        byte[] buffer = new byte[BUFFER_SIZE];
-    
-        int i;
-        while ((i = input.read(buffer)) != -1) {
-            output.write(buffer, 0, i);
-        }
     }
 
     private IOUtil() {}

@@ -67,6 +67,7 @@
         <module>tests</module>
         <module>samples/simple</module>
         <module>samples/patterns</module>
+        <module>samples/images</module>
     </modules>
 
     <dependencyManagement>

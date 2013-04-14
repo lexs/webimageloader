@@ -11,7 +11,6 @@ import android.os.Message;
 
 import com.webimageloader.loader.LoaderManager;
 import com.webimageloader.loader.MemoryCache;
-import com.webimageloader.transformation.Transformation;
 import com.webimageloader.util.AbstractImageLoader;
 import com.webimageloader.util.WaitFuture;
 
@@ -43,6 +42,11 @@ class ImageLoaderImpl extends AbstractImageLoader {
 
     @Override
     public Bitmap loadBlocking(Request request) throws IOException {
+        return loadBlocking(request, null);
+    }
+
+    @Override
+    public Bitmap loadBlocking(Request request, final ProgressListener progressListener) throws IOException {
         final WaitFuture future = new WaitFuture();
 
         Bitmap b = loadInternal(null, request, new LoaderManager.Listener() {
@@ -54,6 +58,13 @@ class ImageLoaderImpl extends AbstractImageLoader {
             @Override
             public void onError(Throwable t) {
                 future.setException(t);
+            }
+
+            @Override
+            public void onProgress(float value) {
+                if (progressListener != null) {
+                    progressListener.onProgress(value);
+                }
             }
         });
 
@@ -92,8 +103,14 @@ class ImageLoaderImpl extends AbstractImageLoader {
         loadInternal(null, request, null);
     }
 
+    @Override
     public <T> Bitmap load(T tag, Request request, Listener<T> listener) {
-        return loadInternal(tag, request, handlerManager.getListener(tag, listener));
+        return load(tag, request, listener, null);
+    }
+
+    @Override
+    public <T> Bitmap load(T tag, Request request, Listener<T> listener, ProgressListener progressListener) {
+        return loadInternal(tag, request, handlerManager.getListener(tag, listener, progressListener));
     }
 
     @Override
@@ -118,15 +135,15 @@ class ImageLoaderImpl extends AbstractImageLoader {
             handler = new Handler(Looper.getMainLooper());
         }
 
-        public <T> LoaderManager.Listener getListener(T tag, Listener<T> listener) {
+        public <T> LoaderManager.Listener getListener(T tag, Listener<T> listener, ProgressListener progressListener) {
             if (tag != null) {
                 // It's possible there is already a callback in progress for this tag
                 // so we'll remove it
                 handler.removeCallbacksAndMessages(tag);
 
-                return new TagListener<T>(tag, listener);
+                return new TagListener<T>(tag, listener, progressListener);
             } else {
-                return new TagListener<T>(listener);
+                return new TagListener<T>(listener, progressListener);
             }
         }
 
@@ -135,16 +152,19 @@ class ImageLoaderImpl extends AbstractImageLoader {
         }
 
         private class TagListener<T> implements LoaderManager.Listener {
-            private Listener<T> listener;
             private WeakReference<T> reference;
+            private Listener<T> listener;
+            private ProgressListener progressListener;
 
-            public TagListener(Listener<T> listener) {
+            public TagListener(Listener<T> listener, ProgressListener progressListener) {
                 this.listener = listener;
+                this.progressListener = progressListener;
             }
 
-            public TagListener(T tag, Listener<T> listener) {
-                this.listener = listener;
+            public TagListener(T tag, Listener<T> listener, ProgressListener progressListener) {
                 this.reference = new WeakReference<T>(tag);
+                this.listener = listener;
+                this.progressListener = progressListener;
             }
 
             @Override
@@ -167,6 +187,20 @@ class ImageLoaderImpl extends AbstractImageLoader {
                     @Override
                     public void run() {
                         listener.onError(tag, t);
+                    }
+                });
+            }
+
+            @Override
+            public void onProgress(final float value) {
+                if (progressListener == null) {
+                    return;
+                }
+
+                post(getTag(), new Runnable() {
+                    @Override
+                    public void run() {
+                        progressListener.onProgress(value);
                     }
                 });
             }
