@@ -25,4 +25,14 @@
             android:minWidth="250dp"
             android:text="@string/progress" />
 
+    <View android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_weight="1" />
+
+    <Button android:id="@+id/clear_cache"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="250dp"
+            android:text="@string/clear_cache" />
+
 </LinearLayout>
