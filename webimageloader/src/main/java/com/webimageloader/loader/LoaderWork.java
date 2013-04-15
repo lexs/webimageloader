@@ -77,7 +77,7 @@ public class LoaderWork {
         }
 
         public void publishProgress(float value) {
-            if (cancelled) {
+            if (!cancelled) {
                 progressListener.onProgress(value);
             }
         }
