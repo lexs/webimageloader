@@ -65,9 +65,7 @@
     <modules>
         <module>webimageloader</module>
         <module>tests</module>
-        <module>samples/simple</module>
-        <module>samples/patterns</module>
-        <module>samples/images</module>
+        <module>sample</module>
     </modules>
 
     <dependencyManagement>
