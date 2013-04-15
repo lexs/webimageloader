@@ -85,6 +85,7 @@ public class MemoryCache {
 
     public void evictAll() {
         cache.evictAll();
+        expired.clear();
     }
 
     public Entry get(LoaderRequest request) {
