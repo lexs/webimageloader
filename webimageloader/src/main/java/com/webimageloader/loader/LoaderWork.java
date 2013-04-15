@@ -77,7 +77,9 @@ public class LoaderWork {
         }
 
         public void publishProgress(float value) {
-            progressListener.onProgress(value);
+            if (cancelled) {
+                progressListener.onProgress(value);
+            }
         }
 
         public void deliverStream(InputSupplier is, Metadata metadata) {
