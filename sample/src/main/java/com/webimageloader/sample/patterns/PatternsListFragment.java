@@ -19,18 +19,17 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
 import com.webimageloader.ImageLoader;
 import com.webimageloader.ext.ImageHelper;
 import com.webimageloader.ext.ImageLoaderApplication;
 import com.webimageloader.sample.AsyncLoader;
 import com.webimageloader.sample.R;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -120,6 +119,13 @@ public class PatternsListFragment extends ListFragment implements LoaderManager.
         }
     }
 
+    private static class PatternDeserializer implements JsonDeserializer<String> {
+        @Override
+        public String deserialize(JsonElement e, Type type, JsonDeserializationContext context) throws JsonParseException {
+            return e.getAsJsonObject().get("imageUrl").getAsString();
+        }
+    }
+
     private static class PatternsLoader extends AsyncLoader<List<String>> {
         public PatternsLoader(Context context) {
             super(context);
@@ -128,54 +134,16 @@ public class PatternsListFragment extends ListFragment implements LoaderManager.
         @Override
         public List<String> loadInBackground() {
             try {
-                InputStream is = new URL(URL).openStream();
-                String content = toString(new BufferedInputStream(is));
-                return parseResponse(content);
+                Gson gson = new GsonBuilder().registerTypeAdapter(String.class, new PatternDeserializer()).create();
+
+                Reader reader = new InputStreamReader(new URL(URL).openStream(), "utf-8");
+                return gson.fromJson(reader, new TypeToken<List<String>>() {
+                }.getType());
             } catch (IOException e) {
                 Log.e(TAG, "Failed to fetch images", e);
 
                 return Collections.emptyList();
             }
-        }
-
-        private List<String> parseResponse(String content) throws IOException {
-            try {
-                ArrayList<String> images = new ArrayList<String>();
-
-                JSONArray jsonImages = new JSONArray(content);
-                for (int i = 0; i < jsonImages.length(); i++) {
-                    JSONObject jsonImage = jsonImages.getJSONObject(i);
-
-                    String url = jsonImage.getString("imageUrl");
-                    images.add(url);
-                }
-
-                return images;
-            } catch (JSONException e) {
-                throw new IOException("Failed to parse json", e);
-            }
-        }
-
-        private static String toString(InputStream is) throws IOException {
-            final char[] buffer = new char[1024];
-            final StringBuilder out = new StringBuilder();
-            try {
-                final Reader in = new InputStreamReader(is, "UTF-8");
-                try {
-                    while (true) {
-                        int rsz = in.read(buffer, 0, buffer.length);
-                        if (rsz < 0)
-                            break;
-                        out.append(buffer, 0, rsz);
-                    }
-                } finally {
-                    in.close();
-                }
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);
-            }
-
-            return out.toString();
         }
     }
 }

@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>sample</artifactId>
     <packaging>apk</packaging>
-    <name>WebImageLoader sample</name>
+    <name>WebImageLoader (sample)</name>
 
     <parent>
         <groupId>com.webimageloader</groupId>
@@ -28,6 +28,12 @@
             <artifactId>webimageloader</artifactId>
             <version>${project.version}</version>
             <type>jar</type>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.2.3</version>
         </dependency>
     </dependencies>
 

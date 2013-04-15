@@ -7,13 +7,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.*;
 
+import com.google.gson.JsonParser;
 import com.webimageloader.ImageLoader;
 import com.webimageloader.Request;
 import com.webimageloader.ext.ImageHelper;
 import com.webimageloader.ext.ImageLoaderApplication;
 import com.webimageloader.sample.R;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.*;
 import java.net.URL;
@@ -68,9 +67,13 @@ public class ProgressActivity extends Activity {
             @Override
             protected String doInBackground(Void... params) {
                 try {
-                    InputStream is = new URL(INSTAGRAM_URL).openStream();
-                    String content = toString(new BufferedInputStream(is));
-                    return parseResponse(content);
+                    Reader reader = new InputStreamReader(new URL(INSTAGRAM_URL).openStream(), "utf-8");
+                    return new JsonParser().parse(reader).getAsJsonObject()
+                            .getAsJsonArray("data")
+                            .get(0).getAsJsonObject()
+                            .getAsJsonObject("images")
+                            .getAsJsonObject("standard_resolution")
+                            .get("url").getAsString();
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to fetch images", e);
 
@@ -86,39 +89,6 @@ public class ProgressActivity extends Activity {
                     progressBar.setIndeterminate(false);
                     imageHelper.load(imageView, progressBar, new Request(url));
                 }
-            }
-
-            private String parseResponse(String content) throws IOException {
-                try {
-                    JSONObject json = new JSONObject(content);
-
-                    return json.getJSONArray("data").getJSONObject(0).getJSONObject("images")
-                            .getJSONObject("standard_resolution").getString("url");
-                } catch (JSONException e) {
-                    throw new IOException("Failed to parse json", e);
-                }
-            }
-
-            private String toString(InputStream is) throws IOException {
-                final char[] buffer = new char[1024];
-                final StringBuilder out = new StringBuilder();
-                try {
-                    final Reader in = new InputStreamReader(is, "UTF-8");
-                    try {
-                        while (true) {
-                            int rsz = in.read(buffer, 0, buffer.length);
-                            if (rsz < 0)
-                                break;
-                            out.append(buffer, 0, rsz);
-                        }
-                    } finally {
-                        in.close();
-                    }
-                } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
-                }
-
-                return out.toString();
             }
         }.execute();
     }
