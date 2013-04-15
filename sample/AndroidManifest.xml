@@ -27,6 +27,7 @@
         <activity android:name=".progress.ProgressActivity" android:label="@string/progress" />
 
         <activity android:name=".patterns.PatternsActivity" android:label="@string/patterns" />
+        <activity android:name=".patterns.PatternDetailsActivity" android:label="@string/patterns" />
     </application>
 
 </manifest>
