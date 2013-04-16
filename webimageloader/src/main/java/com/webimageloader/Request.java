@@ -24,7 +24,12 @@ public class Request {
         /**
          * Flag which makes the request don't save its result to cache
          */
-        NO_CACHE
+        NO_CACHE,
+        /**
+         * Flag for skipping the disk cache, both for retrieval and storing,
+         * useful for images already fetched from disk.
+         */
+        SKIP_DISK_CACHE
     }
 
     private String url;
@@ -32,7 +37,9 @@ public class Request {
     private EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
 
     /**
-     * Create a request for a resource in /res
+     * Create a request for a resource in /res.
+     *
+     * Note that this sets the SKIP_DISK_CACHE to skip disk cache
      *
      * @param c the context to use
      * @param resId the resource if
@@ -40,29 +47,33 @@ public class Request {
      */
     public static Request forResource(Context c, int resId) {
         String url = createUrl(ContentResolver.SCHEME_ANDROID_RESOURCE, c.getPackageName(), String.valueOf(resId));
-        return new Request(url);
+        return new Request(url).addFlag(Flag.SKIP_DISK_CACHE);
     }
 
     /**
-     * Create a request for an asset in /assets
+     * Create a request for an asset in /assets.
+     *
+     * Note that this sets the SKIP_DISK_CACHE to skip disk cache
      *
      * @param path the path of this asset
      * @return a request for this asset
      */
     public static Request forAsset(String path) {
         String url = createUrl(ContentResolver.SCHEME_FILE, "/android_asset/", path);
-        return new Request(url);
+        return new Request(url).addFlag(Flag.SKIP_DISK_CACHE);
     }
 
     /**
-     * Create a request for this file on the local file system
+     * Create a request for this file on the local file system.
+     *
+     * Note that this sets the SKIP_DISK_CACHE to skip disk cache
      *
      * @param file path to the file
      * @return a request for this file
      */
     public static Request forFile(File file) {
         String url = Uri.fromFile(file).toString();
-        return new Request(url);
+        return new Request(url).addFlag(Flag.SKIP_DISK_CACHE);
     }
 
     /**

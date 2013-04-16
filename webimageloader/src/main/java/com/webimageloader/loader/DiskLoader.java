@@ -18,12 +18,15 @@ import com.jakewharton.disklrucache.DiskLruCache.Editor;
 import com.jakewharton.disklrucache.DiskLruCache.Snapshot;
 import com.webimageloader.Constants;
 import com.webimageloader.ImageLoader.Logger;
-import com.webimageloader.Request;
 import com.webimageloader.util.ListenerFuture;
 import com.webimageloader.util.BitmapUtils;
 import com.webimageloader.util.Hasher;
 import com.webimageloader.util.IOUtil;
 import com.webimageloader.util.InputSupplier;
+
+import static com.webimageloader.Request.Flag.IGNORE_CACHE;
+import static com.webimageloader.Request.Flag.NO_CACHE;
+import static com.webimageloader.Request.Flag.SKIP_DISK_CACHE;
 
 public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
     private static final String TAG = "DiskLoader";
@@ -59,7 +62,7 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
 
     @Override
     public void load(LoaderWork.Manager manager, LoaderRequest request) {
-        if (request.hasFlag(Request.Flag.IGNORE_CACHE)) {
+        if (request.hasFlag(IGNORE_CACHE) || request.hasFlag(SKIP_DISK_CACHE)) {
             manager.next(request, new NextListener(request, manager));
             return;
         }
@@ -145,7 +148,7 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
 
         @Override
         public void onStreamLoaded(InputSupplier input, final Metadata metadata) {
-            if (request.hasFlag(Request.Flag.NO_CACHE)) {
+            if (request.hasFlag(NO_CACHE) || request.hasFlag(SKIP_DISK_CACHE)) {
                 manager.deliverStream(input, metadata);
                 return;
             }
