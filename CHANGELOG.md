@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+Version 1.2.0 *(2013-05-09)*
+----------------------------
+
+* Provide progress listener
+* Add flag to skip cache
+* Combine samples apps
+* Add OkHttp to sample app
+* Update to DiskLruCache 2.0.1
+
 Version 1.1.6 *(2013-04-13)*
 ----------------------------
 

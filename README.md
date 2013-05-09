@@ -162,7 +162,7 @@ If you are a Maven user, simply add the following to your `pom.xml`:
 <dependency>
     <groupId>com.webimageloader</groupId>
     <artifactId>webimageloader</artifactId>
-    <version>1.1.6</version>
+    <version>1.2.0</version>
 </dependency>
 ``` 
 
