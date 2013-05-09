@@ -191,3 +191,4 @@ WebImageLoader is licensed under Apache 2.0. If you find this library useful fee
 
 [jar]: http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22webimageloader%22
 [DiskLruCache]: https://github.com/JakeWharton/DiskLruCache
+[ProgressBar]: https://developer.android.com/reference/android/widget/ProgressBar.html
