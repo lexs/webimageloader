@@ -1,5 +1,7 @@
 package com.webimageloader.ext;
 
+import android.view.View;
+import android.widget.ProgressBar;
 import com.webimageloader.ImageLoader;
 import com.webimageloader.ImageLoader.Listener;
 import com.webimageloader.Request;
@@ -144,7 +146,57 @@ public class ImageHelper {
      * @return this helper
      */
     public ImageHelper load(ImageView v, Request request) {
-        Bitmap b = loader.load(v, request, listener);
+        loadInternal(v, request, listener, null);
+
+        return this;
+    }
+
+    /**
+     * Load the specified url into this {@link ImageView}.
+     *
+     * @param v the target view
+     * @param progress {@link ProgressBar} to be updated when loading
+     * @param url the url to load
+     * @return this helper
+     */
+    public ImageHelper load(ImageView v, ProgressBar progress, String url) {
+        return load(v, progress, url, null);
+    }
+
+    /**
+     * Load the specified url into this {@link ImageView}.
+     *
+     * @param v the target view
+     * @param progress {@link ProgressBar} to be updated when loading
+     * @param url the url to load
+     * @param transformation transformation to apply, can be null
+     * @return this helper
+     */
+    public ImageHelper load(ImageView v, ProgressBar progress, String url, Transformation transformation) {
+        return load(v, progress, new Request(url, transformation));
+    }
+
+    /**
+     * Load the specified url into this {@link ImageView}.
+     *
+     * @param v the target view
+     * @param progress {@link ProgressBar} to be updated when loading
+     * @param request the request to load
+     * @return this helper
+     */
+    public ImageHelper load(ImageView v, ProgressBar progress, Request request) {
+        RequestProgressListener listener = new RequestProgressListener(progress);
+        if (loadInternal(v, request, listener, listener) == null) {
+            listener.showProgress(v);
+        } else {
+            listener.showImage(v);
+        }
+
+        return this;
+    }
+
+    private Bitmap loadInternal(ImageView v, Request request, Listener<ImageView> listener, ImageLoader.ProgressListener progressListener) {
+        Bitmap b = loader.load(v, request, listener, progressListener);
 
         if (b != null) {
             v.setImageDrawable(drawableCreator.createDrawable(context, b));
@@ -154,7 +206,7 @@ public class ImageHelper {
             v.setImageDrawable(null);
         }
 
-        return this;
+        return b;
     }
 
     /**
@@ -202,6 +254,37 @@ public class ImageHelper {
         @Override
         public Drawable createDrawable(Context context, Bitmap b) {
             return new BitmapDrawable(context.getResources(), b);
+        }
+    }
+
+    private class RequestProgressListener extends LoadingListener implements ImageLoader.ProgressListener {
+        private ProgressBar progressBar;
+
+        public RequestProgressListener(ProgressBar progressBar) {
+            this.progressBar = progressBar;
+        }
+
+        @Override
+        public void onProgress(float value) {
+            progressBar.setProgress((int) (value * progressBar.getMax()));
+        }
+
+        @Override
+        public void onSuccess(ImageView v, Bitmap b) {
+            super.onSuccess(v, b);
+
+            showImage(v);
+        }
+
+        public void showProgress(ImageView v) {
+            v.setVisibility(View.INVISIBLE);
+            progressBar.setVisibility(View.VISIBLE);
+            progressBar.setProgress(0);
+        }
+
+        public void showImage(ImageView v) {
+            v.setVisibility(View.VISIBLE);
+            progressBar.setVisibility(View.INVISIBLE);
         }
     }
 }

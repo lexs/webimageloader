@@ -13,17 +13,20 @@ import android.graphics.Bitmap;
 import android.os.Process;
 import android.util.Log;
 
-import com.jakewharton.DiskLruCache;
-import com.jakewharton.DiskLruCache.Editor;
-import com.jakewharton.DiskLruCache.Snapshot;
+import com.jakewharton.disklrucache.DiskLruCache;
+import com.jakewharton.disklrucache.DiskLruCache.Editor;
+import com.jakewharton.disklrucache.DiskLruCache.Snapshot;
 import com.webimageloader.Constants;
 import com.webimageloader.ImageLoader.Logger;
-import com.webimageloader.Request;
 import com.webimageloader.util.ListenerFuture;
 import com.webimageloader.util.BitmapUtils;
 import com.webimageloader.util.Hasher;
 import com.webimageloader.util.IOUtil;
 import com.webimageloader.util.InputSupplier;
+
+import static com.webimageloader.Request.Flag.IGNORE_CACHE;
+import static com.webimageloader.Request.Flag.NO_CACHE;
+import static com.webimageloader.Request.Flag.SKIP_DISK_CACHE;
 
 public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
     private static final String TAG = "DiskLoader";
@@ -59,7 +62,7 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
 
     @Override
     public void load(LoaderWork.Manager manager, LoaderRequest request) {
-        if (request.hasFlag(Request.Flag.IGNORE_CACHE)) {
+        if (request.hasFlag(IGNORE_CACHE) || request.hasFlag(SKIP_DISK_CACHE)) {
             manager.next(request, new NextListener(request, manager));
             return;
         }
@@ -145,7 +148,7 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
 
         @Override
         public void onStreamLoaded(InputSupplier input, final Metadata metadata) {
-            if (request.hasFlag(Request.Flag.NO_CACHE)) {
+            if (request.hasFlag(NO_CACHE) || request.hasFlag(SKIP_DISK_CACHE)) {
                 manager.deliverStream(input, metadata);
                 return;
             }
@@ -156,7 +159,7 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
                 OutputStream os = new BufferedOutputStream(editor.newOutputStream(INPUT_IMAGE), BUFFER_SIZE);
                 try {
                     try {
-                        IOUtil.copy(input, os);
+                        copy(input, os);
                     } finally {
                         os.close();
                     }
@@ -185,6 +188,38 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
                 // Pass it trough to the listener without caching.
                 Log.e(TAG, "Failed opening cache", e);
                 manager.deliverStream(input, metadata);
+            }
+        }
+
+        public void copy(InputSupplier input, OutputStream output) throws IOException {
+            long length = input.getLength();
+            InputStream is = new BufferedInputStream(input.getInput(), BUFFER_SIZE);
+
+            try {
+                copy(is, output, length);
+            } finally {
+                is.close();
+            }
+        }
+
+        public void copy(InputStream input, OutputStream output, long length) throws IOException {
+            byte[] buffer = new byte[BUFFER_SIZE];
+
+            if (length != -1) {
+                manager.publishProgress(0f);
+
+                long progress = 0;
+                int i;
+                while ((i = input.read(buffer)) != -1) {
+                    output.write(buffer, 0, i);
+                    progress += i;
+                    manager.publishProgress(Math.min(1f, (float) progress / length));
+                }
+            } else {
+                int i;
+                while ((i = input.read(buffer)) != -1) {
+                    output.write(buffer, 0, i);
+                }
             }
         }
 
@@ -265,6 +300,11 @@ public class DiskLoader extends SimpleBackgroundLoader implements Closeable {
         public DiskInputSupplier(LoaderRequest request, Snapshot snapshot) {
             this.key = hashKeyForDisk(request);
             this.snapshot = snapshot;
+        }
+
+        @Override
+        public long getLength() throws IOException {
+            return cache.get(key).getLength(INPUT_IMAGE);
         }
 
         @Override

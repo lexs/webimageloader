@@ -21,7 +21,6 @@ import com.webimageloader.ImageLoader;
 import com.webimageloader.ImageLoader.Listener;
 import com.webimageloader.Request;
 import com.webimageloader.transformation.SimpleTransformation;
-import com.webimageloader.transformation.Transformation;
 
 @TargetApi(16)
 public class ImageLoaderTestCase extends AndroidTestCase {
@@ -33,6 +32,7 @@ public class ImageLoaderTestCase extends AndroidTestCase {
     private static final String CORRECT_FILE_PATH = "test.png";
     private static final String CORRECT_MOCK_FILE_PATH = MOCK_SCHEME + CORRECT_FILE_PATH;
     private static final String WRONG_FILE_PATH = MOCK_SCHEME + "error.jpeg";
+    private static final Request CORRECT_REQUEST = new Request(CORRECT_MOCK_FILE_PATH);
 
     private static final Listener<Object> EMPTY_LISTENER = new Listener<Object>() {
         @Override
@@ -417,6 +417,45 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         assertEquals(2, streamHandler.timesOpened);
     }
 
+    public void testProgress() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        final Holder<Float> h = new Holder<Float>();
+
+        loader.load(null, CORRECT_REQUEST, new Listener<Object>() {
+            @Override
+            public void onSuccess(Object tag, Bitmap b) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onError(Object tag, Throwable t) {
+                latch.countDown();
+            }
+        }, new ImageLoader.ProgressListener() {
+            @Override
+            public void onProgress(float value) {
+                h.value = value;
+            }
+        });
+
+        assertTrue(latch.await(TIMEOUT, TimeUnit.SECONDS));
+        assertEquals(1f, h.value);
+    }
+
+    public void testProgressBlocking() throws IOException {
+        final Holder<Float> h = new Holder<Float>();
+
+        loader.loadBlocking(CORRECT_REQUEST, new ImageLoader.ProgressListener() {
+            @Override
+            public void onProgress(float value) {
+                h.value = value;
+            }
+        });
+
+        assertEquals(1f, h.value);
+    }
+
     private static class IdentityTransformation extends SimpleTransformation {
         @Override
         public String getIdentifier() {
@@ -463,6 +502,11 @@ public class ImageLoaderTestCase extends AndroidTestCase {
         @Override
         public InputStream getInputStream() throws IOException {
             return assets.open(filename);
+        }
+
+        @Override
+        public int getContentLength() {
+            return (int) new File(filename).length();
         }
     }
 

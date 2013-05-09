@@ -216,11 +216,19 @@ public class NetworkLoader implements Loader, Closeable {
     private class NetworkInputSupplier implements InputSupplier {
         private URLConnection connection;
         private URL url;
+        private long length;
 
         public NetworkInputSupplier(URLConnection connection) {
             this.connection = connection;
 
             url = connection.getURL();
+            // XXX: This returns a int which could be too small
+            length = connection.getContentLength();
+        }
+
+        @Override
+        public long getLength() throws IOException {
+            return length;
         }
 
         @Override

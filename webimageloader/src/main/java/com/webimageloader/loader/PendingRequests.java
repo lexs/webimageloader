@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+import com.webimageloader.ImageLoader;
 import com.webimageloader.ImageLoader.Logger;
 import com.webimageloader.util.BitmapUtils;
 import com.webimageloader.util.InputSupplier;
@@ -47,21 +48,25 @@ public class PendingRequests {
         return null;
     }
 
-    public synchronized LoaderWork addRequest(Object tag, LoaderRequest request, LoaderManager.Listener listener) {
+    public synchronized LoaderWork addRequest(Object tag, final LoaderRequest request, LoaderManager.Listener listener) {
         if (tag != null && stillPending(tag, request)) {
             return null;
         }
 
         if (tag != null) {
             cancelPotentialWork(tag);
-
         }
 
         PendingListeners listeners = pendingRequests.get(request);
         LoaderWork work = null;
 
         if (listeners == null) {
-            work = new LoaderWork(new RequestListener(request));
+            work = new LoaderWork(new RequestListener(request), new ImageLoader.ProgressListener() {
+                @Override
+                public void onProgress(float value) {
+                    publishProgress(request, value);
+                }
+            });
 
             listeners = new PendingListeners(request, tag, listener, work);
             pendingRequests.put(request, listeners);
@@ -79,6 +84,13 @@ public class PendingRequests {
 
     public synchronized void cancel(Object tag) {
         cancelPotentialWork(tag);
+    }
+
+    protected synchronized void publishProgress(LoaderRequest request, float value) {
+        PendingListeners listeners = pendingRequests.get(request);
+        if (listeners != null) {
+            listeners.publishProgress(value);
+        }
     }
 
     protected synchronized void deliverResult(LoaderRequest request, Bitmap b, Metadata metadata) {
@@ -221,6 +233,16 @@ public class PendingRequests {
             return listeners.keySet();
         }
 
+        public void publishProgress(float value) {
+            for (LoaderManager.Listener listener : listeners.values()) {
+                listener.onProgress(value);
+            }
+
+            for (LoaderManager.Listener listener : extraListeners) {
+                listener.onProgress(value);
+            }
+        }
+
         public void deliverResult(Bitmap b) {
             for (LoaderManager.Listener listener : listeners.values()) {
                 listener.onLoaded(b);
@@ -240,5 +262,7 @@ public class PendingRequests {
                 listener.onError(t);
             }
         }
+
+
     }
 }

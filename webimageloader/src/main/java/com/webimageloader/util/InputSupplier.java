@@ -10,6 +10,14 @@ import java.io.InputStream;
  */
 public interface InputSupplier {
     /**
+     * Get the length of the supplied {@link InputStream}
+     *
+     * @return the length
+     * @throws IOException if opening the stream or file failed
+     */
+    long getLength() throws IOException;
+
+    /**
      * Open a new {@link InputStream}, you should be sure to close any previously
      * opened streams before
      *

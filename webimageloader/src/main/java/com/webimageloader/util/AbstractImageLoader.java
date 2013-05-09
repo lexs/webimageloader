@@ -25,7 +25,7 @@ public abstract class AbstractImageLoader implements ImageLoader {
 
     @Override
     public void preload(String url, Transformation transformation) {
-        preload(new Request(url).withTransformation(transformation));
+        preload(new Request(url, transformation));
     }
 
     @Override

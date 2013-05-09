@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="numbers">Numbers</string>
+    <string name="patterns">Patterns</string>
+    <string name="progress">Progress</string>
+    <string name="clear_cache">Clear cache</string>
+</resources>

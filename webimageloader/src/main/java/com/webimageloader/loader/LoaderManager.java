@@ -15,6 +15,9 @@ public class LoaderManager {
 
         @Override
         public void onError(Throwable t) {}
+
+        @Override
+        public void onProgress(float value) {}
     };
     
     private MemoryCache memoryCache;
@@ -31,6 +34,7 @@ public class LoaderManager {
     public interface Listener {
         void onLoaded(Bitmap b);
         void onError(Throwable t);
+        void onProgress(float value);
     }
 
     public LoaderManager(MemoryCache memoryCache, DiskLoader diskLoader, NetworkLoader networkLoader) {
