@@ -166,6 +166,13 @@ If you are a Maven user, simply add the following to your `pom.xml`:
 </dependency>
 ``` 
 
+or using Gradle
+```groovy
+dependencies {
+   compile 'com.webimageloader:webimageloader:1.2.0'
+}
+```
+
 Developed By
 ============
 
